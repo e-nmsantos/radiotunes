@@ -1,0 +1,49 @@
+// Service Worker para Roc TuneIn PWA
+const CACHE_NAME = 'roc-tunein-v2';
+const ASSETS_TO_CACHE = [
+  './',
+  './index.html',
+  './manifest.json'
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  // Streams de áudio e chamadas de API devem passar pela rede sem cache estático
+  if (
+    event.request.url.includes('.mp3') ||
+    event.request.url.includes('.m3u8') ||
+    event.request.url.includes('api.radio-browser.info') ||
+    event.request.url.includes('stream')
+  ) {
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      return cachedResponse || fetch(event.request);
+    })
+  );
+});

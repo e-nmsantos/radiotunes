@@ -1,0 +1,9 @@
+# Binaries & Large Tools
+roc_bin/
+*.exe
+*.dll
+
+# OS files
+.DS_Store
+Thumbs.db
+*.tmp

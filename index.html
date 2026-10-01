@@ -1,0 +1,3224 @@
+<!DOCTYPE html>
+<html lang="pt" class="theme-cyan">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roc TuneIn - Rádio Mundial Hi-Fi, Mapa, DSP & Soundscapes</title>
+  
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#06b6d4">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Roc TuneIn">
+
+  <!-- Tailwind CSS & HLS.js -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  
+  <!-- Leaflet.js for Interactive World Radio Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: 'var(--brand-50)',
+              100: 'var(--brand-100)',
+              200: 'var(--brand-200)',
+              300: 'var(--brand-300)',
+              400: 'var(--brand-400)',
+              500: 'var(--brand-500)',
+              600: 'var(--brand-600)',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root.theme-cyan {
+      --brand-50: #ecfeff;
+      --brand-400: #22d3ee;
+      --brand-500: #06b6d4;
+      --brand-600: #0891b2;
+      --brand-glow: rgba(6, 182, 212, 0.45);
+      --bg-dark: #020617;
+      --bg-surface: #0f172a;
+      --bg-card: #1e293b;
+    }
+    :root.theme-purple {
+      --brand-50: #faf5ff;
+      --brand-400: #c084fc;
+      --brand-500: #a855f7;
+      --brand-600: #9333ea;
+      --brand-glow: rgba(168, 85, 247, 0.45);
+      --bg-dark: #090514;
+      --bg-surface: #150d2a;
+      --bg-card: #241442;
+    }
+    :root.theme-emerald {
+      --brand-50: #ecfdf5;
+      --brand-400: #34d399;
+      --brand-500: #10b981;
+      --brand-600: #059669;
+      --brand-glow: rgba(16, 185, 129, 0.45);
+      --bg-dark: #021a12;
+      --bg-surface: #062b1e;
+      --bg-card: #0d3d2c;
+    }
+    :root.theme-amber {
+      --brand-50: #fffbeb;
+      --brand-400: #fbbf24;
+      --brand-500: #f59e0b;
+      --brand-600: #d97706;
+      --brand-glow: rgba(245, 158, 11, 0.45);
+      --bg-dark: #120b02;
+      --bg-surface: #261605;
+      --bg-card: #3b2308;
+    }
+    :root.theme-oled {
+      --brand-50: #ffffff;
+      --brand-400: #ffffff;
+      --brand-500: #e2e8f0;
+      --brand-600: #94a3b8;
+      --brand-glow: rgba(255, 255, 255, 0.35);
+      --bg-dark: #000000;
+      --bg-surface: #0a0a0a;
+      --bg-card: #141414;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      transition: background-color 0.3s ease;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    
+    .playing-glow {
+      box-shadow: 0 0 25px var(--brand-glow);
+    }
+    .station-card {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      background-color: var(--bg-surface);
+    }
+    .station-card:hover {
+      transform: translateY(-2px);
+    }
+    .quick-chip {
+      transition: all 0.15s ease-in-out;
+    }
+    .quick-chip:hover {
+      transform: scale(1.04);
+    }
+    .recording-pulse {
+      animation: pulse-red 1.2s infinite;
+    }
+    @keyframes pulse-red {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.1); }
+    }
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+      background: #0f172a !important;
+      color: #f8fafc !important;
+      border: 1px solid #334155;
+      border-radius: 16px;
+    }
+  </style>
+</head>
+<body class="text-slate-100 antialiased min-h-screen flex flex-col md:flex-row pb-32 md:pb-28">
+
+  <!-- Sidebar Navigation -->
+  <aside class="w-full md:w-64 bg-slate-900/90 backdrop-blur-md border-r border-slate-800 p-5 flex flex-col justify-between flex-shrink-0">
+    <div class="space-y-6">
+      
+      <!-- Brand Logo & Lang Switcher -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="setView('home')">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-cyan-500/20">
+            📻
+          </div>
+          <div>
+            <h1 class="text-lg font-black tracking-tight flex items-center gap-1.5 text-white">
+              ROC <span class="text-brand-400">TUNEIN</span>
+            </h1>
+            <p class="text-[11px] text-slate-400" data-i18n="tagline">Rádio Global & Hi-Fi DSP</p>
+          </div>
+        </div>
+
+        <!-- Language Selector -->
+        <select id="lang-select" onchange="changeLanguage(this.value)" class="bg-slate-950 border border-slate-800 text-[11px] text-cyan-400 rounded-lg px-2 py-1 font-bold focus:outline-none">
+          <option value="pt">🇵🇹 PT</option>
+          <option value="en">🇬🇧 EN</option>
+          <option value="es">🇪🇸 ES</option>
+          <option value="fr">🇫🇷 FR</option>
+        </select>
+      </div>
+
+      <!-- PWA Install Button Banner -->
+      <div id="pwa-install-banner" class="hidden p-3 rounded-2xl bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 text-xs flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span>📲</span>
+          <span class="font-bold text-white" data-i18n="installApp">Instalar App</span>
+        </div>
+        <button onclick="installPWA()" class="px-2.5 py-1 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-[11px] transition" data-i18n="install">
+          Instalar
+        </button>
+      </div>
+
+      <!-- Main Navigation -->
+      <nav class="space-y-1">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 px-3 mb-2" data-i18n="mainMenu">Menu Principal</div>
+        <button onclick="setView('home')" id="nav-home" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold text-sm transition bg-cyan-500/20 text-cyan-400">
+          <span>🏠</span> <span data-i18n="home">Início / Destaques</span>
+        </button>
+        <button onclick="setView('map')" id="nav-map" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:bg-slate-800 hover:text-white transition">
+          <span>🗺️</span> <span data-i18n="worldMap">Mapa Mundial Interativo</span>
+        </button>
+        <button onclick="setView('favorites')" id="nav-favorites" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:bg-slate-800 hover:text-white transition">
+          <span>⭐</span> <span data-i18n="myFavorites">Meus Favoritos</span> (<span id="fav-count">0</span>)
+        </button>
+        <button onclick="setView('library')" id="nav-library" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:bg-slate-800 hover:text-white transition">
+          <span>📌</span> <span data-i18n="myLibrary">Minha Biblioteca</span> (<span id="lib-count">0</span>)
+        </button>
+        <button onclick="setView('recents')" id="nav-recents" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:bg-slate-800 hover:text-white transition">
+          <span>🕒</span> <span data-i18n="recentlyPlayed">Ouvidas Recentemente</span>
+        </button>
+        <button onclick="loadTopWorldStations()" id="nav-topworld" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:bg-slate-800 hover:text-white transition">
+          <span>🌍</span> <span data-i18n="top50World">Top 50 Mundial</span>
+        </button>
+      </nav>
+
+      <!-- Category Filter list -->
+      <div class="space-y-1">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 px-3 mb-2" data-i18n="categories">Categorias</div>
+        <button onclick="selectCategory('Todas')" id="cat-Todas" class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-cyan-400 transition">
+          <span class="flex items-center gap-2"><span>🌐</span> <span data-i18n="catAll">Todas as Rádios</span></span>
+          <span class="text-[10px] bg-cyan-500/20 px-2 py-0.5 rounded-full" id="count-all">0</span>
+        </button>
+        <button onclick="selectCategory('Música')" id="cat-Música" class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
+          <span class="flex items-center gap-2"><span>🎵</span> <span data-i18n="catMusic">Música & Pop</span></span>
+          <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full" id="count-music">0</span>
+        </button>
+        <button onclick="selectCategory('Rock')" id="cat-Rock" class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
+          <span class="flex items-center gap-2"><span>🎸</span> <span data-i18n="catRock">Rock & Anos 80</span></span>
+          <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full" id="count-rock">0</span>
+        </button>
+        <button onclick="selectCategory('Notícias')" id="cat-Notícias" class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
+          <span class="flex items-center gap-2"><span>📰</span> <span data-i18n="catNews">Notícias & Debates</span></span>
+          <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full" id="count-news">0</span>
+        </button>
+        <button onclick="selectCategory('Desporto')" id="cat-Desporto" class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
+          <span class="flex items-center gap-2"><span>⚽</span> <span data-i18n="catSports">Desporto & Futebol</span></span>
+          <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full" id="count-sports">0</span>
+        </button>
+        <button onclick="selectCategory('Eletrónica')" id="cat-Eletrónica" class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
+          <span class="flex items-center gap-2"><span>🎧</span> <span data-i18n="catElectro">Eletrónica & Dance</span></span>
+          <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full" id="count-electro">0</span>
+        </button>
+        <button onclick="selectCategory('Relax')" id="cat-Relax" class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
+          <span class="flex items-center gap-2"><span>☕</span> <span data-i18n="catRelax">Lo-Fi, Jazz & Relax</span></span>
+          <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full" id="count-relax">0</span>
+        </button>
+      </div>
+
+      <!-- Quick Audio & Utility Tools in Sidebar -->
+      <div class="space-y-1.5 pt-2 border-t border-slate-800">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 px-3 mb-1" data-i18n="tools">Ferramentas & Áudio</div>
+        
+        <button onclick="openSoundscapesModal()" class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 bg-slate-800/60 hover:bg-emerald-500/20 hover:text-emerald-400 transition">
+          <span class="flex items-center gap-2"><span>🌧️</span> <span data-i18n="soundscapes">Sons Ambiente</span></span>
+          <span id="side-soundscapes-badge" class="text-[10px] text-slate-400 font-mono">Off</span>
+        </button>
+
+        <button onclick="openTVMode()" class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 bg-slate-800/60 hover:bg-cyan-500/20 hover:text-cyan-400 transition">
+          <span class="flex items-center gap-2"><span>📺</span> <span data-i18n="tvMode">Modo TV / Ecrã Gigante</span></span>
+          <span class="text-[10px] bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded">F</span>
+        </button>
+
+        <button onclick="openAlarmModal()" class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 bg-slate-800/60 hover:bg-slate-800 hover:text-amber-400 transition">
+          <span class="flex items-center gap-2"><span>⏰</span> <span data-i18n="alarmClock">Despertador</span></span>
+          <span id="side-alarm-badge" class="text-[10px] text-slate-400 font-mono">Off</span>
+        </button>
+
+        <button onclick="openEqualizerModal()" class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 bg-slate-800/60 hover:bg-slate-800 hover:text-cyan-400 transition">
+          <span class="flex items-center gap-2"><span>🎚️</span> <span data-i18n="equalizer">Equalizador (EQ)</span></span>
+          <span id="side-eq-badge" class="text-[10px] text-cyan-400 font-mono">Flat</span>
+        </button>
+
+        <button onclick="openSleepModal()" class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 bg-slate-800/60 hover:bg-slate-800 hover:text-amber-400 transition">
+          <span class="flex items-center gap-2"><span>⏳</span> Sleep Timer</span>
+          <span id="side-sleep-badge" class="text-[10px] text-slate-400">Off</span>
+        </button>
+
+        <button onclick="openBackupModal()" class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 bg-slate-800/60 hover:bg-slate-800 hover:text-emerald-400 transition">
+          <span class="flex items-center gap-2"><span>💾</span> Backup & M3U</span>
+          <span class="text-[10px] text-slate-400">Sync</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Add Custom Stream & Theme Switcher -->
+    <div class="pt-4 border-t border-slate-800 space-y-2">
+      <div class="flex items-center justify-between px-1">
+        <span class="text-[11px] text-slate-500 font-bold uppercase" data-i18n="theme">Tema:</span>
+        <div class="flex items-center gap-1.5">
+          <button onclick="setTheme('cyan')" class="w-5 h-5 rounded-full bg-cyan-400 border border-slate-700 focus:ring-2 ring-white" title="Cyan"></button>
+          <button onclick="setTheme('purple')" class="w-5 h-5 rounded-full bg-purple-500 border border-slate-700 focus:ring-2 ring-white" title="Neon Purple"></button>
+          <button onclick="setTheme('emerald')" class="w-5 h-5 rounded-full bg-emerald-500 border border-slate-700 focus:ring-2 ring-white" title="Emerald Matrix"></button>
+          <button onclick="setTheme('amber')" class="w-5 h-5 rounded-full bg-amber-500 border border-slate-700 focus:ring-2 ring-white" title="Vintage Amber"></button>
+          <button onclick="setTheme('oled')" class="w-5 h-5 rounded-full bg-slate-100 border border-slate-700 focus:ring-2 ring-white" title="OLED Dark"></button>
+        </div>
+      </div>
+
+      <button onclick="openAddModal()" class="w-full py-2.5 px-3 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-bold flex items-center justify-center gap-2 transition active:scale-95" data-i18n="addCustomStream">
+        <span>➕</span> Adicionar Stream Próprio
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 p-4 md:p-8 overflow-y-auto max-w-7xl mx-auto w-full space-y-6">
+
+    <!-- Active Alarm Ringing Alert Banner -->
+    <div id="alarm-ringing-banner" class="hidden p-4 rounded-2xl bg-amber-500 text-slate-950 font-bold flex items-center justify-between shadow-2xl animate-bounce">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">⏰</span>
+        <div>
+          <h4 class="text-sm font-black" data-i18n="alarmRingingTitle">DESPERTADOR ROC TUNEIN ATIVO!</h4>
+          <p class="text-xs font-medium text-slate-900" data-i18n="alarmRingingSub">Bom dia! A tua estação de rádio favorita está a tocar.</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="snoozeAlarm()" class="px-3 py-1.5 rounded-xl bg-slate-950 text-amber-400 font-black text-xs hover:bg-slate-900 transition" data-i18n="snooze">Adiar 5 min</button>
+        <button onclick="dismissAlarm()" class="px-3 py-1.5 rounded-xl bg-slate-950 text-white font-black text-xs hover:bg-slate-900 transition" data-i18n="turnOff">Desligar</button>
+      </div>
+    </div>
+
+    <!-- Super Search & Advanced Filters Header -->
+    <div class="space-y-3">
+      <div class="relative w-full">
+        <input 
+          type="text" 
+          id="search-input" 
+          placeholder="Pesquisar em +45.000 rádios mundiais (ex: Los 40, BBC, Apple, Kiss FM, Comercial, Jovem Pan, Jazz, Rock)..." 
+          class="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-12 pr-44 py-4 text-sm md:text-base text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 shadow-2xl transition"
+          autocomplete="off"
+        />
+        <svg class="w-6 h-6 absolute left-4 top-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        
+        <div class="absolute right-3 top-3 flex items-center gap-2">
+          <span id="search-spinner" class="hidden w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></span>
+          <button onclick="toggleAdvancedFilters()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 transition flex items-center gap-1">
+            <span>⚙️</span> <span data-i18n="filters">Filtros</span>
+          </button>
+          <button onclick="triggerGlobalSearch()" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs shadow-md transition active:scale-95 flex items-center gap-1.5">
+            <span data-i18n="search">Pesquisar</span> 🌐
+          </button>
+        </div>
+      </div>
+
+      <!-- Advanced Discovery Filters Panel (Collapsible) -->
+      <div id="advanced-filters-panel" class="hidden p-5 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h3 class="text-xs font-black uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+            <span>🎯</span> <span data-i18n="advFiltersTitle">Explorador Avançado de Rádios (+45.000 Estações)</span>
+          </h3>
+          <button onclick="resetAdvancedFilters()" class="text-xs text-slate-400 hover:text-white" data-i18n="clearFilters">Limpar Filtros</button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          <!-- Country Filter -->
+          <div>
+            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1" data-i18n="filterCountry">País</label>
+            <input type="text" id="adv-country" placeholder="Ex: Portugal, Espanha, Brasil..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400" />
+          </div>
+
+          <!-- City / State Filter -->
+          <div>
+            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1" data-i18n="filterCity">Cidade / Região</label>
+            <input type="text" id="adv-city" placeholder="Ex: Lisboa, Madrid, São Paulo..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400" />
+          </div>
+
+          <!-- Music Genre / Tag Filter -->
+          <div>
+            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1" data-i18n="filterGenre">Estilo de Música / Tag</label>
+            <input type="text" id="adv-genre" placeholder="Ex: Pop, Rock, 80s, Jazz, House..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400" />
+          </div>
+
+          <!-- Bitrate / Sort Order -->
+          <div>
+            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1" data-i18n="filterSort">Ordenar Por</label>
+            <select id="adv-sort" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400">
+              <option value="clickcount" data-i18n="sortPopular">Mais Populares (Cliques)</option>
+              <option value="votes" data-i18n="sortVotes">Mais Votadas</option>
+              <option value="bitrate" data-i18n="sortQuality">Melhor Qualidade (Bitrate HD)</option>
+              <option value="name" data-i18n="sortName">Nome (A-Z)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/60">
+          <div class="flex items-center gap-4 text-xs text-slate-300">
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="adv-only-hd" class="w-4 h-4 accent-cyan-400 rounded" />
+              <span data-i18n="onlyHD">Apenas HD (≥128 kbps)</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="adv-only-logos" checked class="w-4 h-4 accent-cyan-400 rounded" />
+              <span data-i18n="onlyLogos">Apenas com logótipo</span>
+            </label>
+          </div>
+
+          <button onclick="applyAdvancedDiscoverySearch()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-xs shadow-lg transition active:scale-95" data-i18n="applySearch">
+            🔍 Aplicar Pesquisa Global
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Search Suggestions Chips -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs scrollbar-none">
+        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1 flex-shrink-0" data-i18n="quickSearch">Pesquisa Rápida:</span>
+        <button onclick="quickSearch('Los 40')" class="quick-chip px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-cyan-500/20 hover:text-cyan-400 border border-slate-800 text-slate-300 font-medium flex-shrink-0 transition">🇪🇸 Los 40</button>
+        <button onclick="quickSearch('BBC')" class="quick-chip px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-cyan-500/20 hover:text-cyan-400 border border-slate-800 text-slate-300 font-medium flex-shrink-0 transition">🇬🇧 BBC Radio</button>
+        <button onclick="quickSearch('Apple')" class="quick-chip px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-cyan-500/20 hover:text-cyan-400 border border-slate-800 text-slate-300 font-medium flex-shrink-0 transition">🇺🇸 Apple Hits</button>
+        <button onclick="quickSearch('Comercial')" class="quick-chip px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-cyan-500/20 hover:text-cyan-400 border border-slate-800 text-slate-300 font-medium flex-shrink-0 transition">🇵🇹 Rádio Comercial</button>
+        <button onclick="quickSearch('RFM')" class="quick-chip px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-cyan-500/20 hover:text-cyan-400 border border-slate-800 text-slate-300 font-medium flex-shrink-0 transition">🇵🇹 RFM</button>
+        <button onclick="quickSearch('Kiss FM')" class="quick-chip px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-cyan-500/20 hover:text-cyan-400 border border-slate-800 text-slate-300 font-medium flex-shrink-0 transition">📻 Kiss FM</button>
+        <button onclick="quickSearch('Jovem Pan')" class="quick-chip px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-cyan-500/20 hover:text-cyan-400 border border-slate-800 text-slate-300 font-medium flex-shrink-0 transition">🇧🇷 Jovem Pan</button>
+        <button onclick="quickSearch('Jazz')" class="quick-chip px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-cyan-500/20 hover:text-cyan-400 border border-slate-800 text-slate-300 font-medium flex-shrink-0 transition">🎷 Smooth Jazz</button>
+        <button onclick="quickSearch('Rock 80')" class="quick-chip px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-cyan-500/20 hover:text-cyan-400 border border-slate-800 text-slate-300 font-medium flex-shrink-0 transition">🎸 Rock Anos 80</button>
+        <button onclick="quickSearch('Ibiza')" class="quick-chip px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-cyan-500/20 hover:text-cyan-400 border border-slate-800 text-slate-300 font-medium flex-shrink-0 transition">🎧 Ibiza House</button>
+      </div>
+      
+      <!-- Live Search Status Banner -->
+      <div id="search-status" class="hidden text-xs px-3.5 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span id="search-status-icon">🌐</span>
+          <span id="search-status-text" class="font-medium">A pesquisar na rede global...</span>
+        </div>
+        <button onclick="clearSearch()" class="text-slate-400 hover:text-white font-bold ml-2 transition" data-i18n="clearSearch">✕ Limpar Pesquisa</button>
+      </div>
+
+      <!-- Live Stream Error Notice -->
+      <div id="stream-error-banner" class="hidden text-xs px-4 py-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span>⚠️</span>
+          <span data-i18n="streamOffline">Este stream de rádio está temporariamente inacessível ou offline.</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="retryCurrentStream()" class="px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 font-bold" data-i18n="reconnect">Reconectar 🔄</button>
+          <button onclick="playNext()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 font-bold" data-i18n="next">Próxima ⏭️</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Country Selector Carousel (Pills) -->
+    <div id="country-filter-section" class="space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-500" data-i18n="exploreCountry">Explorar por País</span>
+        <button onclick="selectCountry('Todos')" class="text-xs text-cyan-400 hover:underline" data-i18n="viewAll">Ver Todos</button>
+      </div>
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 text-xs">
+        <button onclick="selectCountry('Todos')" id="country-Todos" class="country-btn px-4 py-2 rounded-xl font-bold bg-cyan-500 text-slate-950 flex-shrink-0 transition">🌍 Todos</button>
+        <button onclick="selectCountry('Portugal')" id="country-Portugal" class="country-btn px-4 py-2 rounded-xl font-medium bg-slate-900 border border-slate-800 hover:text-white flex-shrink-0 transition">🇵🇹 Portugal</button>
+        <button onclick="selectCountry('Espanha')" id="country-Espanha" class="country-btn px-4 py-2 rounded-xl font-medium bg-slate-900 border border-slate-800 hover:text-white flex-shrink-0 transition">🇪🇸 Espanha</button>
+        <button onclick="selectCountry('Reino Unido')" id="country-Reino Unido" class="country-btn px-4 py-2 rounded-xl font-medium bg-slate-900 border border-slate-800 hover:text-white flex-shrink-0 transition">🇬🇧 Reino Unido</button>
+        <button onclick="selectCountry('Estados Unidos')" id="country-Estados Unidos" class="country-btn px-4 py-2 rounded-xl font-medium bg-slate-900 border border-slate-800 hover:text-white flex-shrink-0 transition">🇺🇸 EUA</button>
+        <button onclick="selectCountry('Brasil')" id="country-Brasil" class="country-btn px-4 py-2 rounded-xl font-medium bg-slate-900 border border-slate-800 hover:text-white flex-shrink-0 transition">🇧🇷 Brasil</button>
+        <button onclick="selectCountry('França')" id="country-França" class="country-btn px-4 py-2 rounded-xl font-medium bg-slate-900 border border-slate-800 hover:text-white flex-shrink-0 transition">🇫🇷 França</button>
+        <button onclick="selectCountry('Alemanha')" id="country-Alemanha" class="country-btn px-4 py-2 rounded-xl font-medium bg-slate-900 border border-slate-800 hover:text-white flex-shrink-0 transition">🇩🇪 Alemanha</button>
+        <button onclick="selectCountry('Itália')" id="country-Itália" class="country-btn px-4 py-2 rounded-xl font-medium bg-slate-900 border border-slate-800 hover:text-white flex-shrink-0 transition">🇮🇹 Itália</button>
+        <button onclick="selectCountry('Japão')" id="country-Japão" class="country-btn px-4 py-2 rounded-xl font-medium bg-slate-900 border border-slate-800 hover:text-white flex-shrink-0 transition">🇯🇵 Japão</button>
+      </div>
+    </div>
+
+    <!-- Map View Container -->
+    <div id="map-view-container" class="hidden space-y-3">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-black text-white flex items-center gap-2">
+            <span>🗺️</span> <span data-i18n="worldMapTitle">Mapa Mundial de Rádios em Direto</span>
+          </h2>
+          <p class="text-xs text-slate-400" data-i18n="worldMapSub">Clica em qualquer ponto ou cidade do globo para sintonizar a rádio local instantaneamente.</p>
+        </div>
+        <button onclick="setView('home')" class="text-xs px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white" data-i18n="closeMap">✕ Fechar Mapa</button>
+      </div>
+      <div id="world-map" class="w-full h-[520px] rounded-3xl border border-slate-800 overflow-hidden shadow-2xl z-10"></div>
+    </div>
+
+    <!-- Stations Grid Section -->
+    <div id="stations-grid-section" class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 id="section-title" class="text-base font-black text-white flex items-center gap-2">
+          <span>🔥</span> <span data-i18n="popularStations">Rádios Populares & Tendências</span>
+        </h2>
+        <span id="results-count" class="text-xs text-slate-400">A carregar...</span>
+      </div>
+
+      <div id="stations-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <!-- Station Cards injected dynamically -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="empty-state" class="hidden text-center py-16 bg-slate-900 border border-slate-800 rounded-3xl p-8">
+        <div class="text-5xl mb-3">📻</div>
+        <p class="text-base font-bold text-white" data-i18n="noStations">Nenhuma rádio encontrada para este termo</p>
+        <p class="text-xs text-slate-400 mt-1" data-i18n="noStationsSub">Experimenta usar o Explorador Avançado ou clicar num dos atalhos de pesquisa acima.</p>
+      </div>
+    </div>
+
+    <!-- Functional Domain Preview & M3U Live -->
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></div>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Estado Funcional Roc (Radio.roc)</h3>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="downloadM3UPlaylist()" class="text-xs text-emerald-400 hover:underline font-semibold flex items-center gap-1">
+            <span>📥</span> <span data-i18n="downloadM3U">Baixar M3U</span>
+          </button>
+          <button onclick="copyRocState()" class="text-xs text-cyan-400 hover:underline font-semibold">
+            Copiar Código Roc
+          </button>
+        </div>
+      </div>
+      <pre id="roc-preview" class="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs text-cyan-400 overflow-x-auto leading-relaxed max-h-48"></pre>
+    </div>
+
+  </main>
+
+  <!-- Persistent Bottom Player Bar -->
+  <footer class="fixed bottom-0 left-0 right-0 h-28 md:h-24 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 z-40 px-3 md:px-8 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-0 shadow-2xl py-2 md:py-0">
+    
+    <!-- Left: Current Station Details & External Search -->
+    <div class="flex items-center gap-3 md:gap-4 w-full md:w-1/3 min-w-[200px] max-w-sm justify-between md:justify-start">
+      <div class="flex items-center gap-3 min-w-0">
+        <div id="player-cover-wrap" class="w-12 h-12 md:w-14 md:h-14 rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0 shadow-lg relative transition-transform cursor-pointer" onclick="openTVMode()">
+          <img id="player-cover-img" src="" alt="Capa" class="w-full h-full object-cover hidden" />
+          <div id="player-cover-fallback" class="w-full h-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xl md:text-2xl font-black">
+            📻
+          </div>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2">
+            <h4 id="player-station-name" class="text-sm font-extrabold text-white truncate">LOS 40 España</h4>
+            <span id="player-live-badge" class="hidden px-2 py-0.5 rounded-full text-[9px] font-black bg-red-500 text-white animate-pulse">LIVE</span>
+          </div>
+          <p id="player-station-sub" class="text-xs text-slate-400 truncate mt-0.5">Espanha • Pop & Top 40 Hits</p>
+        </div>
+      </div>
+
+      <!-- Quick Action Icons -->
+      <div class="flex items-center gap-1.5 flex-shrink-0">
+        <button id="player-fav-btn" onclick="toggleCurrentFav()" class="p-1.5 text-xl text-slate-500 hover:text-amber-400 transition" title="Marcar Favorito">☆</button>
+        <button id="player-lib-btn" onclick="toggleCurrentLib()" class="p-1.5 text-sm text-slate-500 hover:text-cyan-400 transition" title="Incluir na Minha Biblioteca">📌</button>
+        <button onclick="searchCurrentOnSpotify()" class="p-1.5 text-slate-400 hover:text-green-400 transition text-sm" title="Procurar no Spotify">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.503 17.308c-.216.353-.674.464-1.027.248-2.812-1.718-6.352-2.107-10.521-1.155-.403.092-.806-.16-.898-.563-.092-.403.16-.806.563-.898 4.567-1.042 8.502-.596 11.636 1.341.353.216.464.674.247 1.027zm1.469-3.266c-.272.443-.852.583-1.295.311-3.219-1.978-8.125-2.55-11.933-1.393-.497.151-1.028-.134-1.179-.631-.151-.497.134-1.028.631-1.179 4.354-1.321 9.775-.681 13.466 1.587.443.272.583.852.31 1.295zm.126-3.41c-3.861-2.293-10.231-2.505-13.914-1.387-.593.18-1.223-.157-1.403-.75-.18-.593.157-1.223.75-1.403 4.238-1.287 11.278-1.04 15.688 1.579.533.316.708 1.008.392 1.541-.316.533-1.008.708-1.513.42z"/></svg>
+        </button>
+        <button onclick="shareCurrentStation()" class="p-1.5 text-slate-400 hover:text-cyan-400 transition text-sm" title="Copiar Link da Estação">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+        </button>
+        <button onclick="openTVMode()" class="p-1.5 text-slate-400 hover:text-white transition text-sm" title="Modo TV">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1v4m0-4h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Center: Master Controls & Visualizer -->
+    <div class="flex flex-col items-center justify-center gap-1 flex-1 max-w-md">
+      <div class="flex items-center gap-4">
+        
+        <!-- Record Stream Button -->
+        <button id="record-btn" onclick="toggleStreamRecording()" class="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-slate-800 transition" title="Gravar Transmissão">
+          <div class="w-3.5 h-3.5 rounded-full border-2 border-current flex items-center justify-center">
+            <div id="record-dot" class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+          </div>
+        </button>
+
+        <button onclick="playPrev()" class="p-2 rounded-xl hover:bg-slate-800 text-slate-300 hover:text-white transition" title="Estação Anterior">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+        </button>
+
+        <button id="player-play-btn" onclick="togglePlay()" class="w-11 h-11 md:w-12 md:h-12 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white flex items-center justify-center shadow-lg shadow-cyan-500/30 transition active:scale-95 playing-glow" title="Reproduzir / Parar">
+          <svg id="p-play-icon" class="w-6 h-6 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="p-pause-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+
+        <button onclick="playNext()" class="p-2 rounded-xl hover:bg-slate-800 text-slate-300 hover:text-white transition" title="Estação Seguinte">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+        </button>
+
+        <button onclick="openSleepModal()" id="player-sleep-btn" class="p-2 rounded-xl text-slate-400 hover:text-amber-400 hover:bg-slate-800 transition text-xs font-mono" title="Sleep Timer">
+          <span id="player-sleep-txt">⏳</span>
+        </button>
+      </div>
+
+      <!-- Live Spectrum Canvas -->
+      <div class="w-48 h-3.5 flex items-center justify-center overflow-hidden">
+        <canvas id="mini-visualizer" class="w-full h-full"></canvas>
+      </div>
+    </div>
+
+    <!-- Right: Volume, Soundscapes & Equalizer -->
+    <div class="flex items-center justify-end gap-3 w-full md:w-1/3 min-w-[160px]">
+      <div class="hidden sm:flex flex-col items-end text-right text-[11px] text-slate-500">
+        <span id="player-bitrate" class="font-mono text-cyan-400 font-bold">128 kbps</span>
+        <span id="player-country">Espanha</span>
+      </div>
+
+      <!-- Soundscapes Trigger -->
+      <button onclick="openSoundscapesModal()" class="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 transition" title="Misturador de Sons Ambiente">
+        🌧️
+      </button>
+
+      <!-- EQ Modal Trigger -->
+      <button onclick="openEqualizerModal()" class="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition" title="Equalizador DSP">
+        🎚️
+      </button>
+
+      <div class="flex items-center gap-2 bg-slate-950 px-3 py-2 rounded-2xl border border-slate-800">
+        <button id="p-mute-btn" onclick="toggleMute()" class="text-slate-400 hover:text-white" title="Mudo">
+          <svg id="p-vol-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+          <svg id="p-mute-icon" class="w-4 h-4 hidden text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
+        </button>
+        <input 
+          type="range" 
+          id="p-volume-slider" 
+          min="0" 
+          max="100" 
+          value="80" 
+          oninput="setVolume(this.value)"
+          class="w-16 md:w-20 accent-cyan-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+        />
+      </div>
+    </div>
+
+  </footer>
+
+  <!-- Modal 1: Soundscapes Ambient Mixer (Web Audio Pure Synthesis) -->
+  <div id="soundscapes-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">🌧️ Misturador de Sons Ambiente</h3>
+        <button onclick="closeSoundscapesModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-400">Mistura a tua rádio em simultâneo com sons relaxantes gerados em tempo real pela Web Audio API.</p>
+
+      <div class="space-y-3.5">
+        <!-- Rain -->
+        <div class="flex items-center justify-between gap-3 bg-slate-950 p-3 rounded-2xl border border-slate-800">
+          <div class="flex items-center gap-2.5 min-w-[120px]">
+            <span class="text-xl">🌧️</span>
+            <div>
+              <div class="text-xs font-bold text-white">Chuva Suave</div>
+              <div class="text-[10px] text-slate-500">Raindrop DSP</div>
+            </div>
+          </div>
+          <input type="range" min="0" max="100" value="0" id="sound-rain" oninput="updateSoundscape('rain', this.value)" class="flex-1 accent-emerald-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+          <span id="val-rain" class="text-xs font-mono text-emerald-400 w-8 text-right">0%</span>
+        </div>
+
+        <!-- Ocean Waves -->
+        <div class="flex items-center justify-between gap-3 bg-slate-950 p-3 rounded-2xl border border-slate-800">
+          <div class="flex items-center gap-2.5 min-w-[120px]">
+            <span class="text-xl">🌊</span>
+            <div>
+              <div class="text-xs font-bold text-white">Ondas do Mar</div>
+              <div class="text-[10px] text-slate-500">Ocean Breeze</div>
+            </div>
+          </div>
+          <input type="range" min="0" max="100" value="0" id="sound-ocean" oninput="updateSoundscape('ocean', this.value)" class="flex-1 accent-emerald-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+          <span id="val-ocean" class="text-xs font-mono text-emerald-400 w-8 text-right">0%</span>
+        </div>
+
+        <!-- Fireplace -->
+        <div class="flex items-center justify-between gap-3 bg-slate-950 p-3 rounded-2xl border border-slate-800">
+          <div class="flex items-center gap-2.5 min-w-[120px]">
+            <span class="text-xl">🔥</span>
+            <div>
+              <div class="text-xs font-bold text-white">Lareira</div>
+              <div class="text-[10px] text-slate-500">Fire Embers</div>
+            </div>
+          </div>
+          <input type="range" min="0" max="100" value="0" id="sound-fire" oninput="updateSoundscape('fire', this.value)" class="flex-1 accent-emerald-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+          <span id="val-fire" class="text-xs font-mono text-emerald-400 w-8 text-right">0%</span>
+        </div>
+
+        <!-- White Noise / Focus -->
+        <div class="flex items-center justify-between gap-3 bg-slate-950 p-3 rounded-2xl border border-slate-800">
+          <div class="flex items-center gap-2.5 min-w-[120px]">
+            <span class="text-xl">🧠</span>
+            <div>
+              <div class="text-xs font-bold text-white">Ruído Branco</div>
+              <div class="text-[10px] text-slate-500">Focus Mask</div>
+            </div>
+          </div>
+          <input type="range" min="0" max="100" value="0" id="sound-noise" oninput="updateSoundscape('noise', this.value)" class="flex-1 accent-emerald-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+          <span id="val-noise" class="text-xs font-mono text-emerald-400 w-8 text-right">0%</span>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="stopAllSoundscapes()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition">Desligar Sons</button>
+        <button onclick="closeSoundscapesModal()" class="flex-1 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black shadow-lg transition">Concluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Equalizador (EQ) -->
+  <div id="eq-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">🎚️ Equalizador de Som DSP</h3>
+        <button onclick="closeEqualizerModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+      
+      <!-- Presets Pills -->
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Presets de Áudio</label>
+        <div class="flex flex-wrap gap-1.5">
+          <button onclick="applyEQPreset('flat')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-cyan-500 text-slate-950 font-bold text-xs transition">Flat</button>
+          <button onclick="applyEQPreset('bass')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Bass Boost</button>
+          <button onclick="applyEQPreset('rock')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Rock</button>
+          <button onclick="applyEQPreset('pop')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Pop</button>
+          <button onclick="applyEQPreset('vocal')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Voz / Notícias</button>
+          <button onclick="applyEQPreset('jazz')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Jazz</button>
+          <button onclick="applyEQPreset('lofi')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Lo-Fi</button>
+        </div>
+      </div>
+
+      <!-- Sliders -->
+      <div class="space-y-4 pt-2">
+        <div>
+          <div class="flex justify-between text-xs font-semibold mb-1">
+            <span class="text-slate-300">Graves (Bass • 150Hz)</span>
+            <span id="eq-bass-val" class="text-cyan-400 font-mono">0 dB</span>
+          </div>
+          <input type="range" id="eq-bass" min="-12" max="12" value="0" step="1" oninput="updateEQManual()" class="w-full accent-cyan-400 cursor-pointer h-2 bg-slate-950 rounded-lg" />
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs font-semibold mb-1">
+            <span class="text-slate-300">Médios (Mid • 1kHz)</span>
+            <span id="eq-mid-val" class="text-cyan-400 font-mono">0 dB</span>
+          </div>
+          <input type="range" id="eq-mid" min="-12" max="12" value="0" step="1" oninput="updateEQManual()" class="w-full accent-cyan-400 cursor-pointer h-2 bg-slate-950 rounded-lg" />
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs font-semibold mb-1">
+            <span class="text-slate-300">Agudos (Treble • 3.5kHz)</span>
+            <span id="eq-treble-val" class="text-cyan-400 font-mono">0 dB</span>
+          </div>
+          <input type="range" id="eq-treble" min="-12" max="12" value="0" step="1" oninput="updateEQManual()" class="w-full accent-cyan-400 cursor-pointer h-2 bg-slate-950 rounded-lg" />
+        </div>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button onclick="resetEQ()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition">Restaurar</button>
+        <button onclick="closeEqualizerModal()" class="flex-1 px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-extrabold shadow-lg transition">Concluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Sleep Timer -->
+  <div id="sleep-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">⏳ Temporizador de Sono</h3>
+        <button onclick="closeSleepModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-400">A reprodução de áudio terminará automaticamente após o tempo selecionado com fade-out suave.</p>
+
+      <div class="grid grid-cols-2 gap-2.5 pt-1">
+        <button onclick="setSleepTimer(0)" class="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition">Desligado</button>
+        <button onclick="setSleepTimer(15)" class="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-cyan-500/20 hover:text-cyan-400 text-slate-300 font-bold text-xs transition">15 Minutos</button>
+        <button onclick="setSleepTimer(30)" class="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-cyan-500/20 hover:text-cyan-400 text-slate-300 font-bold text-xs transition">30 Minutos</button>
+        <button onclick="setSleepTimer(45)" class="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-cyan-500/20 hover:text-cyan-400 text-slate-300 font-bold text-xs transition">45 Minutos</button>
+        <button onclick="setSleepTimer(60)" class="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-cyan-500/20 hover:text-cyan-400 text-slate-300 font-bold text-xs transition">60 Minutos</button>
+        <button onclick="setSleepTimer(90)" class="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-cyan-500/20 hover:text-cyan-400 text-slate-300 font-bold text-xs transition">90 Minutos</button>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="closeSleepModal()" class="w-full px-4 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Radio Alarm Clock -->
+  <div id="alarm-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">⏰ Despertador com Rádio</h3>
+        <button onclick="closeAlarmModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-400">Acorda com a tua rádio preferida e aumento gradual de volume (*gentle wake-up*).</p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs font-semibold text-slate-400 block mb-1">Hora do Despertador</label>
+          <input type="time" id="alarm-time-input" value="07:30" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-base text-white font-mono focus:outline-none focus:border-amber-400" />
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-slate-400 block mb-1">Estação de Rádio para Tocar</label>
+          <select id="alarm-station-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-400">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-950 border border-slate-800">
+          <span class="text-xs font-semibold text-slate-300">Ativar Despertador</span>
+          <input type="checkbox" id="alarm-toggle" class="w-5 h-5 accent-amber-400 cursor-pointer" />
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeAlarmModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition">Cancelar</button>
+        <button onclick="saveAlarmSettings()" class="flex-1 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold shadow-lg transition">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 5: TV / Fullscreen Ambient Mode with 3D Circular & Bars Visualizer -->
+  <div id="tv-ambient-modal" class="fixed inset-0 bg-slate-950 z-50 hidden flex flex-col justify-between p-6 md:p-12">
+    
+    <!-- Top Bar -->
+    <div class="flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
+        <span class="text-xs uppercase tracking-widest font-black text-cyan-400 font-mono">ROC TUNEIN • AMBIENT HI-FI</span>
+      </div>
+
+      <!-- Visualizer Mode Picker (Bars vs Halo Circular) -->
+      <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-2xl p-1 text-xs">
+        <button onclick="setVisualizerStyle('bars')" id="viz-bars-btn" class="px-3 py-1.5 rounded-xl bg-cyan-500 text-slate-950 font-bold">Barras</button>
+        <button onclick="setVisualizerStyle('halo')" id="viz-halo-btn" class="px-3 py-1.5 rounded-xl text-slate-400 hover:text-white font-medium">Halo 3D</button>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div id="tv-digital-clock" class="text-2xl md:text-3xl font-mono font-black text-white tracking-widest">00:00:00</div>
+        <button onclick="closeTVMode()" class="p-2 rounded-2xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white text-xl">✕</button>
+      </div>
+    </div>
+
+    <!-- Center: Large Artwork & Visualizer Canvas -->
+    <div class="flex flex-col items-center justify-center text-center space-y-6 max-w-2xl mx-auto w-full relative">
+      <div id="tv-cover-wrap" class="w-48 h-48 md:w-64 md:h-64 rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-700 flex items-center justify-center shadow-2xl playing-glow relative z-10">
+        <img id="tv-cover-img" src="" class="w-full h-full object-cover hidden" alt="Capa" />
+        <div id="tv-cover-fallback" class="w-full h-full bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-700 flex items-center justify-center text-white text-7xl font-black">
+          📻
+        </div>
+      </div>
+
+      <div class="relative z-10">
+        <h2 id="tv-station-name" class="text-2xl md:text-4xl font-black text-white tracking-tight">LOS 40 España</h2>
+        <p id="tv-station-sub" class="text-sm md:text-base text-slate-400 mt-1">Espanha • Pop & Top 40 Hits</p>
+      </div>
+
+      <!-- TV Visualizer Canvas -->
+      <div class="w-full max-w-lg h-24 flex items-center justify-center">
+        <canvas id="tv-visualizer" class="w-full h-full"></canvas>
+      </div>
+    </div>
+
+    <!-- Bottom Controls -->
+    <div class="flex items-center justify-center gap-6">
+      <button onclick="playPrev()" class="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+      </button>
+
+      <button onclick="togglePlay()" class="w-16 h-16 rounded-3xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white flex items-center justify-center shadow-2xl playing-glow transition active:scale-95">
+        <svg id="tv-play-icon" class="w-8 h-8 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        <svg id="tv-pause-icon" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+      </button>
+
+      <button onclick="playNext()" class="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Modal 6: Backup, Export & M3U -->
+  <div id="backup-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">💾 Backup & Exportação de Favoritos</h3>
+        <button onclick="closeBackupModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-400">Exporta a tua coleção de rádios favoritas ou transfere para outro dispositivo.</p>
+
+      <div class="space-y-2.5">
+        <button onclick="exportJSONBackup()" class="w-full py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-between transition">
+          <span class="flex items-center gap-2"><span>📥</span> Descarregar Backup JSON</span>
+          <span class="text-slate-500 text-[10px]">.json</span>
+        </button>
+
+        <button onclick="downloadM3UPlaylist()" class="w-full py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-xs flex items-center justify-between transition">
+          <span class="flex items-center gap-2"><span>🎵</span> Exportar Lista de Reprodução M3U</span>
+          <span class="text-slate-500 text-[10px]">VLC / iTunes</span>
+        </button>
+
+        <label class="w-full py-3 px-4 rounded-2xl border-2 border-dashed border-slate-800 hover:border-cyan-500/50 cursor-pointer text-slate-400 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition block text-center">
+          <span>📤</span> Restaurar Backup JSON
+          <input type="file" id="import-file" accept=".json" class="hidden" onchange="importJSONBackup(event)" />
+        </label>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="closeBackupModal()" class="w-full px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-bold transition">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 7: Add Custom Station -->
+  <div id="add-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">📻 Adicionar Estação Personalizada</h3>
+        <button onclick="closeAddModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+      
+      <form id="custom-form" class="space-y-3">
+        <div>
+          <label class="text-xs font-semibold text-slate-400 block mb-1">Nome da Estação</label>
+          <input type="text" id="cust-name" required placeholder="Ex: Rádio Local FM" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400" />
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-400 block mb-1">URL do Stream Áudio (MP3, AAC ou M3U8)</label>
+          <input type="url" id="cust-url" required placeholder="https://stream.exemplo.com/live.mp3" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400" />
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-400 block mb-1">URL da Capa / Imagem (Opcional)</label>
+          <input type="url" id="cust-image" placeholder="https://exemplo.com/logo.png" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-slate-400 block mb-1">Categoria</label>
+            <select id="cust-cat" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400">
+              <option value="Música">Música</option>
+              <option value="Rock">Rock</option>
+              <option value="Notícias">Notícias</option>
+              <option value="Desporto">Desporto</option>
+              <option value="Eletrónica">Eletrónica</option>
+              <option value="Relax">Relax</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-400 block mb-1">País</label>
+            <input type="text" id="cust-country" placeholder="Portugal" value="Portugal" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400" />
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-3">
+          <button type="button" onclick="closeAddModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition">Cancelar</button>
+          <button type="submit" class="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold shadow-lg shadow-cyan-500/20 transition active:scale-95">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <audio id="audio-player" preload="none" crossorigin="anonymous"></audio>
+
+  <script>
+    // Master Curated Catalog
+    const MASTER_CATALOG = [
+      { 
+        id: "m_101", 
+        name: "LOS 40 España", 
+        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/Los40.mp3", 
+        category: "Música", 
+        genre: "Pop & Top 40 Hits", 
+        country: "Espanha", 
+        flag: "🇪🇸", 
+        lat: 40.4168, lon: -3.7038, city: "Madrid",
+        bit_rate: 128, 
+        image: "https://los40es00.epimg.net/estaticos/recursosgraficos/v1/img/app/los40_192.png",
+        color: "from-blue-500 via-amber-400 to-red-500",
+        desc: "Todos los éxitos número 1 en España" 
+      },
+      { 
+        id: "m_102", 
+        name: "LOS 40 Classic", 
+        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/LOS40_CLASSIC.mp3", 
+        category: "Rock", 
+        genre: "Classics 80s & 90s", 
+        country: "Espanha", 
+        flag: "🇪🇸", 
+        lat: 40.4168, lon: -3.7038, city: "Madrid",
+        bit_rate: 128, 
+        image: "https://d3kle7qwymxpcy.cloudfront.net/images/broadcasts/4c/ce/10732/1/c175.png",
+        color: "from-yellow-600 to-amber-800",
+        desc: "Los números 1 de tu vida" 
+      },
+      { 
+        id: "m_103", 
+        name: "LOS 40 Urban", 
+        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/LOS40_URBAN.mp3", 
+        category: "Música", 
+        genre: "Reggaeton & Urban Pop", 
+        country: "Espanha", 
+        flag: "🇪🇸", 
+        lat: 40.4168, lon: -3.7038, city: "Madrid",
+        bit_rate: 128, 
+        image: "https://los40es00.epimg.net/estaticos/recursosgraficos/v1/img/app/los40_192.png",
+        color: "from-purple-600 to-pink-600",
+        desc: "El ritmo urbano y latino" 
+      },
+      { 
+        id: "m_104", 
+        name: "Cadena SER", 
+        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/CADENASER.mp3", 
+        category: "Notícias", 
+        genre: "Notícias & Opinião", 
+        country: "Espanha", 
+        flag: "🇪🇸", 
+        lat: 40.4168, lon: -3.7038, city: "Madrid",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s8020g.png",
+        color: "from-yellow-500 to-blue-900",
+        desc: "Líder de audiência em Espanha" 
+      },
+      { 
+        id: "m_105", 
+        name: "Radio Marca", 
+        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/RADIOMARCA.mp3", 
+        category: "Desporto", 
+        genre: "Futebol & Desporto", 
+        country: "Espanha", 
+        flag: "🇪🇸", 
+        lat: 40.4168, lon: -3.7038, city: "Madrid",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s24996g.png",
+        color: "from-red-600 to-red-900",
+        desc: "El deporte en directo" 
+      },
+      { 
+        id: "m_106", 
+        name: "Ibiza Global Radio", 
+        stream_url: "https://listenssl.ibizaglobalradio.com:8024/ibizaglobalradio.mp3", 
+        category: "Eletrónica", 
+        genre: "House & Electronic", 
+        country: "Espanha", 
+        flag: "🇪🇸", 
+        lat: 38.9067, lon: 1.4206, city: "Ibiza",
+        bit_rate: 192, 
+        image: "https://cdn-radiotime-logos.tunein.com/s42468g.png",
+        color: "from-cyan-500 to-fuchsia-600",
+        desc: "Direct from Ibiza Clubs" 
+      },
+
+      // --- REINO UNIDO: BBC, CAPITAL, TALKSPORT, CLASSIC FM ---
+      { 
+        id: "m_201", 
+        name: "BBC Radio 1", 
+        stream_url: "https://stream.live.vc.bbcmedia.co.uk/bbc_radio_one", 
+        category: "Música", 
+        genre: "Pop & Top Charts", 
+        country: "Reino Unido", 
+        flag: "🇬🇧", 
+        lat: 51.5074, lon: -0.1278, city: "Londres",
+        bit_rate: 192, 
+        image: "https://cdn-radiotime-logos.tunein.com/s24939g.png",
+        color: "from-purple-600 to-indigo-700",
+        desc: "The UK's biggest music hits" 
+      },
+      { 
+        id: "m_202", 
+        name: "BBC World Service", 
+        stream_url: "https://stream.live.vc.bbcmedia.co.uk/bbc_world_service", 
+        category: "Notícias", 
+        genre: "Notícias Mundiais", 
+        country: "Reino Unido", 
+        flag: "🇬🇧", 
+        lat: 51.5074, lon: -0.1278, city: "Londres",
+        bit_rate: 192, 
+        image: "https://cdn-radiotime-logos.tunein.com/s24943g.png",
+        color: "from-red-600 to-slate-900",
+        desc: "BBC Global News live around the world" 
+      },
+      { 
+        id: "m_203", 
+        name: "BBC Radio 2", 
+        stream_url: "https://stream.live.vc.bbcmedia.co.uk/bbc_radio_two", 
+        category: "Música", 
+        genre: "Adult Contemporary", 
+        country: "Reino Unido", 
+        flag: "🇬🇧", 
+        lat: 51.5074, lon: -0.1278, city: "Londres",
+        bit_rate: 192, 
+        image: "https://cdn-radiotime-logos.tunein.com/s24940g.png",
+        color: "from-orange-500 to-amber-700",
+        desc: "The most listened station in the UK" 
+      },
+      { 
+        id: "m_204", 
+        name: "BBC Radio 6 Music", 
+        stream_url: "https://stream.live.vc.bbcmedia.co.uk/bbc_6music", 
+        category: "Rock", 
+        genre: "Indie & Alternative", 
+        country: "Reino Unido", 
+        flag: "🇬🇧", 
+        lat: 51.5074, lon: -0.1278, city: "Londres",
+        bit_rate: 192, 
+        image: "https://cdn-radiotime-logos.tunein.com/s44477g.png",
+        color: "from-teal-600 to-slate-900",
+        desc: "The home of cutting-edge music" 
+      },
+      { 
+        id: "m_205", 
+        name: "talkSPORT Premier League", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Desporto", 
+        genre: "Premier League & Football", 
+        country: "Reino Unido", 
+        flag: "🇬🇧", 
+        lat: 51.5074, lon: -0.1278, city: "Londres",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s17062g.png",
+        color: "from-yellow-500 to-amber-700",
+        desc: "The World's Biggest Sports Radio" 
+      },
+      { 
+        id: "m_206", 
+        name: "Capital FM London", 
+        stream_url: "https://media-ssl.musicradio.com/CapitalUK", 
+        category: "Música", 
+        genre: "Top 40 & Dance", 
+        country: "Reino Unido", 
+        flag: "🇬🇧", 
+        lat: 51.5074, lon: -0.1278, city: "Londres",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s16597g.png",
+        color: "from-blue-600 to-red-600",
+        desc: "The UK's No.1 Hit Music Station" 
+      },
+      { 
+        id: "m_207", 
+        name: "Classic FM", 
+        stream_url: "https://media-ssl.musicradio.com/ClassicFM", 
+        category: "Música", 
+        genre: "Clássica", 
+        country: "Reino Unido", 
+        flag: "🇬🇧", 
+        lat: 51.5074, lon: -0.1278, city: "Londres",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s2904g.png",
+        color: "from-amber-700 to-slate-900",
+        desc: "Música Clássica para todos" 
+      },
+
+      // --- ESTADOS UNIDOS: APPLE MUSIC LIVE, KEXP, NPR, SOMA FM ---
+      { 
+        id: "m_301", 
+        name: "Apple Music 1 (Hits Live)", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Pop & Exclusive Hits", 
+        country: "Estados Unidos", 
+        flag: "🇺🇸", 
+        lat: 40.7128, lon: -74.0060, city: "Nova Iorque",
+        bit_rate: 256, 
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Apple_Music_logo.svg/320px-Apple_Music_logo.svg.png",
+        color: "from-rose-500 via-red-500 to-pink-600",
+        desc: "Apple Global Radio 24/7" 
+      },
+      { 
+        id: "m_302", 
+        name: "KEXP 90.3 FM Seattle", 
+        stream_url: "https://kexp-mp3-128.streamguys1.com/kexp128.mp3", 
+        category: "Rock", 
+        genre: "Indie & Alternative", 
+        country: "Estados Unidos", 
+        flag: "🇺🇸", 
+        lat: 47.6062, lon: -122.3321, city: "Seattle",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s32537g.png",
+        color: "from-orange-500 to-red-700",
+        desc: "Where the music matters" 
+      },
+      { 
+        id: "m_303", 
+        name: "NPR News Radio", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Notícias", 
+        genre: "Notícias & Investigação", 
+        country: "Estados Unidos", 
+        flag: "🇺🇸", 
+        lat: 38.9072, lon: -77.0369, city: "Washington",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s21588g.png",
+        color: "from-blue-600 to-red-600",
+        desc: "National Public Radio USA" 
+      },
+      { 
+        id: "m_304", 
+        name: "SomaFM Groove Salad", 
+        stream_url: "https://ice1.somafm.com/groovesalad-128-mp3", 
+        category: "Relax", 
+        genre: "Downtempo & Chillout", 
+        country: "Estados Unidos", 
+        flag: "🇺🇸", 
+        lat: 37.7749, lon: -122.4194, city: "São Francisco",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s1815g.png",
+        color: "from-emerald-600 to-cyan-700",
+        desc: "San Francisco Chillout Station" 
+      },
+
+      // --- PORTUGAL: COMERCIAL, RFM, M80, TSF, ANTENA 1/3, MEGA HITS ---
+      { 
+        id: "m_1", 
+        name: "Rádio Comercial", 
+        stream_url: "https://stream-icy.bauermedia.pt/comercial.mp3", 
+        category: "Música", 
+        genre: "Pop / Hits", 
+        country: "Portugal", 
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6706g.png",
+        color: "from-amber-500 to-red-600",
+        desc: "A Melhor Música de Sempre" 
+      },
+      { 
+        id: "m_2", 
+        name: "RFM", 
+        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/RFM.mp3", 
+        category: "Música", 
+        genre: "Pop / Top 40", 
+        country: "Portugal", 
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6708g.png",
+        color: "from-blue-500 to-cyan-400",
+        desc: "Só Grandes Músicas" 
+      },
+      { 
+        id: "m_3", 
+        name: "M80 Portugal", 
+        stream_url: "https://stream-icy.bauermedia.pt/m80.mp3", 
+        category: "Rock", 
+        genre: "Rock & 80s / 90s", 
+        country: "Portugal", 
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s151475g.png",
+        color: "from-purple-600 to-pink-500",
+        desc: "Se a sua vida tem uma música, passa na M80" 
+      },
+      { 
+        id: "m_4", 
+        name: "TSF Notícias", 
+        stream_url: "http://centova.radios.pt:9470/stream", 
+        category: "Notícias", 
+        genre: "Notícias & Debate", 
+        country: "Portugal", 
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6704g.png",
+        color: "from-red-600 to-slate-900",
+        desc: "Informação e Notícias em Direto 24h" 
+      },
+      { 
+        id: "m_5", 
+        name: "Antena 1 (RTP)", 
+        stream_url: "https://streaming-live.rtp.pt/liveradio/antena180a/playlist.m3u8", 
+        category: "Notícias", 
+        genre: "Geral & Informação", 
+        country: "Portugal", 
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6702g.png",
+        color: "from-blue-700 to-indigo-900",
+        desc: "A Rádio Pública de Portugal" 
+      },
+      { 
+        id: "m_6", 
+        name: "Antena 3 (RTP)", 
+        stream_url: "https://streaming-live.rtp.pt/liveradio/antena380a/playlist.m3u8", 
+        category: "Música", 
+        genre: "Indie & Música Nacional", 
+        country: "Portugal", 
+        flag: "🇵🇹", 
+        lat: 41.1579, lon: -8.6291, city: "Porto",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6705g.png",
+        color: "from-emerald-500 to-teal-700",
+        desc: "Música Portuguesa e Alternativa" 
+      },
+      { 
+        id: "m_7", 
+        name: "Mega Hits", 
+        stream_url: "https://stream-icy.bauermedia.pt/cidade.mp3", 
+        category: "Música", 
+        genre: "Pop & Teen Hits", 
+        country: "Portugal", 
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6709g.png",
+        color: "from-pink-500 to-purple-600",
+        desc: "Mega Hits Radio" 
+      },
+      { 
+        id: "m_8", 
+        name: "Smooth FM", 
+        stream_url: "https://stream-icy.bauermedia.pt/smooth.mp3", 
+        category: "Relax", 
+        genre: "Jazz & Soul", 
+        country: "Portugal", 
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s151475g.png",
+        color: "from-amber-600 to-amber-900",
+        desc: "Jazz, Soul & Blues Suave" 
+      },
+
+      // --- BRASIL: JOVEM PAN, ANTENA 1 BRASIL, BOSSA NOVA ---
+      { 
+        id: "m_11", 
+        name: "Jovem Pan FM", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Pop & Notícias", 
+        country: "Brasil", 
+        flag: "🇧🇷", 
+        lat: -23.5505, lon: -46.6333, city: "São Paulo",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s10499g.png",
+        color: "from-emerald-500 to-yellow-500",
+        desc: "A número 1 do Brasil" 
+      },
+      { 
+        id: "m_12", 
+        name: "Antena 1 Brasil", 
+        stream_url: "https://antenaone.crossradio.com.br/stream/1/", 
+        category: "Música", 
+        genre: "Pop Internacional", 
+        country: "Brasil", 
+        flag: "🇧🇷", 
+        lat: -23.5505, lon: -46.6333, city: "São Paulo",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s10496g.png",
+        color: "from-blue-600 to-indigo-800",
+        desc: "Música Internacional de Qualidade" 
+      },
+      { 
+        id: "m_13", 
+        name: "Bossa Nova Brazil", 
+        stream_url: "https://stream.zeno.fm/k22222180v8uv", 
+        category: "Relax", 
+        genre: "Bossa Nova & MPB", 
+        country: "Brasil", 
+        flag: "🇧🇷", 
+        lat: -22.9068, lon: -43.1729, city: "Rio de Janeiro",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s189033g.png",
+        color: "from-teal-500 to-emerald-600",
+        desc: "Os clássicos da Bossa Nova" 
+      },
+
+      // --- FRANÇA & JAPÃO ---
+      { 
+        id: "m_24", 
+        name: "Jazz Radio Paris", 
+        stream_url: "https://jazzradio.ice.infomaniak.ch/jazzradio-high.mp3", 
+        category: "Relax", 
+        genre: "Jazz & Soul", 
+        country: "França", 
+        flag: "🇫🇷", 
+        lat: 48.8566, lon: 2.3522, city: "Paris",
+        bit_rate: 192, 
+        image: "https://cdn-radiotime-logos.tunein.com/s13369g.png",
+        color: "from-blue-600 to-amber-700",
+        desc: "La radio de tous les Jazz" 
+      },
+      { 
+        id: "m_25", 
+        name: "Lofi Girl 24/7", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Relax", 
+        genre: "Lo-Fi Beats", 
+        country: "França", 
+        flag: "🇫🇷", 
+        lat: 48.8566, lon: 2.3522, city: "Paris",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s308552g.png",
+        color: "from-indigo-600 to-rose-500",
+        desc: "Relax / Study beats live" 
+      },
+      { 
+        id: "m_26", 
+        name: "Tokyo Anime Radio", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "J-Pop & Anime OST", 
+        country: "Japão", 
+        flag: "🇯🇵", 
+        lat: 35.6762, lon: 139.6503, city: "Tóquio",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s276274g.png",
+        color: "from-pink-500 to-rose-600",
+        desc: "Direct J-Pop stream from Tokyo" 
+      }
+    ];
+
+    // Internationalization (i18n)
+    const I18N = {
+      pt: {
+        tagline: "Rádio Global & Hi-Fi DSP",
+        installApp: "Instalar App",
+        install: "Instalar",
+        mainMenu: "Menu Principal",
+        home: "Início / Destaques",
+        worldMap: "Mapa Mundial Interativo",
+        myFavorites: "Meus Favoritos",
+        myLibrary: "Minha Biblioteca",
+        recentlyPlayed: "Ouvidas Recentemente",
+        top50World: "Top 50 Mundial",
+        categories: "Categorias",
+        catAll: "Todas as Rádios",
+        catMusic: "Música & Pop",
+        catRock: "Rock & Anos 80",
+        catNews: "Notícias & Debates",
+        catSports: "Desporto & Futebol",
+        catElectro: "Eletrónica & Dance",
+        catRelax: "Lo-Fi, Jazz & Relax",
+        tools: "Ferramentas & Áudio",
+        soundscapes: "Sons Ambiente",
+        tvMode: "Modo TV / Ecrã Gigante",
+        alarmClock: "Despertador",
+        equalizer: "Equalizador (EQ)",
+        theme: "Tema:",
+        addCustomStream: "Adicionar Stream Próprio",
+        search: "Pesquisar",
+        filters: "Filtros",
+        advFiltersTitle: "Explorador Avançado de Rádios (+45.000 Estações)",
+        clearFilters: "Limpar Filtros",
+        filterCountry: "País",
+        filterCity: "Cidade / Região",
+        filterGenre: "Estilo de Música / Tag",
+        filterSort: "Ordenar Por",
+        sortPopular: "Mais Populares (Cliques)",
+        sortVotes: "Mais Votadas",
+        sortQuality: "Melhor Qualidade (Bitrate HD)",
+        sortName: "Nome (A-Z)",
+        onlyHD: "Apenas HD (≥128 kbps)",
+        onlyLogos: "Apenas com logótipo",
+        applySearch: "🔍 Aplicar Pesquisa Global",
+        quickSearch: "Pesquisa Rápida:",
+        clearSearch: "✕ Limpar Pesquisa",
+        streamOffline: "Este stream de rádio está temporariamente inacessível ou offline.",
+        reconnect: "Reconectar 🔄",
+        next: "Próxima ⏭️",
+        exploreCountry: "Explorar por País",
+        viewAll: "Ver Todos",
+        worldMapTitle: "Mapa Mundial de Rádios em Direto",
+        worldMapSub: "Clica em qualquer ponto ou cidade do globo para sintonizar a rádio local instantaneamente.",
+        closeMap: "✕ Fechar Mapa",
+        popularStations: "Rádios Populares & Tendências",
+        noStations: "Nenhuma rádio encontrada para este termo",
+        noStationsSub: "Experimenta usar o Explorador Avançado ou clicar num dos atalhos de pesquisa acima.",
+        downloadM3U: "Baixar M3U",
+        alarmRingingTitle: "DESPERTADOR ROC TUNEIN ATIVO!",
+        alarmRingingSub: "Bom dia! A tua estação de rádio favorita está a tocar.",
+        snooze: "Adiar 5 min",
+        turnOff: "Desligar",
+      },
+      en: {
+        tagline: "Global Radio & Hi-Fi DSP",
+        installApp: "Install App",
+        install: "Install",
+        mainMenu: "Main Menu",
+        home: "Home / Highlights",
+        worldMap: "Interactive World Map",
+        myFavorites: "My Favorites",
+        myLibrary: "My Library",
+        recentlyPlayed: "Recently Played",
+        top50World: "Top 50 World",
+        categories: "Categories",
+        catAll: "All Stations",
+        catMusic: "Music & Pop",
+        catRock: "Rock & 80s",
+        catNews: "News & Talk",
+        catSports: "Sports & Football",
+        catElectro: "Electronic & Dance",
+        catRelax: "Lo-Fi, Jazz & Relax",
+        tools: "Tools & Audio",
+        soundscapes: "Ambient Soundscapes",
+        tvMode: "TV / Ambient Mode",
+        alarmClock: "Alarm Clock",
+        equalizer: "Equalizer (EQ)",
+        theme: "Theme:",
+        addCustomStream: "Add Custom Stream",
+        search: "Search",
+        filters: "Filters",
+        advFiltersTitle: "Advanced Radio Explorer (+45,000 Stations)",
+        clearFilters: "Clear Filters",
+        filterCountry: "Country",
+        filterCity: "City / Region",
+        filterGenre: "Music Genre / Tag",
+        filterSort: "Sort By",
+        sortPopular: "Most Popular (Clicks)",
+        sortVotes: "Top Voted",
+        sortQuality: "Highest Bitrate (HD)",
+        sortName: "Name (A-Z)",
+        onlyHD: "HD Only (≥128 kbps)",
+        onlyLogos: "With logos only",
+        applySearch: "🔍 Apply Global Search",
+        quickSearch: "Quick Search:",
+        clearSearch: "✕ Clear Search",
+        streamOffline: "This radio stream is temporarily offline or unavailable.",
+        reconnect: "Reconnect 🔄",
+        next: "Next ⏭️",
+        exploreCountry: "Explore by Country",
+        viewAll: "View All",
+        worldMapTitle: "Live World Radio Map",
+        worldMapSub: "Click anywhere on the globe to tune into local radio instantly.",
+        closeMap: "✕ Close Map",
+        popularStations: "Popular & Trending Radios",
+        noStations: "No stations found for this query",
+        noStationsSub: "Try using the Advanced Explorer or clicking one of the search chips above.",
+        downloadM3U: "Download M3U",
+        alarmRingingTitle: "ROC TUNEIN ALARM RINGING!",
+        alarmRingingSub: "Good morning! Your favorite radio station is playing.",
+        snooze: "Snooze 5 min",
+        turnOff: "Dismiss",
+      },
+      es: {
+        tagline: "Radio Mundial & Hi-Fi DSP",
+        installApp: "Instalar App",
+        install: "Instalar",
+        mainMenu: "Menú Principal",
+        home: "Inicio / Destacados",
+        worldMap: "Mapa Mundial Interactivo",
+        myFavorites: "Mis Favoritos",
+        myLibrary: "Mi Biblioteca",
+        recentlyPlayed: "Escuchadas Recientemente",
+        top50World: "Top 50 Mundial",
+        categories: "Categorías",
+        catAll: "Todas las Radios",
+        catMusic: "Música & Pop",
+        catRock: "Rock & Años 80",
+        catNews: "Noticias & Debates",
+        catSports: "Deportes & Fútbol",
+        catElectro: "Electrónica & Dance",
+        catRelax: "Lo-Fi, Jazz & Relax",
+        tools: "Herramientas & Audio",
+        soundscapes: "Sonidos Ambiente",
+        tvMode: "Modo TV / Pantalla Grande",
+        alarmClock: "Despertador",
+        equalizer: "Ecualizador (EQ)",
+        theme: "Tema:",
+        addCustomStream: "Añadir Stream Propio",
+        search: "Buscar",
+        filters: "Filtros",
+        advFiltersTitle: "Explorador Avanzado de Radios (+45.000 Emisoras)",
+        clearFilters: "Limpiar Filtros",
+        filterCountry: "País",
+        filterCity: "Ciudad / Región",
+        filterGenre: "Género Musical / Tag",
+        filterSort: "Ordenar Por",
+        sortPopular: "Más Populares (Clics)",
+        sortVotes: "Más Votadas",
+        sortQuality: "Mejor Calidad (HD)",
+        sortName: "Nombre (A-Z)",
+        onlyHD: "Solo HD (≥128 kbps)",
+        onlyLogos: "Solo con logo",
+        applySearch: "🔍 Aplicar Búsqueda Global",
+        quickSearch: "Búsqueda Rápida:",
+        clearSearch: "✕ Limpiar Búsqueda",
+        streamOffline: "Esta emisora no está disponible en este momento.",
+        reconnect: "Reconectar 🔄",
+        next: "Siguiente ⏭️",
+        exploreCountry: "Explorar por País",
+        viewAll: "Ver Todos",
+        worldMapTitle: "Mapa Mundial de Radios en Directo",
+        worldMapSub: "Haz clic en cualquier punto del mapa para sintonizar la radio local.",
+        closeMap: "✕ Cerrar Mapa",
+        popularStations: "Radios Populares & Tendencias",
+        noStations: "No se han encontrado radios",
+        noStationsSub: "Prueba con el Explorador Avanzado o selecciona un país arriba.",
+        downloadM3U: "Descargar M3U",
+        alarmRingingTitle: "¡DESPERTADOR ROC TUNEIN ACTIVO!",
+        alarmRingingSub: "¡Buenos días! Tu emisora favorita está sonando.",
+        snooze: "Posponer 5 min",
+        turnOff: "Apagar",
+      },
+      fr: {
+        tagline: "Radio Mondiale & Hi-Fi DSP",
+        installApp: "Installer l'App",
+        install: "Installer",
+        mainMenu: "Menu Principal",
+        home: "Accueil / À la une",
+        worldMap: "Carte Mondiale Interactive",
+        myFavorites: "Mes Favoris",
+        myLibrary: "Ma Bibliothèque",
+        recentlyPlayed: "Écoutées Récemment",
+        top50World: "Top 50 Mondial",
+        categories: "Catégories",
+        catAll: "Toutes les Radios",
+        catMusic: "Musique & Pop",
+        catRock: "Rock & Années 80",
+        catNews: "Actualités & Débats",
+        catSports: "Sports & Football",
+        catElectro: "Électronique & Dance",
+        catRelax: "Lo-Fi, Jazz & Détente",
+        tools: "Outils & Audio",
+        soundscapes: "Sons d'Ambiance",
+        tvMode: "Mode TV / Grand Écran",
+        alarmClock: "Réveil Radio",
+        equalizer: "Égaliseur (EQ)",
+        theme: "Thème :",
+        addCustomStream: "Ajouter un Flux",
+        search: "Rechercher",
+        filters: "Filtres",
+        advFiltersTitle: "Explorateur Avancé (+45.000 Stations)",
+        clearFilters: "Effacer les Filtres",
+        filterCountry: "Pays",
+        filterCity: "Ville / Région",
+        filterGenre: "Genre / Style",
+        filterSort: "Trier Par",
+        sortPopular: "Plus Populaires (Clics)",
+        sortVotes: "Mieux Notées",
+        sortQuality: "Meilleur Débit (HD)",
+        sortName: "Nom (A-Z)",
+        onlyHD: "HD Seulement (≥128 kbps)",
+        onlyLogos: "Avec logos uniquement",
+        applySearch: "🔍 Lancer la Recherche",
+        quickSearch: "Recherche Rapide :",
+        clearSearch: "✕ Effacer",
+        streamOffline: "Ce flux radio est temporairement indisponible.",
+        reconnect: "Reconnecter 🔄",
+        next: "Suivante ⏭️",
+        exploreCountry: "Explorer par Pays",
+        viewAll: "Tout Voir",
+        worldMapTitle: "Carte Mondiale des Radios en Direct",
+        worldMapSub: "Cliquez sur une ville pour écouter la radio locale instantanément.",
+        closeMap: "✕ Fermer Carte",
+        popularStations: "Radios Populaires",
+        noStations: "Aucune station trouvée",
+        noStationsSub: "Essayez l'Explorateur Avancé ou les suggestions ci-dessus.",
+        downloadM3U: "Télécharger M3U",
+        alarmRingingTitle: "RÉVEIL ROC TUNEIN !",
+        alarmRingingSub: "Bonjour ! Votre radio préférée joue actuellement.",
+        snooze: "Répéter 5 min",
+        turnOff: "Éteindre",
+      }
+    };
+
+    let currentLang = localStorage.getItem('roc_user_lang') || 'pt';
+
+    function changeLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('roc_user_lang', lang);
+      document.getElementById('lang-select').value = lang;
+      
+      const dict = I18N[lang] || I18N.pt;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) {
+          el.textContent = dict[key];
+        }
+      });
+      render();
+    }
+
+    // State Variables
+    let userFavorites = JSON.parse(localStorage.getItem('roc_user_favorites') || '["m_101", "m_201", "m_301", "m_1", "m_2"]');
+    let userLibrary = JSON.parse(localStorage.getItem('roc_user_library') || '["m_101", "m_102", "m_103", "m_104", "m_105", "m_106", "m_201", "m_202", "m_301", "m_1", "m_2", "m_3", "m_4", "m_5", "m_6", "m_11", "m_13", "m_24", "m_25"]');
+    let userCustomStations = JSON.parse(localStorage.getItem('roc_user_custom_stations') || '[]');
+    let recentIds = JSON.parse(localStorage.getItem('roc_user_recents') || '["m_101", "m_201", "m_301", "m_1", "m_2"]');
+    let currentTheme = localStorage.getItem('roc_user_theme') || 'cyan';
+    
+    let eqSettings = JSON.parse(localStorage.getItem('roc_user_eq') || '{"name":"flat","bass":0,"mid":0,"treble":0}');
+    let alarmSettings = JSON.parse(localStorage.getItem('roc_user_alarm') || '{"enabled":false,"time":"07:30","stationId":"m_101"}');
+    
+    let sleepSecondsLeft = 0;
+    let sleepInterval = null;
+    let alarmCheckInterval = null;
+    let visualizerStyle = 'bars'; // 'bars' or 'halo'
+
+    let apiSearchResults = [];
+    let currentStationId = "m_101";
+    let isPlaying = false;
+    let isMuted = false;
+    let volume = 80;
+    let currentView = 'home';
+    let selectedCategory = 'Todas';
+    let selectedCountry = 'Todos';
+    let searchQuery = '';
+    let hlsInstance = null;
+    let searchTimer = null;
+    let leafletMap = null;
+    let mapMarkers = [];
+    let deferredPWAInstallPrompt = null;
+
+    // Recording State
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isRecording = false;
+    let recordInterval = null;
+    let recordSeconds = 0;
+
+    // Audio Engine & Web Audio DSP Nodes
+    const audio = document.getElementById('audio-player');
+    audio.volume = volume / 100;
+
+    let audioCtx = null;
+    let sourceNode = null;
+    let analyserNode = null;
+    let bassFilter = null;
+    let midFilter = null;
+    let trebleFilter = null;
+    let isAudioContextReady = false;
+
+    // Soundscapes Nodes (Synthesizers)
+    const soundscapeNodes = {
+      rain: { gain: null, node: null, vol: 0 },
+      ocean: { gain: null, node: null, vol: 0 },
+      fire: { gain: null, node: null, vol: 0 },
+      noise: { gain: null, node: null, vol: 0 }
+    };
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => {
+          console.warn('SW register fail:', err);
+        });
+      });
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPWAInstallPrompt = e;
+      document.getElementById('pwa-install-banner').classList.remove('hidden');
+    });
+
+    function installPWA() {
+      if (deferredPWAInstallPrompt) {
+        deferredPWAInstallPrompt.prompt();
+        deferredPWAInstallPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            document.getElementById('pwa-install-banner').classList.add('hidden');
+          }
+          deferredPWAInstallPrompt = null;
+        });
+      }
+    }
+
+    function initAudioContext() {
+      if (audioCtx) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+
+        analyserNode = audioCtx.createAnalyser();
+        analyserNode.fftSize = 128;
+
+        bassFilter = audioCtx.createBiquadFilter();
+        bassFilter.type = 'lowshelf';
+        bassFilter.frequency.value = 150;
+        bassFilter.gain.value = eqSettings.bass;
+
+        midFilter = audioCtx.createBiquadFilter();
+        midFilter.type = 'peaking';
+        midFilter.frequency.value = 1000;
+        midFilter.Q.value = 1.0;
+        midFilter.gain.value = eqSettings.mid;
+
+        trebleFilter = audioCtx.createBiquadFilter();
+        trebleFilter.type = 'highshelf';
+        trebleFilter.frequency.value = 3500;
+        trebleFilter.gain.value = eqSettings.treble;
+
+        sourceNode = audioCtx.createMediaElementSource(audio);
+        sourceNode.connect(bassFilter);
+        bassFilter.connect(midFilter);
+        midFilter.connect(trebleFilter);
+        trebleFilter.connect(analyserNode);
+        analyserNode.connect(audioCtx.destination);
+
+        isAudioContextReady = true;
+      } catch (err) {
+        console.warn("Web Audio API inicializada em modo fallback:", err);
+      }
+    }
+
+    // Soundscapes Synthesizer Engine
+    function initSoundscapeNode(type) {
+      if (!audioCtx) initAudioContext();
+      if (soundscapeNodes[type].node) return;
+
+      const bufferSize = audioCtx.sampleRate * 2;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      if (type === 'rain') {
+        let lastOut = 0.0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          data[i] = (lastOut + (0.02 * white)) / 1.02;
+          lastOut = data[i];
+          data[i] *= 3.5;
+        }
+      } else if (type === 'ocean') {
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.sin(i / 10000);
+        }
+      } else if (type === 'fire') {
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() > 0.985 ? (Math.random() * 2 - 1) : (Math.random() * 0.05 - 0.025);
+        }
+      } else {
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+      }
+
+      const noiseSrc = audioCtx.createBufferSource();
+      noiseSrc.buffer = buffer;
+      noiseSrc.loop = true;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = type === 'rain' ? 'lowpass' : (type === 'ocean' ? 'bandpass' : 'highpass');
+      filter.frequency.value = type === 'rain' ? 800 : (type === 'ocean' ? 400 : 1200);
+
+      const gain = audioCtx.createGain();
+      gain.gain.value = 0;
+
+      noiseSrc.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+      noiseSrc.start();
+
+      soundscapeNodes[type].node = noiseSrc;
+      soundscapeNodes[type].gain = gain;
+    }
+
+    function updateSoundscape(type, val) {
+      initAudioContext();
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      initSoundscapeNode(type);
+
+      const num = parseInt(val, 10);
+      soundscapeNodes[type].vol = num;
+      if (soundscapeNodes[type].gain) {
+        soundscapeNodes[type].gain.gain.value = (num / 100) * 0.4;
+      }
+      document.getElementById(`val-${type}`).textContent = `${num}%`;
+
+      const activeCount = Object.values(soundscapeNodes).filter(s => s.vol > 0).length;
+      document.getElementById('side-soundscapes-badge').textContent = activeCount > 0 ? `${activeCount} On` : 'Off';
+    }
+
+    function stopAllSoundscapes() {
+      ['rain', 'ocean', 'fire', 'noise'].forEach(t => {
+        document.getElementById(`sound-${t}`).value = 0;
+        updateSoundscape(t, 0);
+      });
+    }
+
+    function getAllStations() {
+      const combined = searchQuery.trim() !== ''
+        ? [...apiSearchResults, ...userCustomStations, ...MASTER_CATALOG]
+        : [...userCustomStations, ...MASTER_CATALOG, ...apiSearchResults];
+
+      const seen = new Set();
+      return combined.filter(s => {
+        if (!s || !s.id || seen.has(String(s.id))) return false;
+        seen.add(String(s.id));
+        s.favorite = userFavorites.includes(String(s.id));
+        s.inLibrary = userLibrary.includes(String(s.id));
+        return true;
+      });
+    }
+
+    function saveState() {
+      localStorage.setItem('roc_user_favorites', JSON.stringify(userFavorites));
+      localStorage.setItem('roc_user_library', JSON.stringify(userLibrary));
+      localStorage.setItem('roc_user_custom_stations', JSON.stringify(userCustomStations));
+      localStorage.setItem('roc_user_recents', JSON.stringify(recentIds));
+      localStorage.setItem('roc_user_eq', JSON.stringify(eqSettings));
+      localStorage.setItem('roc_user_alarm', JSON.stringify(alarmSettings));
+      localStorage.setItem('roc_user_theme', currentTheme);
+      updateCounts();
+      render();
+    }
+
+    function updateCounts() {
+      const all = getAllStations();
+      document.getElementById('fav-count').textContent = userFavorites.length;
+      document.getElementById('lib-count').textContent = userLibrary.length;
+      document.getElementById('count-all').textContent = all.length;
+      document.getElementById('count-music').textContent = all.filter(s => s.category === 'Música').length;
+      document.getElementById('count-rock').textContent = all.filter(s => s.category === 'Rock').length;
+      document.getElementById('count-news').textContent = all.filter(s => s.category === 'Notícias').length;
+      document.getElementById('count-sports').textContent = all.filter(s => s.category === 'Desporto').length;
+      document.getElementById('count-electro').textContent = all.filter(s => s.category === 'Eletrónica').length;
+      document.getElementById('count-relax').textContent = all.filter(s => s.category === 'Relax').length;
+      
+      document.getElementById('side-alarm-badge').textContent = alarmSettings.enabled ? alarmSettings.time : 'Off';
+    }
+
+    function getCurrentStation() {
+      const all = getAllStations();
+      return all.find(s => String(s.id) === String(currentStationId)) || all[0] || MASTER_CATALOG[0];
+    }
+
+    function selectStation(id, autoplay = true) {
+      currentStationId = String(id);
+      recentIds = [String(id), ...recentIds.filter(i => String(i) !== String(id))].slice(0, 30);
+      
+      const s = getCurrentStation();
+      document.getElementById('player-station-name').textContent = s.name;
+      document.getElementById('player-station-sub').textContent = `${s.country || 'Global'} • ${s.genre || s.category}`;
+      document.getElementById('player-bitrate').textContent = `${s.bit_rate || 128} kbps`;
+      document.getElementById('player-country').textContent = s.country || 'Global';
+      document.getElementById('player-fav-btn').textContent = userFavorites.includes(String(s.id)) ? '⭐' : '☆';
+      document.getElementById('player-lib-btn').textContent = userLibrary.includes(String(s.id)) ? '📌' : '➕';
+
+      document.getElementById('tv-station-name').textContent = s.name;
+      document.getElementById('tv-station-sub').textContent = `${s.country || 'Global'} • ${s.genre || s.category}`;
+
+      updateMediaSession(s);
+      document.getElementById('stream-error-banner').classList.add('hidden');
+
+      const imgEl = document.getElementById('player-cover-img');
+      const fallbackEl = document.getElementById('player-cover-fallback');
+      const tvImgEl = document.getElementById('tv-cover-img');
+      const tvFallbackEl = document.getElementById('tv-cover-fallback');
+
+      if (s.image) {
+        imgEl.src = s.image;
+        imgEl.classList.remove('hidden');
+        fallbackEl.classList.add('hidden');
+        tvImgEl.src = s.image;
+        tvImgEl.classList.remove('hidden');
+        tvFallbackEl.classList.add('hidden');
+
+        imgEl.onerror = () => {
+          imgEl.classList.add('hidden');
+          fallbackEl.classList.remove('hidden');
+          tvImgEl.classList.add('hidden');
+          tvFallbackEl.classList.remove('hidden');
+        };
+      } else {
+        imgEl.classList.add('hidden');
+        fallbackEl.classList.remove('hidden');
+        tvImgEl.classList.add('hidden');
+        tvFallbackEl.classList.remove('hidden');
+      }
+
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+
+      const streamUrl = s.stream_url;
+      if (streamUrl && streamUrl.includes('.m3u8') && Hls.isSupported()) {
+        hlsInstance = new Hls();
+        hlsInstance.loadSource(streamUrl);
+        hlsInstance.attachMedia(audio);
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+          if (autoplay) startAudio();
+        });
+        hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            showStreamError();
+            isPlaying = false;
+            updatePlayState();
+          }
+        });
+      } else {
+        audio.src = streamUrl || '';
+        if (autoplay && streamUrl) {
+          startAudio();
+        }
+      }
+
+      saveState();
+    }
+
+    function updateMediaSession(station) {
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: station.name,
+          artist: `${station.country || 'Global'} • ${station.genre || station.category}`,
+          album: 'Roc TuneIn Global Radio',
+          artwork: [
+            { src: station.image || 'https://cdn-radiotime-logos.tunein.com/s6706g.png', sizes: '512x512', type: 'image/png' }
+          ]
+        });
+
+        navigator.mediaSession.setActionHandler('play', () => togglePlay());
+        navigator.mediaSession.setActionHandler('pause', () => togglePlay());
+        navigator.mediaSession.setActionHandler('previoustrack', () => playPrev());
+        navigator.mediaSession.setActionHandler('nexttrack', () => playNext());
+        navigator.mediaSession.setActionHandler('stop', () => {
+          audio.pause();
+          isPlaying = false;
+          updatePlayState();
+        });
+      }
+    }
+
+    function startAudio() {
+      initAudioContext();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      audio.play().then(() => {
+        isPlaying = true;
+        document.getElementById('stream-error-banner').classList.add('hidden');
+        updatePlayState();
+      }).catch(err => {
+        console.warn("Autoplay / stream error:", err);
+        showStreamError();
+        isPlaying = false;
+        updatePlayState();
+      });
+    }
+
+    function showStreamError() {
+      document.getElementById('stream-error-banner').classList.remove('hidden');
+    }
+
+    function retryCurrentStream() {
+      selectStation(currentStationId, true);
+    }
+
+    function togglePlay() {
+      initAudioContext();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      if (!audio.src && !hlsInstance) {
+        selectStation(currentStationId, true);
+        return;
+      }
+      if (isPlaying) {
+        audio.pause();
+        isPlaying = false;
+      } else {
+        audio.play().then(() => {
+          isPlaying = true;
+          document.getElementById('stream-error-banner').classList.add('hidden');
+        }).catch(err => {
+          showStreamError();
+        });
+      }
+      updatePlayState();
+    }
+
+    function updatePlayState() {
+      const playIcon = document.getElementById('p-play-icon');
+      const pauseIcon = document.getElementById('p-pause-icon');
+      const tvPlayIcon = document.getElementById('tv-play-icon');
+      const tvPauseIcon = document.getElementById('tv-pause-icon');
+      const liveBadge = document.getElementById('player-live-badge');
+      const cover = document.getElementById('player-cover-wrap');
+
+      if (isPlaying) {
+        playIcon.classList.add('hidden');
+        pauseIcon.classList.remove('hidden');
+        tvPlayIcon.classList.add('hidden');
+        tvPauseIcon.classList.remove('hidden');
+        liveBadge.classList.remove('hidden');
+        liveBadge.classList.add('inline-block');
+        cover.classList.add('scale-105', 'ring-2', 'ring-cyan-400');
+      } else {
+        playIcon.classList.remove('hidden');
+        pauseIcon.classList.add('hidden');
+        tvPlayIcon.classList.remove('hidden');
+        tvPauseIcon.classList.add('hidden');
+        liveBadge.classList.add('hidden');
+        cover.classList.remove('scale-105', 'ring-2', 'ring-cyan-400');
+      }
+      renderRocPreview();
+    }
+
+    function playNext() {
+      const list = getFilteredStations();
+      if (list.length === 0) return;
+      const idx = list.findIndex(s => String(s.id) === String(currentStationId));
+      const nextIdx = (idx + 1) % list.length;
+      selectStation(list[nextIdx].id, isPlaying);
+    }
+
+    function playPrev() {
+      const list = getFilteredStations();
+      if (list.length === 0) return;
+      const idx = list.findIndex(s => String(s.id) === String(currentStationId));
+      const prevIdx = idx <= 0 ? list.length - 1 : idx - 1;
+      selectStation(list[prevIdx].id, isPlaying);
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      audio.muted = isMuted;
+      document.getElementById('p-vol-icon').classList.toggle('hidden', isMuted);
+      document.getElementById('p-mute-icon').classList.toggle('hidden', !isMuted);
+      renderRocPreview();
+    }
+
+    function setVolume(v) {
+      volume = v;
+      audio.volume = v / 100;
+      if (isMuted && v > 0) toggleMute();
+      renderRocPreview();
+    }
+
+    function toggleFavorite(id, event) {
+      if (event) event.stopPropagation();
+      const strId = String(id);
+      if (userFavorites.includes(strId)) {
+        userFavorites = userFavorites.filter(i => String(i) !== strId);
+      } else {
+        userFavorites.push(strId);
+      }
+      const curr = getCurrentStation();
+      document.getElementById('player-fav-btn').textContent = userFavorites.includes(String(curr.id)) ? '⭐' : '☆';
+      saveState();
+    }
+
+    function toggleCurrentFav() {
+      toggleFavorite(currentStationId);
+    }
+
+    function toggleLibraryInclusion(id, event) {
+      if (event) event.stopPropagation();
+      const strId = String(id);
+      if (userLibrary.includes(strId)) {
+        userLibrary = userLibrary.filter(i => String(i) !== strId);
+      } else {
+        userLibrary.push(strId);
+      }
+      const curr = getCurrentStation();
+      document.getElementById('player-lib-btn').textContent = userLibrary.includes(String(curr.id)) ? '📌' : '➕';
+      saveState();
+    }
+
+    function toggleCurrentLib() {
+      toggleLibraryInclusion(currentStationId);
+    }
+
+    function setView(view) {
+      currentView = view;
+      document.querySelectorAll('.nav-btn').forEach(b => {
+        b.className = 'nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:bg-slate-800 hover:text-white transition';
+      });
+      const activeNav = document.getElementById(`nav-${view}`);
+      if (activeNav) {
+        activeNav.className = 'nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold text-sm transition bg-cyan-500/20 text-cyan-400';
+      }
+
+      const mapContainer = document.getElementById('map-view-container');
+      const gridSection = document.getElementById('stations-grid-section');
+      const countrySection = document.getElementById('country-filter-section');
+
+      if (view === 'map') {
+        mapContainer.classList.remove('hidden');
+        gridSection.classList.add('hidden');
+        countrySection.classList.add('hidden');
+        initWorldMap();
+      } else {
+        mapContainer.classList.add('hidden');
+        gridSection.classList.remove('hidden');
+        countrySection.classList.remove('hidden');
+      }
+      
+      const titleEl = document.getElementById('section-title');
+      const dict = I18N[currentLang] || I18N.pt;
+      if (view === 'favorites') titleEl.innerHTML = `<span>⭐</span> ${dict.myFavorites}`;
+      else if (view === 'library') titleEl.innerHTML = `<span>📌</span> ${dict.myLibrary}`;
+      else if (view === 'recents') titleEl.innerHTML = `<span>🕒</span> ${dict.recentlyPlayed}`;
+      else if (view === 'topworld') titleEl.innerHTML = `<span>🌍</span> ${dict.top50World}`;
+      else titleEl.innerHTML = `<span>🔥</span> ${dict.popularStations}`;
+      
+      render();
+    }
+
+    // World Interactive Radio Map (Leaflet)
+    function initWorldMap() {
+      if (!leafletMap) {
+        leafletMap = L.map('world-map', {
+          center: [30, 0],
+          zoom: 2,
+          minZoom: 2,
+          maxZoom: 10
+        });
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; OpenStreetMap &copy; CARTO',
+          subdomains: 'abcd',
+          maxZoom: 19
+        }).addTo(leafletMap);
+      }
+
+      mapMarkers.forEach(m => leafletMap.removeLayer(m));
+      mapMarkers = [];
+
+      const all = getAllStations();
+      all.forEach(st => {
+        if (st.lat && st.lon) {
+          const customIcon = L.divIcon({
+            className: 'custom-radio-pin',
+            html: `<div class="w-8 h-8 rounded-full bg-cyan-500/30 border-2 border-cyan-400 flex items-center justify-center text-white text-sm shadow-lg shadow-cyan-500/50 hover:scale-125 transition cursor-pointer">📻</div>`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+          });
+
+          const marker = L.marker([st.lat, st.lon], { icon: customIcon }).addTo(leafletMap);
+          marker.bindPopup(`
+            <div class="p-1 space-y-2 text-slate-100">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">${st.flag || '🌐'}</span>
+                <div>
+                  <h4 class="font-extrabold text-sm text-cyan-400">${st.name}</h4>
+                  <p class="text-[11px] text-slate-400">${st.city || st.country} • ${st.genre}</p>
+                </div>
+              </div>
+              <button onclick="selectStation('${st.id}', true)" class="w-full py-1.5 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition">
+                ▶️ Ouvir em Direto
+              </button>
+            </div>
+          `);
+          mapMarkers.push(marker);
+        }
+      });
+
+      setTimeout(() => {
+        leafletMap.invalidateSize();
+      }, 200);
+    }
+
+    function selectCategory(cat) {
+      selectedCategory = cat;
+      currentView = 'home';
+      document.querySelectorAll('.cat-btn').forEach(b => {
+        b.className = 'cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition';
+      });
+      const activeCat = document.getElementById(`cat-${cat}`);
+      if (activeCat) {
+        activeCat.className = 'cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-cyan-400 transition';
+      }
+      setView('home');
+      render();
+    }
+
+    function selectCountry(country) {
+      selectedCountry = country;
+      document.querySelectorAll('.country-btn').forEach(b => {
+        b.className = 'country-btn px-4 py-2 rounded-xl font-medium bg-slate-900 border border-slate-800 hover:text-white flex-shrink-0 transition';
+      });
+      const activeBtn = document.getElementById(`country-${country}`);
+      if (activeBtn) {
+        activeBtn.className = 'country-btn px-4 py-2 rounded-xl font-bold bg-cyan-500 text-slate-950 flex-shrink-0 transition';
+      }
+      render();
+    }
+
+    function toggleAdvancedFilters() {
+      const p = document.getElementById('advanced-filters-panel');
+      p.classList.toggle('hidden');
+    }
+
+    function resetAdvancedFilters() {
+      document.getElementById('adv-country').value = '';
+      document.getElementById('adv-city').value = '';
+      document.getElementById('adv-genre').value = '';
+      document.getElementById('adv-only-hd').checked = false;
+      document.getElementById('adv-only-logos').checked = true;
+      document.getElementById('adv-sort').value = 'clickcount';
+      clearSearch();
+    }
+
+    function applyAdvancedDiscoverySearch() {
+      const country = document.getElementById('adv-country').value.trim();
+      const city = document.getElementById('adv-city').value.trim();
+      const genre = document.getElementById('adv-genre').value.trim();
+      const sort = document.getElementById('adv-sort').value;
+      const onlyHD = document.getElementById('adv-only-hd').checked;
+      const onlyLogos = document.getElementById('adv-only-logos').checked;
+
+      executeAdvancedDiscoverySearch({ country, city, genre, sort, onlyHD, onlyLogos });
+    }
+
+    async function executeAdvancedDiscoverySearch({ country, city, genre, sort, onlyHD, onlyLogos }) {
+      const spinner = document.getElementById('search-spinner');
+      const statusBanner = document.getElementById('search-status');
+      const statusText = document.getElementById('search-status-text');
+      const statusIcon = document.getElementById('search-status-icon');
+
+      spinner.classList.remove('hidden');
+      statusBanner.classList.remove('hidden');
+      statusIcon.textContent = "🔍";
+      statusText.textContent = `A pesquisar com filtros avançados no catálogo global...`;
+
+      let url = `https://de1.api.radio-browser.info/json/stations/search?limit=80&order=${sort}&reverse=true`;
+      if (country) url += `&country=${encodeURIComponent(country)}`;
+      if (city) url += `&state=${encodeURIComponent(city)}`;
+      if (genre) url += `&tag=${encodeURIComponent(genre)}`;
+
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          const rawData = await res.json();
+          let filtered = Array.isArray(rawData) ? rawData : [];
+
+          if (onlyHD) {
+            filtered = filtered.filter(item => (item.bitrate || 0) >= 128);
+          }
+          if (onlyLogos) {
+            filtered = filtered.filter(item => item.favicon && item.favicon.startsWith('http'));
+          }
+
+          apiSearchResults = filtered.map((item, idx) => {
+            const cat = getCategoryFromTags(item.tags || item.name || "");
+            const flag = getFlagEmoji(item.countrycode || "");
+            const safeCountry = item.country || (item.countrycode ? item.countrycode.toUpperCase() : "Global");
+            return {
+              id: `rb_${item.stationuuid || idx}`,
+              name: (item.name || 'Rádio Sem Nome').trim(),
+              stream_url: item.url_resolved || item.url,
+              category: cat,
+              tags: item.tags || "",
+              genre: item.tags ? item.tags.split(',').slice(0, 2).map(t => t.trim()).join(' / ') : cat,
+              country: safeCountry,
+              flag: flag,
+              lat: item.geo_lat || null,
+              lon: item.geo_long || null,
+              bit_rate: item.bitrate || 128,
+              favorite: false,
+              inLibrary: false,
+              image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
+              color: getRandomGradient(item.stationuuid || String(idx)),
+              desc: item.state ? `${item.state}, ${safeCountry}` : safeCountry
+            };
+          });
+
+          statusIcon.textContent = "✅";
+          statusText.textContent = `Encontradas ${apiSearchResults.length} rádios com os filtros aplicados.`;
+        }
+      } catch (err) {
+        statusIcon.textContent = "⚠️";
+        statusText.textContent = "Erro na pesquisa externa. A exibir catálogo local.";
+      } finally {
+        spinner.classList.add('hidden');
+        render();
+      }
+    }
+
+    function getFilteredStations() {
+      let list = getAllStations();
+
+      if (currentView === 'favorites') {
+        list = list.filter(s => userFavorites.includes(String(s.id)));
+      } else if (currentView === 'library') {
+        list = list.filter(s => userLibrary.includes(String(s.id)));
+      } else if (currentView === 'recents') {
+        list = recentIds.map(id => list.find(s => String(s.id) === String(id))).filter(Boolean);
+      }
+
+      if (searchQuery.trim() === '') {
+        if (selectedCategory !== 'Todas') {
+          list = list.filter(s => s.category === selectedCategory);
+        }
+        if (selectedCountry !== 'Todos') {
+          list = list.filter(s => s.country && s.country.toLowerCase() === selectedCountry.toLowerCase());
+        }
+      } else {
+        const q = searchQuery.toLowerCase().replace(/[\s-_]+/g, '');
+        list = list.filter(s => {
+          const nameNorm = (s.name || '').toLowerCase().replace(/[\s-_]+/g, '');
+          const genreNorm = (s.genre || '').toLowerCase().replace(/[\s-_]+/g, '');
+          const countryNorm = (s.country || '').toLowerCase().replace(/[\s-_]+/g, '');
+          const tagsNorm = (s.tags || '').toLowerCase().replace(/[\s-_]+/g, '');
+          
+          return nameNorm.includes(q) || genreNorm.includes(q) || countryNorm.includes(q) || tagsNorm.includes(q) || 
+                 (s.name && s.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        });
+      }
+
+      return list;
+    }
+
+    function render() {
+      const grid = document.getElementById('stations-grid');
+      const empty = document.getElementById('empty-state');
+      const count = document.getElementById('results-count');
+      const list = getFilteredStations();
+
+      count.textContent = `${list.length} estações disponíveis`;
+
+      if (list.length === 0) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+      } else {
+        empty.classList.add('hidden');
+        grid.innerHTML = list.map(s => {
+          const isCurrent = String(s.id) === String(currentStationId);
+          const isFav = userFavorites.includes(String(s.id));
+          const isInLib = userLibrary.includes(String(s.id));
+          const bgGrad = s.color || 'from-cyan-600 to-blue-700';
+          const safeName = (s.name || 'Rádio').replace(/"/g, '&quot;');
+          const safeGenre = (s.genre || s.desc || 'Música & Rádio').replace(/"/g, '&quot;');
+          const safeCountry = (s.country || 'Mundo').replace(/"/g, '&quot;');
+          const initial = (s.name || 'R').trim().charAt(0).toUpperCase();
+
+          return `
+            <div onclick="selectStation('${s.id}', true)" class="station-card group cursor-pointer rounded-2xl p-4 border flex flex-col justify-between ${isCurrent ? 'bg-cyan-500/15 border-cyan-500/60 shadow-xl shadow-cyan-500/15' : 'bg-slate-900 border-slate-800 hover:border-cyan-500/40 hover:bg-slate-800/80'}">
+              
+              <!-- Cover Header -->
+              <div class="flex items-start justify-between gap-3 mb-3">
+                <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition shadow-md relative">
+                  ${s.image ? `<img src="${s.image}" alt="${safeName}" class="w-full h-full object-cover" onerror="this.outerHTML='<div class=\\'w-full h-full bg-gradient-to-tr ${bgGrad} flex items-center justify-center text-white font-black text-xl\\'>${initial}</div>'" />` : `<div class="w-full h-full bg-gradient-to-tr ${bgGrad} flex items-center justify-center text-white font-black text-xl">${initial}</div>`}
+                </div>
+                <div class="flex items-center gap-1">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                    ${s.flag || '🌐'} ${safeCountry}
+                  </span>
+                  <button onclick="toggleLibraryInclusion('${s.id}', event)" class="p-1 rounded-lg text-slate-400 hover:text-cyan-400 transition text-sm" title="${isInLib ? 'Remover da Biblioteca' : 'Incluir na Biblioteca'}">
+                    ${isInLib ? '📌' : '➕'}
+                  </button>
+                  <button onclick="toggleFavorite('${s.id}', event)" class="p-1 rounded-lg text-slate-400 hover:text-amber-400 transition" title="Favorito">
+                    ${isFav ? '⭐' : '☆'}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Info -->
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-sm font-extrabold text-white truncate ${isCurrent ? 'text-cyan-400' : ''}">
+                    ${safeName}
+                  </h3>
+                  ${isCurrent && isPlaying ? '<span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping flex-shrink-0"></span>' : ''}
+                </div>
+                <p class="text-xs text-slate-400 truncate mt-0.5">${safeGenre}</p>
+              </div>
+
+              <!-- Footer info -->
+              <div class="mt-3 pt-2.5 border-t border-slate-800/50 flex items-center justify-between text-[11px] text-slate-500">
+                <span class="px-2 py-0.5 rounded bg-slate-950 font-medium">${s.category || 'Música'}</span>
+                <span class="font-mono text-cyan-400 font-bold">${s.bit_rate || 128} kbps</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      renderRocPreview();
+    }
+
+    function renderRocPreview() {
+      const curr = getCurrentStation();
+      const code = 
+`# --- Estado Funcional em Roc (Radio.roc) ---
+
+current_playback : PlaybackState
+current_playback = {
+    current_station_id: "${curr.id}",
+    is_playing: Bool.${isPlaying ? 'True' : 'False'},
+    volume: ${volume},
+    is_muted: Bool.${isMuted ? 'True' : 'False'},
+    sleep_timer: {
+        seconds_left: ${sleepSecondsLeft},
+        is_active: Bool.${sleepSecondsLeft > 0 ? 'True' : 'False'},
+    },
+    alarm: {
+        hour: ${parseInt(alarmSettings.time.split(':')[0], 10)},
+        minute: ${parseInt(alarmSettings.time.split(':')[1], 10)},
+        station_id: "${alarmSettings.stationId}",
+        is_enabled: Bool.${alarmSettings.enabled ? 'True' : 'False'},
+    },
+}
+
+equalizer_state : EqualizerPreset
+equalizer_state = {
+    name: "${eqSettings.name}",
+    bass: ${eqSettings.bass},
+    mid: ${eqSettings.mid},
+    treble: ${eqSettings.treble},
+}
+
+active_stations : StationList
+active_stations = [
+` + getFilteredStations().slice(0, 5).map(s => `    { id: "${s.id}", name: "${(s.name || '').replace(/"/g, '')}", country: "${s.country || 'Global'}", genre: "${(s.genre || '').replace(/"/g, '')}", favorite: Bool.${userFavorites.includes(String(s.id)) ? 'True' : 'False'}, in_library: Bool.${userLibrary.includes(String(s.id)) ? 'True' : 'False'} }`).join(',\n') +
+`
+]`;
+      document.getElementById('roc-preview').textContent = code;
+    }
+
+    function copyRocState() {
+      navigator.clipboard.writeText(document.getElementById('roc-preview').textContent);
+      alert('Estrutura de dados Roc copiada!');
+    }
+
+    // Direct Global Search with multi-server discovery
+    async function executeGlobalSearch(term) {
+      const trimmed = (term || '').trim();
+      if (trimmed.length < 2) {
+        apiSearchResults = [];
+        hideSearchStatus();
+        render();
+        return;
+      }
+
+      const spinner = document.getElementById('search-spinner');
+      const statusBanner = document.getElementById('search-status');
+      const statusText = document.getElementById('search-status-text');
+      const statusIcon = document.getElementById('search-status-icon');
+      
+      spinner.classList.remove('hidden');
+      statusBanner.classList.remove('hidden');
+      statusIcon.textContent = "🔍";
+      statusText.textContent = `A pesquisar em +45.000 rádios mundiais por "${trimmed}"...`;
+
+      const servers = [
+        'https://de1.api.radio-browser.info',
+        'https://all.api.radio-browser.info'
+      ];
+
+      let rawData = [];
+      for (const server of servers) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 4500);
+
+          const nameUrl = `${server}/json/stations/search?name=${encodeURIComponent(trimmed)}&limit=60&order=clickcount&reverse=true`;
+          const res = await fetch(nameUrl, { signal: controller.signal });
+          clearTimeout(timeoutId);
+
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+              rawData = data;
+              break;
+            }
+          }
+        } catch (err) {
+          console.warn(`Tentativa em ${server} falhou:`, err);
+        }
+      }
+
+      if (rawData.length < 10) {
+        try {
+          const tagUrl = `https://de1.api.radio-browser.info/json/stations/search?tag=${encodeURIComponent(trimmed)}&limit=30&order=clickcount&reverse=true`;
+          const tagRes = await fetch(tagUrl);
+          if (tagRes.ok) {
+            const tagData = await tagRes.json();
+            if (Array.isArray(tagData)) {
+              const existingUuids = new Set(rawData.map(x => x.stationuuid));
+              tagData.forEach(item => {
+                if (!existingUuids.has(item.stationuuid)) {
+                  rawData.push(item);
+                }
+              });
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (rawData && rawData.length > 0) {
+        apiSearchResults = rawData.map((item, idx) => {
+          const cat = getCategoryFromTags(item.tags || item.name || "");
+          const flag = getFlagEmoji(item.countrycode || "");
+          const safeCountry = item.country || (item.countrycode ? item.countrycode.toUpperCase() : "Global");
+          return {
+            id: `rb_${item.stationuuid || idx}`,
+            name: (item.name || 'Rádio Sem Nome').trim(),
+            stream_url: item.url_resolved || item.url,
+            category: cat,
+            tags: item.tags || "",
+            genre: item.tags ? item.tags.split(',').slice(0, 2).map(t => t.trim()).join(' / ') : cat,
+            country: safeCountry,
+            flag: flag,
+            lat: item.geo_lat || null,
+            lon: item.geo_long || null,
+            bit_rate: item.bitrate || 128,
+            favorite: false,
+            inLibrary: false,
+            image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
+            color: getRandomGradient(item.stationuuid || String(idx)),
+            desc: item.state ? `${item.state}, ${safeCountry}` : safeCountry
+          };
+        });
+
+        statusIcon.textContent = "✅";
+        statusText.textContent = `Encontradas ${apiSearchResults.length} rádios globais para "${trimmed}"`;
+      } else {
+        apiSearchResults = [];
+        statusIcon.textContent = "ℹ️";
+        statusText.textContent = `Nenhum resultado externo encontrado para "${trimmed}". A mostrar catálogo local.`;
+      }
+
+      spinner.classList.add('hidden');
+      render();
+    }
+
+    async function loadTopWorldStations() {
+      setView('topworld');
+      const spinner = document.getElementById('search-spinner');
+      const statusBanner = document.getElementById('search-status');
+      const statusText = document.getElementById('search-status-text');
+      const statusIcon = document.getElementById('search-status-icon');
+
+      spinner.classList.remove('hidden');
+      statusBanner.classList.remove('hidden');
+      statusIcon.textContent = "🌍";
+      statusText.textContent = "A carregar as 50 rádios mais ouvidas no mundo...";
+
+      try {
+        const res = await fetch('https://de1.api.radio-browser.info/json/stations/topclick/50');
+        const data = await res.json();
+        if (data && data.length > 0) {
+          apiSearchResults = data.map((item, idx) => ({
+            id: `top_${item.stationuuid || idx}`,
+            name: item.name.trim(),
+            stream_url: item.url_resolved || item.url,
+            category: getCategoryFromTags(item.tags || ""),
+            tags: item.tags || "",
+            genre: item.tags ? item.tags.split(',').slice(0, 2).join(' / ') : "Top Mundial",
+            country: item.country || "Mundo",
+            flag: getFlagEmoji(item.countrycode || ""),
+            bit_rate: item.bitrate || 128,
+            favorite: false,
+            inLibrary: false,
+            image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
+            color: "from-purple-600 to-indigo-700",
+            desc: `Top #${idx+1} Mundial (${item.clickcount || 0} cliques)`
+          }));
+          statusIcon.textContent = "✅";
+          statusText.textContent = "50 Rádios Mundiais mais populares carregadas!";
+        }
+      } catch (e) {
+        statusIcon.textContent = "ℹ️";
+        statusText.textContent = "A exibir catálogo principal.";
+      } finally {
+        spinner.classList.add('hidden');
+        render();
+      }
+    }
+
+    function getCategoryFromTags(tags) {
+      const t = (tags || '').toLowerCase();
+      if (t.includes('news') || t.includes('noticias') || t.includes('notícia') || t.includes('talk') || t.includes('info')) return 'Notícias';
+      if (t.includes('sport') || t.includes('football') || t.includes('futebol') || t.includes('esporte')) return 'Desporto';
+      if (t.includes('rock') || t.includes('metal') || t.includes('classic rock') || t.includes('indie')) return 'Rock';
+      if (t.includes('electro') || t.includes('dance') || t.includes('house') || t.includes('techno') || t.includes('edm') || t.includes('club')) return 'Eletrónica';
+      if (t.includes('chill') || t.includes('lofi') || t.includes('jazz') || t.includes('relax') || t.includes('ambient') || t.includes('bossa')) return 'Relax';
+      return 'Música';
+    }
+
+    function getFlagEmoji(countryCode) {
+      if (!countryCode || countryCode.length !== 2) return '🌐';
+      const codePoints = countryCode
+        .toUpperCase()
+        .split('')
+        .map(char => 127397 + char.charCodeAt(0));
+      return String.fromCodePoint(...codePoints);
+    }
+
+    function getRandomGradient(seed) {
+      const gradients = [
+        'from-cyan-600 to-blue-700',
+        'from-purple-600 to-pink-600',
+        'from-emerald-600 to-teal-700',
+        'from-amber-500 to-rose-600',
+        'from-blue-600 to-indigo-800',
+        'from-red-600 to-amber-700'
+      ];
+      let hash = 0;
+      for (let i = 0; i < (seed || '').length; i++) {
+        hash = (hash + seed.charCodeAt(i)) % gradients.length;
+      }
+      return gradients[hash] || gradients[0];
+    }
+
+    function triggerGlobalSearch() {
+      const q = document.getElementById('search-input').value.trim();
+      executeGlobalSearch(q);
+    }
+
+    function quickSearch(term) {
+      document.getElementById('search-input').value = term;
+      searchQuery = term;
+      render();
+      executeGlobalSearch(term);
+    }
+
+    function clearSearch() {
+      document.getElementById('search-input').value = '';
+      searchQuery = '';
+      apiSearchResults = [];
+      hideSearchStatus();
+      render();
+    }
+
+    function hideSearchStatus() {
+      document.getElementById('search-status').classList.add('hidden');
+    }
+
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      render();
+
+      clearTimeout(searchTimer);
+      if (searchQuery.trim().length >= 2) {
+        searchTimer = setTimeout(() => {
+          executeGlobalSearch(searchQuery.trim());
+        }, 250);
+      } else {
+        apiSearchResults = [];
+        hideSearchStatus();
+      }
+    });
+
+    document.getElementById('search-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        clearTimeout(searchTimer);
+        executeGlobalSearch(searchQuery.trim());
+      }
+    });
+
+    // Equalizer (EQ) System
+    const EQ_PRESETS = {
+      flat: { name: 'Flat', bass: 0, mid: 0, treble: 0 },
+      bass: { name: 'Bass Boost', bass: 7, mid: 0, treble: 2 },
+      rock: { name: 'Rock', bass: 5, mid: -1, treble: 4 },
+      pop: { name: 'Pop', bass: 2, mid: 3, treble: 1 },
+      vocal: { name: 'Voz / Notícias', bass: -4, mid: 6, treble: 2 },
+      jazz: { name: 'Jazz', bass: 3, mid: 2, treble: 3 },
+      lofi: { name: 'Lo-Fi', bass: 4, mid: -2, treble: -3 },
+    };
+
+    function openEqualizerModal() {
+      document.getElementById('eq-modal').classList.remove('hidden');
+      syncEQSliders();
+    }
+    function closeEqualizerModal() {
+      document.getElementById('eq-modal').classList.add('hidden');
+    }
+
+    function syncEQSliders() {
+      document.getElementById('eq-bass').value = eqSettings.bass;
+      document.getElementById('eq-mid').value = eqSettings.mid;
+      document.getElementById('eq-treble').value = eqSettings.treble;
+      document.getElementById('eq-bass-val').textContent = `${eqSettings.bass > 0 ? '+' : ''}${eqSettings.bass} dB`;
+      document.getElementById('eq-mid-val').textContent = `${eqSettings.mid > 0 ? '+' : ''}${eqSettings.mid} dB`;
+      document.getElementById('eq-treble-val').textContent = `${eqSettings.treble > 0 ? '+' : ''}${eqSettings.treble} dB`;
+      document.getElementById('side-eq-badge').textContent = eqSettings.name || 'Flat';
+    }
+
+    function applyEQPreset(presetKey) {
+      const preset = EQ_PRESETS[presetKey] || EQ_PRESETS.flat;
+      eqSettings = { ...preset, name: preset.name };
+      applyEQToAudioNodes();
+      syncEQSliders();
+      saveState();
+    }
+
+    function updateEQManual() {
+      eqSettings.bass = parseInt(document.getElementById('eq-bass').value, 10);
+      eqSettings.mid = parseInt(document.getElementById('eq-mid').value, 10);
+      eqSettings.treble = parseInt(document.getElementById('eq-treble').value, 10);
+      eqSettings.name = 'Personalizado';
+      applyEQToAudioNodes();
+      syncEQSliders();
+      saveState();
+    }
+
+    function resetEQ() {
+      applyEQPreset('flat');
+    }
+
+    function applyEQToAudioNodes() {
+      if (!isAudioContextReady) return;
+      if (bassFilter) bassFilter.gain.value = eqSettings.bass;
+      if (midFilter) midFilter.gain.value = eqSettings.mid;
+      if (trebleFilter) trebleFilter.gain.value = eqSettings.treble;
+    }
+
+    // Sleep Timer System
+    function openSleepModal() { document.getElementById('sleep-modal').classList.remove('hidden'); }
+    function closeSleepModal() { document.getElementById('sleep-modal').classList.add('hidden'); }
+
+    function setSleepTimer(minutes) {
+      clearInterval(sleepInterval);
+      if (minutes <= 0) {
+        sleepSecondsLeft = 0;
+        document.getElementById('side-sleep-badge').textContent = 'Off';
+        document.getElementById('player-sleep-txt').textContent = '⏳';
+      } else {
+        sleepSecondsLeft = minutes * 60;
+        updateSleepDisplay();
+        sleepInterval = setInterval(() => {
+          sleepSecondsLeft--;
+          if (sleepSecondsLeft <= 0) {
+            clearInterval(sleepInterval);
+            sleepSecondsLeft = 0;
+            audio.pause();
+            isPlaying = false;
+            updatePlayState();
+            document.getElementById('side-sleep-badge').textContent = 'Off';
+            document.getElementById('player-sleep-txt').textContent = '⏳';
+          } else {
+            if (sleepSecondsLeft <= 10 && volume > 10) {
+              audio.volume = (volume / 100) * (sleepSecondsLeft / 10);
+            }
+            updateSleepDisplay();
+          }
+        }, 1000);
+      }
+      closeSleepModal();
+      renderRocPreview();
+    }
+
+    function updateSleepDisplay() {
+      const mins = Math.floor(sleepSecondsLeft / 60);
+      const secs = sleepSecondsLeft % 60;
+      const str = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+      document.getElementById('side-sleep-badge').textContent = str;
+      document.getElementById('player-sleep-txt').textContent = str;
+    }
+
+    // Alarm Clock System
+    function openAlarmModal() {
+      const select = document.getElementById('alarm-station-select');
+      const all = getAllStations();
+      select.innerHTML = all.map(s => `<option value="${s.id}" ${s.id === alarmSettings.stationId ? 'selected' : ''}>${s.name} (${s.country || 'Global'})</option>`).join('');
+      document.getElementById('alarm-time-input').value = alarmSettings.time || '07:30';
+      document.getElementById('alarm-toggle').checked = !!alarmSettings.enabled;
+      document.getElementById('alarm-modal').classList.remove('hidden');
+    }
+    function closeAlarmModal() { document.getElementById('alarm-modal').classList.add('hidden'); }
+
+    function saveAlarmSettings() {
+      alarmSettings.time = document.getElementById('alarm-time-input').value;
+      alarmSettings.stationId = document.getElementById('alarm-station-select').value;
+      alarmSettings.enabled = document.getElementById('alarm-toggle').checked;
+      saveState();
+      closeAlarmModal();
+      initAlarmChecker();
+    }
+
+    function initAlarmChecker() {
+      clearInterval(alarmCheckInterval);
+      alarmCheckInterval = setInterval(() => {
+        if (!alarmSettings.enabled) return;
+        const now = new Date();
+        const curTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        if (curTime === alarmSettings.time && now.getSeconds() === 0) {
+          triggerAlarm();
+        }
+      }, 1000);
+    }
+    initAlarmChecker();
+
+    function triggerAlarm() {
+      document.getElementById('alarm-ringing-banner').classList.remove('hidden');
+      selectStation(alarmSettings.stationId, true);
+      let rampVol = 10;
+      setVolume(rampVol);
+      const rampInterval = setInterval(() => {
+        rampVol += 5;
+        if (rampVol >= 90) clearInterval(rampInterval);
+        setVolume(rampVol);
+      }, 2000);
+    }
+
+    function snoozeAlarm() {
+      document.getElementById('alarm-ringing-banner').classList.add('hidden');
+      audio.pause();
+      isPlaying = false;
+      updatePlayState();
+      setTimeout(() => {
+        triggerAlarm();
+      }, 5 * 60 * 1000);
+    }
+
+    function dismissAlarm() {
+      document.getElementById('alarm-ringing-banner').classList.add('hidden');
+    }
+
+    // Soundscapes Modal
+    function openSoundscapesModal() { document.getElementById('soundscapes-modal').classList.remove('hidden'); }
+    function closeSoundscapesModal() { document.getElementById('soundscapes-modal').classList.add('hidden'); }
+
+    // TV Mode
+    function openTVMode() {
+      document.getElementById('tv-ambient-modal').classList.remove('hidden');
+      startTVClock();
+      resizeTVCanvas();
+    }
+    function closeTVMode() {
+      document.getElementById('tv-ambient-modal').classList.add('hidden');
+    }
+
+    function setVisualizerStyle(style) {
+      visualizerStyle = style;
+      document.getElementById('viz-bars-btn').className = style === 'bars' ? 'px-3 py-1.5 rounded-xl bg-cyan-500 text-slate-950 font-bold' : 'px-3 py-1.5 rounded-xl text-slate-400 hover:text-white font-medium';
+      document.getElementById('viz-halo-btn').className = style === 'halo' ? 'px-3 py-1.5 rounded-xl bg-cyan-500 text-slate-950 font-bold' : 'px-3 py-1.5 rounded-xl text-slate-400 hover:text-white font-medium';
+    }
+
+    function startTVClock() {
+      function update() {
+        const now = new Date();
+        const str = now.toTimeString().split(' ')[0];
+        document.getElementById('tv-digital-clock').textContent = str;
+      }
+      update();
+      setInterval(update, 1000);
+    }
+
+    // Stream Recording
+    function toggleStreamRecording() {
+      if (isRecording) stopRecording();
+      else startRecording();
+    }
+
+    function startRecording() {
+      try {
+        let stream = null;
+        if (audio.captureStream) stream = audio.captureStream();
+        else if (audio.mozCaptureStream) stream = audio.mozCaptureStream();
+
+        if (!stream || stream.getAudioTracks().length === 0) {
+          alert('Aviso: O navegador restringe a gravação direta de áudio CORS desta rádio específica.');
+          return;
+        }
+
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+        mediaRecorder.onstop = saveRecordedAudio;
+        mediaRecorder.start(500);
+
+        isRecording = true;
+        recordSeconds = 0;
+        document.getElementById('record-dot').classList.add('recording-pulse');
+        recordInterval = setInterval(() => {
+          recordSeconds++;
+          const mins = Math.floor(recordSeconds / 60);
+          const secs = recordSeconds % 60;
+          document.getElementById('record-btn').title = `A gravar: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }, 1000);
+      } catch (err) {
+        alert('Gravação não suportada neste stream pelo navegador.');
+      }
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+      isRecording = false;
+      clearInterval(recordInterval);
+      document.getElementById('record-dot').classList.remove('recording-pulse');
+      document.getElementById('record-btn').title = 'Gravar Transmissão';
+    }
+
+    function saveRecordedAudio() {
+      const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const curr = getCurrentStation();
+      const safeName = (curr.name || 'Radio').replace(/[^a-zA-Z0-9_-]/g, '_');
+      a.href = url;
+      a.download = `Gravacao_${safeName}_${Date.now()}.webm`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // External Search & Share
+    function searchCurrentOnSpotify() {
+      const curr = getCurrentStation();
+      const query = encodeURIComponent(`${curr.name}`);
+      window.open(`https://open.spotify.com/search/${query}`, '_blank');
+    }
+
+    function shareCurrentStation() {
+      const curr = getCurrentStation();
+      const shareUrl = `${window.location.origin}${window.location.pathname}?station=${encodeURIComponent(curr.id)}`;
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        alert(`Link de partilha copiado para a estação: ${curr.name}`);
+      });
+    }
+
+    // Backup & M3U Export
+    function openBackupModal() { document.getElementById('backup-modal').classList.remove('hidden'); }
+    function closeBackupModal() { document.getElementById('backup-modal').classList.add('hidden'); }
+
+    function exportJSONBackup() {
+      const backupData = {
+        favorites: userFavorites,
+        library: userLibrary,
+        customStations: userCustomStations,
+        recents: recentIds,
+        eq: eqSettings,
+        alarm: alarmSettings,
+        exportedAt: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `RadioTunes_Backup_${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importJSONBackup(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const data = JSON.parse(evt.target.result);
+          if (data.favorites) userFavorites = data.favorites;
+          if (data.library) userLibrary = data.library;
+          if (data.customStations) userCustomStations = data.customStations;
+          if (data.recents) recentIds = data.recents;
+          if (data.eq) eqSettings = data.eq;
+          if (data.alarm) alarmSettings = data.alarm;
+          saveState();
+          closeBackupModal();
+          alert('Backup restaurado com sucesso!');
+        } catch (err) {
+          alert('Ficheiro JSON inválido.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function downloadM3UPlaylist() {
+      const list = getAllStations();
+      let m3u = "#EXTM3U\n";
+      list.forEach(s => {
+        m3u += `#EXTINF:-1,${s.name} (${s.country || 'Global'})\n${s.stream_url}\n`;
+      });
+      const blob = new Blob([m3u], { type: 'audio/x-mpegurl' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `RadioTunes_Global_Playlist.m3u`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Theme Management
+    function setTheme(t) {
+      currentTheme = t;
+      document.documentElement.className = `theme-${t}`;
+      saveState();
+    }
+    setTheme(currentTheme);
+
+    // Custom Station Modal
+    function openAddModal() { document.getElementById('add-modal').classList.remove('hidden'); }
+    function closeAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
+
+    document.getElementById('custom-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('cust-name').value.trim();
+      const url = document.getElementById('cust-url').value.trim();
+      const image = document.getElementById('cust-image').value.trim() || null;
+      const cat = document.getElementById('cust-cat').value;
+      const country = document.getElementById('cust-country').value.trim() || 'Portugal';
+      
+      const newId = `custom_${Date.now()}`;
+      const newStation = {
+        id: newId,
+        name,
+        stream_url: url,
+        category: cat,
+        genre: cat,
+        country,
+        flag: "📍",
+        bit_rate: 128,
+        favorite: true,
+        inLibrary: true,
+        image,
+        color: "from-cyan-600 to-blue-700",
+        desc: "Stream próprio adicionado"
+      };
+      
+      userCustomStations.unshift(newStation);
+      userFavorites.push(newId);
+      userLibrary.push(newId);
+      saveState();
+      closeAddModal();
+      selectStation(newId, true);
+    });
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'SELECT'].includes(document.activeElement.tagName)) return;
+      if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+      if (e.code === 'ArrowRight') { e.preventDefault(); playNext(); }
+      if (e.code === 'ArrowLeft') { e.preventDefault(); playPrev(); }
+      if (e.code === 'KeyM') { toggleMute(); }
+      if (e.code === 'KeyF') { openTVMode(); }
+      if (e.code === 'Escape') { closeTVMode(); }
+      if (e.code === 'ArrowUp') {
+        e.preventDefault();
+        setVolume(Math.min(100, volume + 5));
+        document.getElementById('p-volume-slider').value = volume;
+      }
+      if (e.code === 'ArrowDown') {
+        e.preventDefault();
+        setVolume(Math.max(0, volume - 5));
+        document.getElementById('p-volume-slider').value = volume;
+      }
+    });
+
+    // Audio Visualizers (Mini Bar + TV HD Spectrum with 3D Circular Halo support)
+    const miniCanvas = document.getElementById('mini-visualizer');
+    const miniCtx = miniCanvas.getContext('2d');
+    const tvCanvas = document.getElementById('tv-visualizer');
+    const tvCtx = tvCanvas.getContext('2d');
+
+    function resizeCanvas() {
+      miniCanvas.width = miniCanvas.parentElement.clientWidth * window.devicePixelRatio;
+      miniCanvas.height = miniCanvas.parentElement.clientHeight * window.devicePixelRatio;
+    }
+    function resizeTVCanvas() {
+      if (tvCanvas.parentElement) {
+        tvCanvas.width = tvCanvas.parentElement.clientWidth * window.devicePixelRatio;
+        tvCanvas.height = tvCanvas.parentElement.clientHeight * window.devicePixelRatio;
+      }
+    }
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      resizeTVCanvas();
+    });
+    resizeCanvas();
+
+    let visualizerStep = 0;
+    const freqData = new Uint8Array(64);
+
+    function drawSpectrum() {
+      miniCtx.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
+      tvCtx.clearRect(0, 0, tvCanvas.width, tvCanvas.height);
+
+      let hasRealData = false;
+      if (isAudioContextReady && analyserNode && isPlaying) {
+        try {
+          analyserNode.getByteFrequencyData(freqData);
+          for (let val of freqData) {
+            if (val > 0) { hasRealData = true; break; }
+          }
+        } catch (e) {}
+      }
+
+      const brandColor = getComputedStyle(document.documentElement).getPropertyValue('--brand-500').trim() || '#06b6d4';
+      const bars = 24;
+      const w = miniCanvas.width / bars;
+
+      // Draw Mini Visualizer
+      for (let i = 0; i < bars; i++) {
+        let h = 2;
+        if (isPlaying) {
+          if (hasRealData) {
+            const raw = freqData[i % freqData.length] / 255;
+            h = Math.max(2, raw * miniCanvas.height * 0.95);
+          } else {
+            const wave = (Math.sin(visualizerStep * 0.15 + i * 0.45) * 0.5 + 0.5);
+            h = Math.max(2, wave * miniCanvas.height * 0.85);
+          }
+        }
+        miniCtx.fillStyle = brandColor;
+        miniCtx.fillRect(i * w + 1, miniCanvas.height - h, w - 2, h);
+      }
+
+      // Draw TV Visualizer (Bars or 3D Halo)
+      if (visualizerStyle === 'bars') {
+        const tvW = tvCanvas.width / bars;
+        for (let i = 0; i < bars; i++) {
+          let tvH = 4;
+          if (isPlaying) {
+            if (hasRealData) {
+              const raw = freqData[i % freqData.length] / 255;
+              tvH = Math.max(4, raw * tvCanvas.height * 0.95);
+            } else {
+              const wave = (Math.sin(visualizerStep * 0.15 + i * 0.45) * 0.5 + 0.5);
+              tvH = Math.max(4, wave * tvCanvas.height * 0.85);
+            }
+          }
+          tvCtx.fillStyle = brandColor;
+          tvCtx.fillRect(i * tvW + 2, tvCanvas.height - tvH, tvW - 4, tvH);
+        }
+      } else {
+        // Halo 3D Circular Waveform
+        const centerX = tvCanvas.width / 2;
+        const centerY = tvCanvas.height / 2;
+        const radius = Math.min(centerX, centerY) * 0.6;
+        const points = 36;
+        
+        tvCtx.beginPath();
+        tvCtx.strokeStyle = brandColor;
+        tvCtx.lineWidth = 3;
+        tvCtx.shadowBlur = 15;
+        tvCtx.shadowColor = brandColor;
+
+        for (let i = 0; i <= points; i++) {
+          const angle = (i / points) * Math.PI * 2;
+          let amp = 0;
+          if (isPlaying) {
+            amp = hasRealData ? (freqData[i % freqData.length] / 255) * 25 : Math.sin(visualizerStep * 0.2 + i * 0.8) * 12;
+          }
+          const r = radius + amp;
+          const x = centerX + Math.cos(angle) * r;
+          const y = centerY + Math.sin(angle) * r;
+          if (i === 0) tvCtx.moveTo(x, y);
+          else tvCtx.lineTo(x, y);
+        }
+        tvCtx.closePath();
+        tvCtx.stroke();
+        tvCtx.shadowBlur = 0;
+      }
+
+      visualizerStep++;
+      requestAnimationFrame(drawSpectrum);
+    }
+    drawSpectrum();
+
+    // Check Deep Link Query Param on Load (?station=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const stationParam = urlParams.get('station');
+    if (stationParam) {
+      currentStationId = stationParam;
+    }
+
+    // Initial load
+    changeLanguage(currentLang);
+    updateCounts();
+    syncEQSliders();
+    selectStation(currentStationId, false);
+  </script>
+</body>
+</html>
