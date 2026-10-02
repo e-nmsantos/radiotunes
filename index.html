@@ -2359,7 +2359,7 @@
         });
       });
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('Nova versão ativada!');
+        window.location.reload();
       });
     }
 
@@ -3009,21 +3009,25 @@
     }
 
     function saveState() {
-      localStorage.setItem('roc_user_favorites', JSON.stringify(userFavorites));
-      localStorage.setItem('roc_user_library', JSON.stringify(userLibrary));
-      localStorage.setItem('roc_user_playlists', JSON.stringify(userPlaylists));
-      localStorage.setItem('roc_user_categories', JSON.stringify(userCategories));
-      localStorage.setItem('roc_user_station_cats', JSON.stringify(stationCategoryOverrides));
-      localStorage.setItem('roc_user_deleted_stations', JSON.stringify(deletedStationIds));
-      localStorage.setItem('roc_user_custom_stations', JSON.stringify(userCustomStations));
-      localStorage.setItem('roc_user_recents', JSON.stringify(recentIds));
-      localStorage.setItem('roc_user_track_history', JSON.stringify(trackHistory));
-      localStorage.setItem('roc_user_eq10', JSON.stringify(eq10Bands));
-      localStorage.setItem('roc_user_spatial', String(spatialValue));
-      localStorage.setItem('roc_user_reverb', String(reverbValue));
-      localStorage.setItem('roc_user_alarm', JSON.stringify(alarmSettings));
-      localStorage.setItem('roc_user_dvr', JSON.stringify(dvrSettings));
-      localStorage.setItem('roc_user_theme', currentTheme);
+      try {
+        localStorage.setItem('roc_user_favorites', JSON.stringify(userFavorites));
+        localStorage.setItem('roc_user_library', JSON.stringify(userLibrary));
+        localStorage.setItem('roc_user_playlists', JSON.stringify(userPlaylists));
+        localStorage.setItem('roc_user_categories', JSON.stringify(userCategories));
+        localStorage.setItem('roc_user_station_cats', JSON.stringify(stationCategoryOverrides));
+        localStorage.setItem('roc_user_deleted_stations', JSON.stringify(deletedStationIds));
+        localStorage.setItem('roc_user_custom_stations', JSON.stringify(userCustomStations));
+        localStorage.setItem('roc_user_recents', JSON.stringify(recentIds));
+        localStorage.setItem('roc_user_track_history', JSON.stringify(trackHistory));
+        localStorage.setItem('roc_user_eq10', JSON.stringify(eq10Bands));
+        localStorage.setItem('roc_user_spatial', String(spatialValue));
+        localStorage.setItem('roc_user_reverb', String(reverbValue));
+        localStorage.setItem('roc_user_alarm', JSON.stringify(alarmSettings));
+        localStorage.setItem('roc_user_dvr', JSON.stringify(dvrSettings));
+        localStorage.setItem('roc_user_theme', currentTheme);
+      } catch(e) {
+        console.warn('localStorage save warning:', e);
+      }
       updateCounts();
       render();
     }
