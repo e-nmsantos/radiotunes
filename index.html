@@ -137,9 +137,34 @@
       border: 1px solid #334155;
       border-radius: 16px;
     }
+
+    /* Drag & Drop Feedback */
+    .drag-target-active {
+      background: rgba(6, 182, 212, 0.25) !important;
+      border-color: #22d3ee !important;
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
+    }
+    .card-dragging {
+      opacity: 0.4;
+      transform: scale(0.96);
+      border: 2px dashed #06b6d4 !important;
+    }
+
+    /* Toast Animation */
+    .toast-slide {
+      animation: toast-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
   </style>
 </head>
-<body class="text-slate-100 antialiased min-h-screen flex flex-col md:flex-row pb-32 md:pb-28">
+<body class="text-slate-100 antialiased min-h-screen flex flex-col md:flex-row pb-44 md:pb-28">
+
+  <!-- Toast Notification Floating Container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full px-3"></div>
 
   <!-- Sidebar Navigation -->
   <aside class="w-full md:w-64 bg-slate-900/90 backdrop-blur-md border-r border-slate-800 p-5 flex flex-col justify-between flex-shrink-0">
@@ -210,37 +235,17 @@
         </button>
       </nav>
 
-      <!-- Category Filter list -->
-      <div class="space-y-1">
-        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 px-3 mb-2" data-i18n="categories">Categorias</div>
-        <button onclick="selectCategory('Todas')" id="cat-Todas" class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-cyan-400 transition">
-          <span class="flex items-center gap-2"><span>🌐</span> <span data-i18n="catAll">Todas as Rádios</span></span>
-          <span class="text-[10px] bg-cyan-500/20 px-2 py-0.5 rounded-full" id="count-all">0</span>
-        </button>
-        <button onclick="selectCategory('Música')" id="cat-Música" class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
-          <span class="flex items-center gap-2"><span>🎵</span> <span data-i18n="catMusic">Música & Pop</span></span>
-          <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full" id="count-music">0</span>
-        </button>
-        <button onclick="selectCategory('Rock')" id="cat-Rock" class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
-          <span class="flex items-center gap-2"><span>🎸</span> <span data-i18n="catRock">Rock & Anos 80</span></span>
-          <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full" id="count-rock">0</span>
-        </button>
-        <button onclick="selectCategory('Notícias')" id="cat-Notícias" class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
-          <span class="flex items-center gap-2"><span>📰</span> <span data-i18n="catNews">Notícias & Debates</span></span>
-          <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full" id="count-news">0</span>
-        </button>
-        <button onclick="selectCategory('Desporto')" id="cat-Desporto" class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
-          <span class="flex items-center gap-2"><span>⚽</span> <span data-i18n="catSports">Desporto & Futebol</span></span>
-          <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full" id="count-sports">0</span>
-        </button>
-        <button onclick="selectCategory('Eletrónica')" id="cat-Eletrónica" class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
-          <span class="flex items-center gap-2"><span>🎧</span> <span data-i18n="catElectro">Eletrónica & Dance</span></span>
-          <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full" id="count-electro">0</span>
-        </button>
-        <button onclick="selectCategory('Relax')" id="cat-Relax" class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
-          <span class="flex items-center gap-2"><span>☕</span> <span data-i18n="catRelax">Lo-Fi, Jazz & Relax</span></span>
-          <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full" id="count-relax">0</span>
-        </button>
+      <!-- Category Filter list & Creator -->
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between px-3 mb-1">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500" data-i18n="categories">Categorias</span>
+          <button onclick="openCreateCategoryModal()" class="text-[11px] font-extrabold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 bg-cyan-500/10 hover:bg-cyan-500/20 px-2 py-0.5 rounded-lg border border-cyan-500/20 transition active:scale-95" title="Criar Nova Categoria">
+            <span>➕</span> <span data-i18n="newCategory">Nova</span>
+          </button>
+        </div>
+        <div id="sidebar-categories-list" class="space-y-1 max-h-52 overflow-y-auto pr-0.5">
+          <!-- Dynamically populated categories with Drag & Drop dropzone -->
+        </div>
       </div>
 
       <!-- Quick Audio & Utility Tools in Sidebar -->
@@ -491,6 +496,22 @@
       </div>
     </div>
 
+    <!-- Category Selector Carousel (Pills with Drag & Drop & "+ Nova Categoria") -->
+    <div id="category-filter-section" class="space-y-2">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500" data-i18n="exploreCategory">Estilo Musical / Categoria</span>
+          <span class="text-[10px] text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full hidden sm:inline">💡 Arrasta rádios para aqui</span>
+        </div>
+        <button onclick="openCreateCategoryModal()" class="text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 active:scale-95 transition">
+          <span>➕</span> <span data-i18n="createCategory">Nova Categoria</span>
+        </button>
+      </div>
+      <div id="categories-carousel" class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+
     <!-- Country Selector Carousel (Pills) -->
     <div id="country-filter-section" class="space-y-2">
       <div class="flex items-center justify-between">
@@ -581,21 +602,21 @@
   </main>
 
   <!-- Persistent Bottom Player Bar -->
-  <footer class="fixed bottom-0 left-0 right-0 h-28 md:h-24 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 z-40 px-3 md:px-8 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-0 shadow-2xl py-2 md:py-0">
+  <footer class="fixed bottom-16 md:bottom-0 left-0 right-0 h-20 md:h-24 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 z-40 px-3 md:px-8 flex items-center justify-between gap-2 md:gap-0 shadow-2xl py-2 md:py-0">
     
     <!-- Left: Current Station Details & External Search -->
-    <div class="flex items-center gap-3 md:gap-4 w-full md:w-1/3 min-w-[200px] max-w-sm justify-between md:justify-start">
-      <div class="flex items-center gap-3 min-w-0">
-        <div id="player-cover-wrap" class="w-12 h-12 md:w-14 md:h-14 rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0 shadow-lg relative transition-transform cursor-pointer" onclick="openTVMode()">
+    <div class="flex items-center gap-3 md:gap-4 w-auto md:w-1/3 min-w-[140px] max-w-sm justify-between md:justify-start">
+      <div class="flex items-center gap-2.5 md:gap-3 min-w-0 cursor-pointer" onclick="handlePlayerClick()">
+        <div id="player-cover-wrap" class="w-11 h-11 md:w-14 md:h-14 rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0 shadow-lg relative transition-transform">
           <img id="player-cover-img" src="" alt="Capa" class="w-full h-full object-cover hidden" />
-          <div id="player-cover-fallback" class="w-full h-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xl md:text-2xl font-black">
+          <div id="player-cover-fallback" class="w-full h-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white text-lg md:text-2xl font-black">
             📻
           </div>
         </div>
         <div class="min-w-0 flex-1">
-          <div class="flex items-center gap-2">
-            <h4 id="player-station-name" class="text-sm font-extrabold text-white truncate">LOS 40 España</h4>
-            <span id="player-live-badge" class="hidden px-2 py-0.5 rounded-full text-[9px] font-black bg-red-500 text-white animate-pulse">LIVE</span>
+          <div class="flex items-center gap-1.5 md:gap-2">
+            <h4 id="player-station-name" class="text-xs md:text-sm font-extrabold text-white truncate max-w-[120px] sm:max-w-[160px] md:max-w-none">LOS 40 España</h4>
+            <span id="player-live-badge" class="hidden px-1.5 py-0.5 rounded-full text-[8px] md:text-[9px] font-black bg-red-500 text-white animate-pulse">LIVE</span>
           </div>
           <!-- Live Now Playing Track Info -->
           <div class="flex items-center gap-1.5 truncate">
@@ -693,6 +714,34 @@
     </div>
 
   </footer>
+ 
+  <!-- Fixed Mobile Bottom Navigation Bar -->
+  <nav id="mobile-bottom-nav" class="fixed bottom-0 left-0 right-0 h-16 bg-slate-950/95 backdrop-blur-lg border-t border-slate-800 z-40 md:hidden flex items-center justify-around px-1 shadow-2xl">
+    <button onclick="setView('home')" id="mob-nav-home" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-cyan-400 transition">
+      <span class="text-lg">🔥</span>
+      <span class="text-[10px] font-bold" data-i18n="home">Início</span>
+    </button>
+    <button onclick="setView('map')" id="mob-nav-map" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-400 hover:text-white transition">
+      <span class="text-lg">🗺️</span>
+      <span class="text-[10px] font-bold" data-i18n="worldMap">Mapa</span>
+    </button>
+    <button onclick="setView('favorites')" id="mob-nav-favorites" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-400 hover:text-white transition">
+      <span class="text-lg">⭐</span>
+      <span class="text-[10px] font-bold" data-i18n="myFavorites">Favoritos</span>
+    </button>
+    <button onclick="setView('library')" id="mob-nav-library" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-400 hover:text-white transition">
+      <span class="text-lg">📌</span>
+      <span class="text-[10px] font-bold" data-i18n="myLibrary">Biblioteca</span>
+    </button>
+    <button onclick="setView('playlists')" id="mob-nav-playlists" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-400 hover:text-white transition">
+      <span class="text-lg">📂</span>
+      <span class="text-[10px] font-bold" data-i18n="myPlaylists">Playlists</span>
+    </button>
+    <button onclick="openMobileToolsDrawer()" id="mob-nav-tools" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-400 hover:text-white transition">
+      <span class="text-lg">🛠️</span>
+      <span class="text-[10px] font-bold" data-i18n="mobileTools">Mais</span>
+    </button>
+  </nav>
 
   <!-- Hidden Video for Picture-in-Picture Canvas Stream -->
   <video id="pip-video" class="hidden" autoplay muted></video>
@@ -1197,6 +1246,173 @@
           <button type="submit" class="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold shadow-lg shadow-cyan-500/20 transition active:scale-95">Guardar</button>
         </div>
       </form>
+    </div>
+  <!-- Modal 11: Create Custom Category -->
+  <div id="category-create-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">✨ Criar Nova Categoria</h3>
+        <button onclick="closeCreateCategoryModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+      <p class="text-xs text-slate-400">Cria uma categoria musical ou pasta temática personalizada (ex: *Fado, Podcasts, Sertanejo, K-Pop, Anos 90*) para organizares as tuas rádios.</p>
+      <form id="category-create-form" class="space-y-4">
+        <div>
+          <label class="text-xs font-semibold text-slate-400 block mb-1">Nome da Categoria</label>
+          <input type="text" id="cat-create-name" required placeholder="Ex: Sertanejo, Fado, Estudo..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400" />
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-400 block mb-1">Ícone / Emoji</label>
+          <div class="grid grid-cols-6 gap-2" id="emoji-picker-grid">
+            <button type="button" onclick="selectCategoryEmoji('🎵', this)" class="emoji-opt-btn p-2 rounded-xl bg-slate-950 ring-2 ring-cyan-400 text-xl border border-slate-800 text-center">🎵</button>
+            <button type="button" onclick="selectCategoryEmoji('🎸', this)" class="emoji-opt-btn p-2 rounded-xl bg-slate-950 hover:bg-cyan-500/20 text-xl border border-slate-800 text-center">🎸</button>
+            <button type="button" onclick="selectCategoryEmoji('🎷', this)" class="emoji-opt-btn p-2 rounded-xl bg-slate-950 hover:bg-cyan-500/20 text-xl border border-slate-800 text-center">🎷</button>
+            <button type="button" onclick="selectCategoryEmoji('🎙️', this)" class="emoji-opt-btn p-2 rounded-xl bg-slate-950 hover:bg-cyan-500/20 text-xl border border-slate-800 text-center">🎙️</button>
+            <button type="button" onclick="selectCategoryEmoji('📻', this)" class="emoji-opt-btn p-2 rounded-xl bg-slate-950 hover:bg-cyan-500/20 text-xl border border-slate-800 text-center">📻</button>
+            <button type="button" onclick="selectCategoryEmoji('🎧', this)" class="emoji-opt-btn p-2 rounded-xl bg-slate-950 hover:bg-cyan-500/20 text-xl border border-slate-800 text-center">🎧</button>
+            <button type="button" onclick="selectCategoryEmoji('🎹', this)" class="emoji-opt-btn p-2 rounded-xl bg-slate-950 hover:bg-cyan-500/20 text-xl border border-slate-800 text-center">🎹</button>
+            <button type="button" onclick="selectCategoryEmoji('⚡', this)" class="emoji-opt-btn p-2 rounded-xl bg-slate-950 hover:bg-cyan-500/20 text-xl border border-slate-800 text-center">⚡</button>
+            <button type="button" onclick="selectCategoryEmoji('☕', this)" class="emoji-opt-btn p-2 rounded-xl bg-slate-950 hover:bg-cyan-500/20 text-xl border border-slate-800 text-center">☕</button>
+            <button type="button" onclick="selectCategoryEmoji('❤️', this)" class="emoji-opt-btn p-2 rounded-xl bg-slate-950 hover:bg-cyan-500/20 text-xl border border-slate-800 text-center">❤️</button>
+            <button type="button" onclick="selectCategoryEmoji('🏖️', this)" class="emoji-opt-btn p-2 rounded-xl bg-slate-950 hover:bg-cyan-500/20 text-xl border border-slate-800 text-center">🏖️</button>
+            <button type="button" onclick="selectCategoryEmoji('🔥', this)" class="emoji-opt-btn p-2 rounded-xl bg-slate-950 hover:bg-cyan-500/20 text-xl border border-slate-800 text-center">🔥</button>
+          </div>
+          <input type="hidden" id="cat-create-icon" value="🎵" />
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="closeCreateCategoryModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition">Cancelar</button>
+          <button type="submit" class="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-black shadow-lg shadow-cyan-500/20 transition active:scale-95">Criar Categoria</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 12: Assign Station to Category -->
+  <div id="station-category-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">🏷️ Mover Rádio para Categoria</h3>
+        <button onclick="closeStationCategoryModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+      <div id="station-category-target-info" class="p-3 bg-slate-950 rounded-2xl border border-slate-800 flex items-center gap-3">
+        <!-- Target station info injected dynamically -->
+      </div>
+      <p class="text-xs text-slate-400">Escolhe a categoria de destino para esta estação. Ficará automaticamente organizada e guardada na tua Biblioteca.</p>
+      <div id="station-category-options-list" class="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+        <!-- Category choices dynamically injected -->
+      </div>
+      <div class="pt-2">
+        <button onclick="closeStationCategoryModal()" class="w-full px-4 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 13: Mobile Fullscreen Player Sheet -->
+  <div id="mobile-player-sheet" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 hidden flex flex-col justify-between p-6 md:hidden">
+    <div class="flex items-center justify-between">
+      <button onclick="closeMobileSheetPlayer()" class="p-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 active:scale-95 text-lg">✕</button>
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+        <span class="text-xs font-black uppercase tracking-widest text-cyan-400">ROC TUNEIN</span>
+      </div>
+      <button onclick="openTVMode()" class="p-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 active:scale-95 text-sm" title="Modo Ecrã Inteiro">📺</button>
+    </div>
+
+    <!-- Center artwork & station info -->
+    <div class="flex flex-col items-center justify-center text-center space-y-5 my-auto">
+      <div id="sheet-cover-wrap" class="w-56 h-56 rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-700 flex items-center justify-center shadow-2xl playing-glow relative">
+        <img id="sheet-cover-img" src="" class="w-full h-full object-cover hidden" alt="Capa" />
+        <div id="sheet-cover-fallback" class="w-full h-full bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-700 flex items-center justify-center text-white text-6xl font-black">📻</div>
+      </div>
+      <div class="space-y-1 max-w-xs">
+        <h3 id="sheet-station-name" class="text-xl font-black text-white truncate">LOS 40 España</h3>
+        <p id="sheet-now-playing" class="text-xs text-cyan-400 font-medium truncate">Pop & Top 40 Hits</p>
+      </div>
+
+      <!-- Quick Actions (Favorite, Library, Change Category) -->
+      <div class="flex items-center gap-2 pt-2">
+        <button id="sheet-fav-btn" onclick="toggleCurrentFav()" class="px-3.5 py-2 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-amber-400 font-bold active:scale-95">☆ Favorito</button>
+        <button id="sheet-lib-btn" onclick="toggleCurrentLib()" class="px-3.5 py-2 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-cyan-400 font-bold active:scale-95">📌 Biblioteca</button>
+        <button onclick="openStationCategoryModal(currentStationId)" class="px-3.5 py-2 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-purple-400 font-bold active:scale-95">🏷️ Categoria</button>
+      </div>
+    </div>
+
+    <!-- Bottom Controls & Volume -->
+    <div class="space-y-5">
+      <!-- Volume Slider -->
+      <div class="flex items-center gap-3 bg-slate-900/80 px-4 py-3 rounded-2xl border border-slate-800">
+        <span class="text-xs text-slate-400">🔈</span>
+        <input type="range" id="sheet-volume-slider" min="0" max="100" value="80" oninput="setVolume(this.value); const pvs=document.getElementById('p-volume-slider'); if(pvs) pvs.value=this.value;" class="flex-1 accent-cyan-400 h-2 bg-slate-800 rounded-lg cursor-pointer" />
+        <span class="text-xs text-slate-400">🔊</span>
+      </div>
+
+      <!-- Main Controls -->
+      <div class="flex items-center justify-center gap-6 pb-2">
+        <button onclick="playPrev()" class="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 active:scale-95 text-xl">⏮️</button>
+        <button id="sheet-play-btn" onclick="togglePlay()" class="w-16 h-16 rounded-3xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white flex items-center justify-center shadow-xl text-2xl active:scale-95">▶️</button>
+        <button onclick="playNext()" class="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 active:scale-95 text-xl">⏭️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 14: Mobile Tools Drawer Modal -->
+  <div id="mobile-tools-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">🛠️ Ferramentas & Configurações</h3>
+        <button onclick="closeMobileToolsDrawer()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2.5">
+        <button onclick="closeMobileToolsDrawer(); openEqualizerModal();" class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/40 text-left transition space-y-1 active:scale-95">
+          <span class="text-2xl">🎚️</span>
+          <h4 class="text-xs font-bold text-white">Equalizador & 3D</h4>
+          <p class="text-[10px] text-slate-500">10 Bandas & Spatial</p>
+        </button>
+        <button onclick="closeMobileToolsDrawer(); openSoundscapesModal();" class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-emerald-500/40 text-left transition space-y-1 active:scale-95">
+          <span class="text-2xl">🌧️</span>
+          <h4 class="text-xs font-bold text-white">Sons Ambiente</h4>
+          <p class="text-[10px] text-slate-500">Chuva, Mar, Lareira</p>
+        </button>
+        <button onclick="closeMobileToolsDrawer(); openSleepModal();" class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-amber-500/40 text-left transition space-y-1 active:scale-95">
+          <span class="text-2xl">⏳</span>
+          <h4 class="text-xs font-bold text-white">Sleep Timer</h4>
+          <p class="text-[10px] text-slate-500">Desligar automático</p>
+        </button>
+        <button onclick="closeMobileToolsDrawer(); openAlarmModal();" class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-amber-500/40 text-left transition space-y-1 active:scale-95">
+          <span class="text-2xl">⏰</span>
+          <h4 class="text-xs font-bold text-white">Despertador</h4>
+          <p class="text-[10px] text-slate-500">Gentle wake-up</p>
+        </button>
+        <button onclick="closeMobileToolsDrawer(); openDVRModal();" class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-red-500/40 text-left transition space-y-1 active:scale-95">
+          <span class="text-2xl">🔴</span>
+          <h4 class="text-xs font-bold text-white">Gravação DVR</h4>
+          <p class="text-[10px] text-slate-500">Gravar emissões</p>
+        </button>
+        <button onclick="closeMobileToolsDrawer(); openTrackHistoryModal();" class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-purple-500/40 text-left transition space-y-1 active:scale-95">
+          <span class="text-2xl">📜</span>
+          <h4 class="text-xs font-bold text-white">Letras & Histórico</h4>
+          <p class="text-[10px] text-slate-500">Spotify & Google</p>
+        </button>
+        <button onclick="closeMobileToolsDrawer(); openBackupModal();" class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/40 text-left transition space-y-1 active:scale-95">
+          <span class="text-2xl">💾</span>
+          <h4 class="text-xs font-bold text-white">Backup & M3U</h4>
+          <p class="text-[10px] text-slate-500">Exportar listas</p>
+        </button>
+        <button onclick="closeMobileToolsDrawer(); openAddModal();" class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/40 text-left transition space-y-1 active:scale-95">
+          <span class="text-2xl">➕</span>
+          <h4 class="text-xs font-bold text-white">Adicionar Rádio</h4>
+          <p class="text-[10px] text-slate-500">Stream próprio</p>
+        </button>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
+        <div class="text-slate-400">Marca Registada:</div>
+        <div class="font-bold text-cyan-400">© 2026 Nuno Santos</div>
+      </div>
+
+      <div class="pt-1">
+        <button onclick="closeMobileToolsDrawer()" class="w-full px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-bold transition">Fechar</button>
+      </div>
     </div>
   </div>
 
@@ -1732,6 +1948,10 @@
         reconnect: "Reconectar 🔄",
         next: "Próxima ⏭️",
         exploreCountry: "Explorar por País",
+        exploreCategory: "Estilo Musical / Categoria",
+        createCategory: "Nova Categoria",
+        newCategory: "Nova",
+        mobileTools: "Mais",
         viewAll: "Ver Todos",
         worldMapTitle: "Mapa Mundial de Rádios em Direto",
         worldMapSub: "Clica em qualquer ponto ou cidade do globo para sintonizar a rádio local instantaneamente.",
@@ -1796,6 +2016,10 @@
         reconnect: "Reconnect 🔄",
         next: "Next ⏭️",
         exploreCountry: "Explore by Country",
+        exploreCategory: "Music Genre / Category",
+        createCategory: "New Category",
+        newCategory: "New",
+        mobileTools: "More",
         viewAll: "View All",
         worldMapTitle: "Live World Radio Map",
         worldMapSub: "Click anywhere on the globe to tune into local radio instantly.",
@@ -1860,6 +2084,10 @@
         reconnect: "Reconectar 🔄",
         next: "Siguiente ⏭️",
         exploreCountry: "Explorar por País",
+        exploreCategory: "Género Musical / Categoría",
+        createCategory: "Nueva Categoría",
+        newCategory: "Nueva",
+        mobileTools: "Más",
         viewAll: "Ver Todos",
         worldMapTitle: "Mapa Mundial de Radios en Directo",
         worldMapSub: "Haz clic en cualquier punto del mapa para sintonizar la radio local.",
@@ -1924,6 +2152,10 @@
         reconnect: "Reconnecter 🔄",
         next: "Suivante ⏭️",
         exploreCountry: "Explorer par Pays",
+        exploreCategory: "Genre Musical / Catégorie",
+        createCategory: "Nouvelle Catégorie",
+        newCategory: "Nouvelle",
+        mobileTools: "Plus",
         viewAll: "Tout Voir",
         worldMapTitle: "Carte Mondiale des Radios en Direct",
         worldMapSub: "Cliquez sur une ville pour écouter la radio locale instantanément.",
@@ -1960,10 +2192,23 @@
     let userFavorites = JSON.parse(localStorage.getItem('roc_user_favorites') || '["m_101", "m_201", "m_301", "m_1", "m_2"]');
     let userLibrary = JSON.parse(localStorage.getItem('roc_user_library') || '["m_101", "m_102", "m_103", "m_104", "m_105", "m_106", "m_201", "m_202", "m_301", "m_1", "m_2", "m_3", "m_4", "m_5", "m_6", "m_11", "m_13", "m_24", "m_25"]');
     let userPlaylists = JSON.parse(localStorage.getItem('roc_user_playlists') || '[{"id":"pl_1","name":"Foco no Trabalho","icon":"💼","stationIds":["m_101","m_304","m_25"]},{"id":"pl_2","name":"Treino & Energia","icon":"🏃‍♂️","stationIds":["m_103","m_106","m_7"]}]');
+    let userCategories = JSON.parse(localStorage.getItem('roc_user_categories') || JSON.stringify([
+      { id: "Todas", name: "Todas as Rádios", icon: "🌐" },
+      { id: "Música", name: "Música & Pop", icon: "🎵" },
+      { id: "Rock", name: "Rock & Anos 80", icon: "🎸" },
+      { id: "Notícias", name: "Notícias & Debates", icon: "📰" },
+      { id: "Desporto", name: "Desporto & Futebol", icon: "⚽" },
+      { id: "Eletrónica", name: "Eletrónica & Dance", icon: "🎧" },
+      { id: "Relax", name: "Lo-Fi, Jazz & Relax", icon: "☕" }
+    ]));
+    let stationCategoryOverrides = JSON.parse(localStorage.getItem('roc_user_station_cats') || '{}');
     let userCustomStations = JSON.parse(localStorage.getItem('roc_user_custom_stations') || '[]');
     let recentIds = JSON.parse(localStorage.getItem('roc_user_recents') || '["m_101", "m_201", "m_301", "m_1", "m_2"]');
     let trackHistory = JSON.parse(localStorage.getItem('roc_user_track_history') || '[]');
     let currentTheme = localStorage.getItem('roc_user_theme') || 'cyan';
+    
+    let draggedStationId = null;
+    let targetStationForCategory = null;
     
     let eq10Bands = JSON.parse(localStorage.getItem('roc_user_eq10') || '{"32":0,"64":0,"125":0,"250":0,"500":0,"1k":0,"2k":0,"4k":0,"8k":0,"16k":0}');
     let spatialValue = parseInt(localStorage.getItem('roc_user_spatial') || '0', 10);
@@ -2189,6 +2434,259 @@
       });
     }
 
+    // Toast Notification Engine
+    function showToast(msg, icon = '✨', type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      const bgClass = type === 'success' ? 'bg-emerald-950/95 border-emerald-500/50 text-emerald-100' : 'bg-slate-900/95 border-cyan-500/50 text-slate-100';
+      toast.className = `toast-slide p-3.5 rounded-2xl border shadow-2xl backdrop-blur-md flex items-center gap-3 text-xs pointer-events-auto transition-all ${bgClass}`;
+      toast.innerHTML = `
+        <span class="text-xl flex-shrink-0">${icon}</span>
+        <span class="flex-1 font-medium leading-tight">${msg}</span>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // Category Creation & Management Engine
+    function renderCategories() {
+      const sidebarList = document.getElementById('sidebar-categories-list');
+      const carousel = document.getElementById('categories-carousel');
+      const all = getAllStations();
+
+      if (sidebarList) {
+        sidebarList.innerHTML = userCategories.map(cat => {
+          const isSelected = selectedCategory === cat.id;
+          const count = cat.id === 'Todas' ? all.length : all.filter(s => s.category === cat.id).length;
+          return `
+            <button 
+              onclick="selectCategory('${cat.id}')" 
+              id="cat-${cat.id}" 
+              ondragover="handleDragOver(event)" 
+              ondragleave="handleDragLeave(event)" 
+              ondrop="handleDropCategory(event, '${cat.id}')" 
+              class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium transition ${isSelected ? 'bg-cyan-500/20 text-cyan-400 font-bold border border-cyan-500/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}"
+            >
+              <span class="flex items-center gap-2 truncate">
+                <span>${cat.icon || '📁'}</span> 
+                <span class="truncate">${cat.name}</span>
+              </span>
+              <span class="text-[10px] ${isSelected ? 'bg-cyan-500/30 text-cyan-300' : 'bg-slate-800 text-slate-400'} px-2 py-0.5 rounded-full flex-shrink-0">${count}</span>
+            </button>
+          `;
+        }).join('');
+      }
+
+      if (carousel) {
+        carousel.innerHTML = userCategories.map(cat => {
+          const isSelected = selectedCategory === cat.id;
+          return `
+            <button 
+              onclick="selectCategory('${cat.id}')" 
+              id="car-cat-${cat.id}" 
+              ondragover="handleDragOver(event)" 
+              ondragleave="handleDragLeave(event)" 
+              ondrop="handleDropCategory(event, '${cat.id}')" 
+              class="cat-pill-btn px-3.5 py-1.5 rounded-xl font-medium border flex-shrink-0 transition flex items-center gap-1.5 ${isSelected ? 'bg-cyan-500 text-slate-950 font-bold border-cyan-400 shadow-md shadow-cyan-500/20' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white'}"
+            >
+              <span>${cat.icon || '📁'}</span>
+              <span>${cat.name}</span>
+            </button>
+          `;
+        }).join('');
+      }
+    }
+
+    function openCreateCategoryModal() {
+      document.getElementById('category-create-modal').classList.remove('hidden');
+      document.getElementById('cat-create-name').value = '';
+    }
+    function closeCreateCategoryModal() {
+      document.getElementById('category-create-modal').classList.add('hidden');
+    }
+
+    function selectCategoryEmoji(emoji, btn) {
+      document.getElementById('cat-create-icon').value = emoji;
+      document.querySelectorAll('#emoji-picker-grid button').forEach(b => {
+        b.className = 'emoji-opt-btn p-2 rounded-xl bg-slate-950 hover:bg-cyan-500/20 text-xl border border-slate-800 text-center';
+      });
+      if (btn) {
+        btn.className = 'emoji-opt-btn p-2 rounded-xl bg-slate-950 ring-2 ring-cyan-400 text-xl border border-slate-800 text-center';
+      }
+    }
+
+    document.getElementById('category-create-form')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('cat-create-name').value.trim();
+      const icon = document.getElementById('cat-create-icon').value || '🎵';
+      if (!name) return;
+
+      const newCat = {
+        id: name,
+        name: name,
+        icon: icon
+      };
+
+      if (!userCategories.some(c => c.id.toLowerCase() === name.toLowerCase())) {
+        userCategories.push(newCat);
+        localStorage.setItem('roc_user_categories', JSON.stringify(userCategories));
+        showToast(`Categoria "${name}" criada com sucesso!`, icon, 'success');
+      }
+      closeCreateCategoryModal();
+      selectCategory(newCat.id);
+    });
+
+    // Drag & Drop Handlers
+    function handleDragStart(e, stationId) {
+      draggedStationId = String(stationId);
+      e.dataTransfer.setData('text/plain', stationId);
+      e.dataTransfer.effectAllowed = 'move';
+      const card = e.target.closest('.station-card');
+      if (card) card.classList.add('card-dragging');
+    }
+
+    function handleDragEnd(e) {
+      draggedStationId = null;
+      document.querySelectorAll('.station-card').forEach(c => c.classList.remove('card-dragging'));
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const target = e.currentTarget;
+      target.classList.add('drag-target-active');
+    }
+
+    function handleDragLeave(e) {
+      const target = e.currentTarget;
+      target.classList.remove('drag-target-active');
+    }
+
+    function handleDropCategory(e, catId) {
+      e.preventDefault();
+      const target = e.currentTarget;
+      target.classList.remove('drag-target-active');
+      const stationId = e.dataTransfer.getData('text/plain') || draggedStationId;
+      if (!stationId || catId === 'Todas') return;
+
+      assignCategoryToStation(stationId, catId);
+    }
+
+    // Touch Category Assignment Modal
+    function openStationCategoryModal(stationId, event) {
+      if (event) event.stopPropagation();
+      targetStationForCategory = String(stationId);
+      const all = getAllStations();
+      const station = all.find(s => String(s.id) === targetStationForCategory) || getCurrentStation();
+
+      const infoEl = document.getElementById('station-category-target-info');
+      if (infoEl) {
+        infoEl.innerHTML = `
+          <span class="text-2xl">${station.flag || '📻'}</span>
+          <div class="min-w-0 flex-1">
+            <h4 class="text-xs font-bold text-white truncate">${station.name}</h4>
+            <p class="text-[11px] text-slate-400">Categoria atual: <span class="text-cyan-400 font-semibold">${station.category || 'Música'}</span></p>
+          </div>
+        `;
+      }
+
+      const listEl = document.getElementById('station-category-options-list');
+      if (listEl) {
+        listEl.innerHTML = userCategories.filter(c => c.id !== 'Todas').map(cat => `
+          <button onclick="assignCategoryToStation('${targetStationForCategory}', '${cat.id}')" class="w-full p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 flex items-center justify-between text-xs transition">
+            <span class="flex items-center gap-2 font-medium text-white"><span>${cat.icon || '📁'}</span> <span>${cat.name}</span></span>
+            <span class="text-cyan-400 font-bold text-xs">Mover ➔</span>
+          </button>
+        `).join('');
+      }
+
+      document.getElementById('station-category-modal').classList.remove('hidden');
+    }
+
+    function closeStationCategoryModal() {
+      document.getElementById('station-category-modal').classList.add('hidden');
+      targetStationForCategory = null;
+    }
+
+    function assignCategoryToStation(stationId, catId) {
+      const strId = String(stationId);
+      stationCategoryOverrides[strId] = catId;
+      localStorage.setItem('roc_user_station_cats', JSON.stringify(stationCategoryOverrides));
+
+      // Also update userCustomStations if present
+      const custStation = userCustomStations.find(s => String(s.id) === strId);
+      if (custStation) {
+        custStation.category = catId;
+        custStation.genre = catId;
+        localStorage.setItem('roc_user_custom_stations', JSON.stringify(userCustomStations));
+      }
+
+      // Automatically pin to library
+      if (!userLibrary.includes(strId)) {
+        userLibrary.push(strId);
+        localStorage.setItem('roc_user_library', JSON.stringify(userLibrary));
+      }
+
+      const all = getAllStations();
+      const station = all.find(s => String(s.id) === strId);
+      const catObj = userCategories.find(c => c.id === catId);
+      const stName = station ? station.name : 'Rádio';
+      const catName = catObj ? catObj.name : catId;
+      const catIcon = catObj ? catObj.icon : '🏷️';
+
+      showToast(`Rádio "${stName}" associada à categoria "${catName}" e guardada na Biblioteca!`, catIcon, 'success');
+
+      closeStationCategoryModal();
+      saveState();
+    }
+
+    // Mobile Sheet Player & Tools
+    function handlePlayerClick() {
+      if (window.innerWidth < 768) {
+        openMobileSheetPlayer();
+      } else {
+        openTVMode();
+      }
+    }
+
+    function openMobileSheetPlayer() {
+      const s = getCurrentStation();
+      document.getElementById('sheet-station-name').textContent = s.name;
+      document.getElementById('sheet-now-playing').textContent = `${s.country || 'Global'} • ${s.genre || s.category}`;
+      document.getElementById('sheet-volume-slider').value = volume;
+      
+      const imgEl = document.getElementById('sheet-cover-img');
+      const fallbackEl = document.getElementById('sheet-cover-fallback');
+      if (s.image) {
+        imgEl.src = s.image;
+        imgEl.classList.remove('hidden');
+        fallbackEl.classList.add('hidden');
+      } else {
+        imgEl.classList.add('hidden');
+        fallbackEl.classList.remove('hidden');
+      }
+      document.getElementById('sheet-fav-btn').textContent = userFavorites.includes(String(s.id)) ? '⭐ Favorito' : '☆ Favorito';
+      document.getElementById('sheet-lib-btn').textContent = userLibrary.includes(String(s.id)) ? '📌 Na Biblioteca' : '➕ Biblioteca';
+      document.getElementById('sheet-play-btn').textContent = isPlaying ? '⏸️' : '▶️';
+      document.getElementById('mobile-player-sheet').classList.remove('hidden');
+    }
+
+    function closeMobileSheetPlayer() {
+      document.getElementById('mobile-player-sheet').classList.add('hidden');
+    }
+
+    function openMobileToolsDrawer() {
+      document.getElementById('mobile-tools-modal').classList.remove('hidden');
+    }
+    function closeMobileToolsDrawer() {
+      document.getElementById('mobile-tools-modal').classList.add('hidden');
+    }
+
     function getAllStations() {
       const combined = searchQuery.trim() !== ''
         ? [...apiSearchResults, ...userCustomStations, ...MASTER_CATALOG]
@@ -2200,6 +2698,9 @@
         seen.add(String(s.id));
         s.favorite = userFavorites.includes(String(s.id));
         s.inLibrary = userLibrary.includes(String(s.id));
+        if (stationCategoryOverrides[String(s.id)]) {
+          s.category = stationCategoryOverrides[String(s.id)];
+        }
         return true;
       });
     }
@@ -2208,6 +2709,8 @@
       localStorage.setItem('roc_user_favorites', JSON.stringify(userFavorites));
       localStorage.setItem('roc_user_library', JSON.stringify(userLibrary));
       localStorage.setItem('roc_user_playlists', JSON.stringify(userPlaylists));
+      localStorage.setItem('roc_user_categories', JSON.stringify(userCategories));
+      localStorage.setItem('roc_user_station_cats', JSON.stringify(stationCategoryOverrides));
       localStorage.setItem('roc_user_custom_stations', JSON.stringify(userCustomStations));
       localStorage.setItem('roc_user_recents', JSON.stringify(recentIds));
       localStorage.setItem('roc_user_track_history', JSON.stringify(trackHistory));
@@ -2225,15 +2728,8 @@
       const all = getAllStations();
       document.getElementById('fav-count').textContent = userFavorites.length;
       document.getElementById('lib-count').textContent = userLibrary.length;
-      document.getElementById('count-all').textContent = all.length;
-      document.getElementById('count-music').textContent = all.filter(s => s.category === 'Música').length;
-      document.getElementById('count-rock').textContent = all.filter(s => s.category === 'Rock').length;
-      document.getElementById('count-news').textContent = all.filter(s => s.category === 'Notícias').length;
-      document.getElementById('count-sports').textContent = all.filter(s => s.category === 'Desporto').length;
-      document.getElementById('count-electro').textContent = all.filter(s => s.category === 'Eletrónica').length;
-      document.getElementById('count-relax').textContent = all.filter(s => s.category === 'Relax').length;
+      renderCategories();
       document.getElementById('side-history-badge').textContent = trackHistory.length;
-      
       document.getElementById('side-alarm-badge').textContent = alarmSettings.enabled ? alarmSettings.time : 'Off';
       document.getElementById('side-dvr-badge').textContent = dvrSettings.enabled ? dvrSettings.time : 'Off';
     }
@@ -2479,6 +2975,8 @@
         liveBadge.classList.add('hidden');
         cover.classList.remove('scale-105', 'ring-2', 'ring-cyan-400');
       }
+      const sheetPlayBtn = document.getElementById('sheet-play-btn');
+      if (sheetPlayBtn) sheetPlayBtn.textContent = isPlaying ? '⏸️' : '▶️';
       renderRocPreview();
       updatePiPCanvas();
     }
@@ -2602,6 +3100,14 @@
       const activeNav = document.getElementById(`nav-${view}`);
       if (activeNav) {
         activeNav.className = 'nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold text-sm transition bg-cyan-500/20 text-cyan-400';
+      }
+
+      document.querySelectorAll('.mob-nav-btn').forEach(b => {
+        b.className = 'mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-400 hover:text-white transition';
+      });
+      const activeMobNav = document.getElementById(`mob-nav-${view}`);
+      if (activeMobNav) {
+        activeMobNav.className = 'mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-cyan-400 font-bold transition';
       }
 
       const mapContainer = document.getElementById('map-view-container');
@@ -2751,13 +3257,7 @@
     function selectCategory(cat) {
       selectedCategory = cat;
       currentView = 'home';
-      document.querySelectorAll('.cat-btn').forEach(b => {
-        b.className = 'cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition';
-      });
-      const activeCat = document.getElementById(`cat-${cat}`);
-      if (activeCat) {
-        activeCat.className = 'cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-cyan-400 transition';
-      }
+      renderCategories();
       setView('home');
       render();
     }
@@ -2923,7 +3423,13 @@
           const initial = (s.name || 'R').trim().charAt(0).toUpperCase();
 
           return `
-            <div onclick="selectStation('${s.id}', true)" class="station-card group cursor-pointer rounded-2xl p-4 border flex flex-col justify-between ${isCurrent ? 'bg-cyan-500/15 border-cyan-500/60 shadow-xl shadow-cyan-500/15' : 'bg-slate-900 border-slate-800 hover:border-cyan-500/40 hover:bg-slate-800/80'}">
+            <div 
+              draggable="true" 
+              ondragstart="handleDragStart(event, '${s.id}')" 
+              ondragend="handleDragEnd(event)" 
+              onclick="selectStation('${s.id}', true)" 
+              class="station-card group cursor-pointer rounded-2xl p-4 border flex flex-col justify-between select-none ${isCurrent ? 'bg-cyan-500/15 border-cyan-500/60 shadow-xl shadow-cyan-500/15' : 'bg-slate-900 border-slate-800 hover:border-cyan-500/40 hover:bg-slate-800/80'}"
+            >
               
               <!-- Cover Header -->
               <div class="flex items-start justify-between gap-3 mb-3">
@@ -2934,10 +3440,13 @@
                   <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
                     ${s.flag || '🌐'} ${safeCountry}
                   </span>
-                  <button onclick="toggleLibraryInclusion('${s.id}', event)" class="p-1 rounded-lg text-slate-400 hover:text-cyan-400 transition text-sm" title="${isInLib ? 'Remover da Biblioteca' : 'Incluir na Biblioteca'}">
+                  <button onclick="openStationCategoryModal('${s.id}', event)" class="p-1 rounded-lg text-slate-400 hover:text-purple-400 hover:bg-purple-500/10 transition text-sm" title="Mover para Categoria">
+                    🏷️
+                  </button>
+                  <button onclick="toggleLibraryInclusion('${s.id}', event)" class="p-1 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition text-sm" title="${isInLib ? 'Remover da Biblioteca' : 'Incluir na Biblioteca'}">
                     ${isInLib ? '📌' : '➕'}
                   </button>
-                  <button onclick="toggleFavorite('${s.id}', event)" class="p-1 rounded-lg text-slate-400 hover:text-amber-400 transition" title="Favorito">
+                  <button onclick="toggleFavorite('${s.id}', event)" class="p-1 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition" title="Favorito">
                     ${isFav ? '⭐' : '☆'}
                   </button>
                 </div>
@@ -2954,9 +3463,11 @@
                 <p class="text-xs text-slate-400 truncate mt-0.5">${safeGenre}</p>
               </div>
 
-              <!-- Footer info -->
+              <!-- Footer info with Category Tag -->
               <div class="mt-3 pt-2.5 border-t border-slate-800/50 flex items-center justify-between text-[11px] text-slate-500">
-                <span class="px-2 py-0.5 rounded bg-slate-950 font-medium">${s.category || 'Música'}</span>
+                <span class="px-2 py-0.5 rounded-lg bg-slate-950 text-cyan-400 border border-slate-800/80 font-semibold flex items-center gap-1">
+                  <span class="text-xs">🏷️</span> <span class="truncate max-w-[90px]">${s.category || 'Música'}</span>
+                </span>
                 <span class="font-mono text-cyan-400 font-bold">${s.bit_rate || 128} kbps</span>
               </div>
             </div>
@@ -3690,7 +4201,13 @@ active_stations = [
     setTheme(currentTheme);
 
     // Custom Station Modal
-    function openAddModal() { document.getElementById('add-modal').classList.remove('hidden'); }
+    function openAddModal() {
+      const catSelect = document.getElementById('cust-cat');
+      if (catSelect) {
+        catSelect.innerHTML = userCategories.filter(c => c.id !== 'Todas').map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      }
+      document.getElementById('add-modal').classList.remove('hidden');
+    }
     function closeAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
 
     document.getElementById('custom-form').addEventListener('submit', (e) => {
@@ -3724,6 +4241,7 @@ active_stations = [
       saveState();
       closeAddModal();
       selectStation(newId, true);
+      showToast(`Rádio "${name}" adicionada com sucesso à categoria "${cat}" e à Biblioteca!`, '📻', 'success');
     });
 
     // Keyboard Shortcuts

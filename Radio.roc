@@ -28,6 +28,12 @@ CustomPlaylist : {
 	station_ids : List(U64),
 }
 
+CustomCategory : {
+	id : Str,
+	name : Str,
+	icon : Str,
+}
+
 ScheduledRecording : {
 	station_id : U64,
 	start_time : Str,
@@ -122,6 +128,27 @@ toggle_library_inclusion = |stations, target_id| {
 			}
 		},
 	)
+}
+
+## Atribui uma estação de rádio a uma nova categoria ou género musical
+assign_station_category : StationList, U64, Str -> StationList
+assign_station_category = |stations, target_id, new_category| {
+	List.map(
+		stations,
+		|station| {
+			if station.id == target_id {
+				{ ..station, genre: new_category }
+			} else {
+				station
+			}
+		},
+	)
+}
+
+## Cria e adiciona uma nova categoria personalizada
+create_custom_category : List(CustomCategory), Str, Str, Str -> List(CustomCategory)
+create_custom_category = |categories, id, name, icon| {
+	List.append(categories, { id, name, icon })
 }
 
 ## Filtro avançado por múltiplos critérios
@@ -525,3 +552,19 @@ expect {
 		and rec.duration_mins == 30
 			and rec.is_active == Bool.True
 }
+
+# Teste 13: Criação de Categorias Personalizadas e Reatribuição de Rádio
+expect {
+	s1 = create_station(1, "Rádio Comercial", "url1", "Música", "Portugal", 128)
+	updated_stations = assign_station_category([s1], 1, "Anos 90")
+	matching_90s = filter_by_genre(updated_stations, "Anos 90")
+
+	cats = [
+		{ id: "cat_pop", name: "Pop", icon: "🎵" },
+	]
+	new_cats = create_custom_category(cats, "cat_90s", "Anos 90", "📻")
+
+	List.len(matching_90s) == 1
+		and List.len(new_cats) == 2
+}
+
