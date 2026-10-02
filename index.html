@@ -4106,9 +4106,11 @@
 
     function getAllStations() {
       const deletedSet = new Set(deletedStationIds.map(String));
+      const mapDiscovered = typeof mapDiscoveredStations !== 'undefined' && Array.isArray(mapDiscoveredStations) ? mapDiscoveredStations : [];
+      const mapStationsList = typeof MAP_STATIONS !== 'undefined' && Array.isArray(MAP_STATIONS) ? MAP_STATIONS : [];
       const combined = searchQuery.trim() !== ''
-        ? [...apiSearchResults, ...userCustomStations, ...MASTER_CATALOG]
-        : [...userCustomStations, ...MASTER_CATALOG, ...apiSearchResults];
+        ? [...apiSearchResults, ...mapDiscovered, ...mapStationsList, ...userCustomStations, ...MASTER_CATALOG]
+        : [...userCustomStations, ...MASTER_CATALOG, ...mapStationsList, ...mapDiscovered, ...apiSearchResults];
 
       const seen = new Set();
       return combined.filter(s => {
@@ -4167,8 +4169,26 @@
     }
 
     function getCurrentStation() {
+      const targetId = String(currentStationId);
+      
+      // 1. Direct search in discovered map stations
+      if (typeof mapDiscoveredStations !== 'undefined' && Array.isArray(mapDiscoveredStations)) {
+        const foundMap = mapDiscoveredStations.find(s => String(s.id) === targetId);
+        if (foundMap) return foundMap;
+      }
+
+      // 2. Direct search in MAP_STATIONS
+      if (typeof MAP_STATIONS !== 'undefined' && Array.isArray(MAP_STATIONS)) {
+        const foundMapBuiltin = MAP_STATIONS.find(s => String(s.id) === targetId);
+        if (foundMapBuiltin) return foundMapBuiltin;
+      }
+
+      // 3. Search in all stations
       const all = getAllStations();
-      return all.find(s => String(s.id) === String(currentStationId)) || all[0] || MASTER_CATALOG[0];
+      const foundAll = all.find(s => String(s.id) === targetId);
+      if (foundAll) return foundAll;
+
+      return all[0] || MASTER_CATALOG[0];
     }
 
     function selectStation(id, autoplay = true) {
