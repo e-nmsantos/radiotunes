@@ -681,6 +681,9 @@
         <button onclick="shareCurrentStation()" class="p-1.5 text-slate-400 hover:text-cyan-400 transition text-sm" title="Copiar Link da Estação">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
         </button>
+        <button onclick="openDeleteStationModal(currentStationId)" class="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition text-sm" title="Eliminar / Remover Estação Atual">
+          🗑️
+        </button>
         <button onclick="openTVMode()" class="p-1.5 text-slate-400 hover:text-white transition text-sm" title="Modo TV">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1v4m0-4h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
         </button>
@@ -1233,6 +1236,11 @@
           <span class="text-slate-500 text-[10px]">VLC / iTunes</span>
         </button>
 
+        <button onclick="restoreAllDeletedStations()" class="w-full py-2.5 px-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-amber-500/50 text-amber-400 font-bold text-xs flex items-center justify-between transition">
+          <span class="flex items-center gap-2"><span>🔄</span> Restaurar Rádios Eliminadas</span>
+          <span id="deleted-count-badge" class="px-2 py-0.5 rounded-full bg-slate-800 text-[10px] text-slate-300">0</span>
+        </button>
+
         <label class="w-full py-3 px-4 rounded-2xl border-2 border-dashed border-slate-800 hover:border-cyan-500/50 cursor-pointer text-slate-400 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition block text-center">
           <span>📤</span> Restaurar Backup JSON
           <input type="file" id="import-file" accept=".json" class="hidden" onchange="importJSONBackup(event)" />
@@ -1344,7 +1352,7 @@
         <!-- Category choices dynamically injected -->
       </div>
       <div class="pt-2 flex flex-col gap-2">
-        <button onclick="closeStationCategoryModal(); openDeleteStationModal(targetStationForCategory);" class="w-full p-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-800/60 flex items-center justify-between text-xs text-red-300 font-bold transition">
+        <button onclick="const sid = targetStationForCategory || currentStationId; closeStationCategoryModal(); openDeleteStationModal(sid);" class="w-full p-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-800/60 flex items-center justify-between text-xs text-red-300 font-bold transition">
           <span class="flex items-center gap-2"><span>🗑️</span> <span>Eliminar / Remover esta Estação</span></span>
           <span class="text-red-400">✕</span>
         </button>
@@ -1465,24 +1473,24 @@
   </div>
 
   <!-- Modal 15: Confirm Delete Station Modal -->
-  <div id="delete-confirm-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+  <div id="delete-confirm-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[9999] hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-red-400 flex items-center gap-2">🗑️ Eliminar / Remover Estação</h3>
-        <button onclick="closeDeleteStationModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+        <h3 class="text-base font-black text-red-400 flex items-center gap-2">🗑️ Eliminar Rádio</h3>
+        <button onclick="closeDeleteStationModal()" class="text-slate-400 hover:text-white text-xl p-1">&times;</button>
       </div>
 
       <div id="delete-station-info" class="p-3.5 bg-slate-950 rounded-2xl border border-slate-800 flex items-center gap-3">
         <!-- Station details dynamically injected -->
       </div>
 
-      <p class="text-xs text-slate-300">
-        Tens a certeza que desejas remover esta estação de rádio da tua lista? Se for uma rádio personalizada, será apagada definitivamente.
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Tens a certeza que desejas remover esta estação de rádio da tua lista? Deixará de aparecer no catálogo, nos teus favoritos e na tua biblioteca.
       </p>
 
       <div class="flex gap-3 pt-2">
-        <button onclick="closeDeleteStationModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition">Cancelar</button>
-        <button onclick="confirmDeleteStation()" class="flex-1 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-black shadow-lg shadow-red-500/20 transition active:scale-95">Sim, Eliminar</button>
+        <button type="button" onclick="closeDeleteStationModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition">Cancelar</button>
+        <button type="button" onclick="confirmDeleteStation()" class="flex-1 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-black shadow-lg shadow-red-500/20 transition active:scale-95">Sim, Eliminar</button>
       </div>
     </div>
   </div>
@@ -2762,26 +2770,51 @@
 
     // Delete / Hide Station Engine
     function openDeleteStationModal(stationId, event) {
-      if (event) event.stopPropagation();
+      if (event) {
+        try {
+          if (typeof event.stopPropagation === 'function') event.stopPropagation();
+          if (typeof event.preventDefault === 'function') event.preventDefault();
+        } catch(e) {}
+      }
+      if (!stationId) stationId = currentStationId;
       stationToDeleteId = String(stationId);
+
+      // Close sub-drawers/sheets if open
+      closeStationCategoryModal();
+      closeMobileSheetPlayer();
+
       const all = getAllStations();
-      const station = all.find(s => String(s.id) === stationToDeleteId) || getCurrentStation();
+      const station = all.find(s => String(s.id) === stationToDeleteId) || 
+                      userCustomStations.find(s => String(s.id) === stationToDeleteId) ||
+                      MASTER_CATALOG.find(s => String(s.id) === stationToDeleteId) ||
+                      apiSearchResults.find(s => String(s.id) === stationToDeleteId) ||
+                      getCurrentStation();
 
       const infoEl = document.getElementById('delete-station-info');
-      if (infoEl) {
+      if (infoEl && station) {
+        const flag = station.flag || '📻';
+        const name = station.name || 'Estação';
+        const country = station.country || 'Global';
+        const category = station.category || 'Música';
+        const imgTag = station.image 
+          ? `<img src="${station.image}" class="w-10 h-10 rounded-xl object-cover border border-slate-700 flex-shrink-0" onerror="this.outerHTML='<span class=\\'text-3xl flex-shrink-0\\'>${flag}</span>'" />`
+          : `<span class="text-3xl flex-shrink-0">${flag}</span>`;
+
         infoEl.innerHTML = `
-          <span class="text-3xl">${station.flag || '📻'}</span>
+          ${imgTag}
           <div class="min-w-0 flex-1">
-            <h4 class="text-sm font-extrabold text-white truncate">${station.name}</h4>
-            <p class="text-xs text-slate-400">${station.country || 'Global'} • ${station.category || 'Música'}</p>
+            <h4 class="text-sm font-extrabold text-white truncate">${name}</h4>
+            <p class="text-xs text-slate-400">${country} • <span class="text-cyan-400 font-semibold">${category}</span></p>
           </div>
         `;
       }
-      document.getElementById('delete-confirm-modal').classList.remove('hidden');
+      const modal = document.getElementById('delete-confirm-modal');
+      if (modal) modal.classList.remove('hidden');
     }
 
     function closeDeleteStationModal() {
-      document.getElementById('delete-confirm-modal').classList.add('hidden');
+      const modal = document.getElementById('delete-confirm-modal');
+      if (modal) modal.classList.add('hidden');
       stationToDeleteId = null;
     }
 
@@ -2789,10 +2822,13 @@
       if (!stationToDeleteId) return;
       const strId = String(stationToDeleteId);
       const all = getAllStations();
-      const station = all.find(s => String(s.id) === strId);
+      const station = all.find(s => String(s.id) === strId) ||
+                      userCustomStations.find(s => String(s.id) === strId) ||
+                      MASTER_CATALOG.find(s => String(s.id) === strId) ||
+                      apiSearchResults.find(s => String(s.id) === strId);
       const stName = station ? station.name : 'Rádio';
 
-      // 1. If it is a custom station, remove from userCustomStations
+      // 1. If it is a custom station, remove permanently from userCustomStations
       userCustomStations = userCustomStations.filter(s => String(s.id) !== strId);
 
       // 2. Remove from favorites, library, recents, playlists
@@ -2800,28 +2836,51 @@
       userLibrary = userLibrary.filter(id => String(id) !== strId);
       recentIds = recentIds.filter(id => String(id) !== strId);
       userPlaylists.forEach(pl => {
-        pl.stationIds = pl.stationIds.filter(id => String(id) !== strId);
+        if (pl && pl.stationIds) {
+          pl.stationIds = pl.stationIds.filter(id => String(id) !== strId);
+        }
       });
 
-      // 3. Mark as deleted/hidden from catalog
-      if (!deletedStationIds.includes(strId)) {
-        deletedStationIds.push(strId);
-        localStorage.setItem('roc_user_deleted_stations', JSON.stringify(deletedStationIds));
-      }
+      // 3. Remove from active search results
+      apiSearchResults = apiSearchResults.filter(s => String(s.id) !== strId);
 
-      // 4. Delete category override
+      // 4. Mark as deleted/hidden from catalog
+      if (!deletedStationIds.map(String).includes(strId)) {
+        deletedStationIds.push(strId);
+      }
+      localStorage.setItem('roc_user_deleted_stations', JSON.stringify(deletedStationIds));
+
+      // 5. Delete category override
       delete stationCategoryOverrides[strId];
       localStorage.setItem('roc_user_station_cats', JSON.stringify(stationCategoryOverrides));
-
-      showToast(`Rádio "${stName}" eliminada da tua lista com sucesso!`, '🗑️', 'info');
 
       closeDeleteStationModal();
       saveState();
 
-      // If current station was deleted, play next
+      showToast(`Rádio "${stName}" eliminada da tua lista com sucesso!`, '🗑️', 'info');
+
+      // 6. If currently playing this deleted station, switch to next available station
       if (String(currentStationId) === strId) {
-        playNext();
+        const remaining = getAllStations();
+        if (remaining.length > 0) {
+          selectStation(remaining[0].id, isPlaying);
+        } else {
+          stopAudio();
+        }
       }
+    }
+
+    function restoreAllDeletedStations() {
+      if (!deletedStationIds || deletedStationIds.length === 0) {
+        showToast('Não existem rádios eliminadas para restaurar.', 'ℹ️', 'info');
+        return;
+      }
+      const count = deletedStationIds.length;
+      deletedStationIds = [];
+      localStorage.setItem('roc_user_deleted_stations', JSON.stringify([]));
+      saveState();
+      showToast(`${count} rádio(s) restaurada(s) com sucesso no catálogo!`, '🔄', 'success');
+      closeBackupModal();
     }
 
     // View Explainer Banner Helper
@@ -2835,18 +2894,21 @@
     }
 
     function getAllStations() {
+      const deletedSet = new Set(deletedStationIds.map(String));
       const combined = searchQuery.trim() !== ''
         ? [...apiSearchResults, ...userCustomStations, ...MASTER_CATALOG]
         : [...userCustomStations, ...MASTER_CATALOG, ...apiSearchResults];
 
       const seen = new Set();
       return combined.filter(s => {
-        if (!s || !s.id || seen.has(String(s.id)) || deletedStationIds.includes(String(s.id))) return false;
-        seen.add(String(s.id));
-        s.favorite = userFavorites.includes(String(s.id));
-        s.inLibrary = userLibrary.includes(String(s.id));
-        if (stationCategoryOverrides[String(s.id)]) {
-          s.category = stationCategoryOverrides[String(s.id)];
+        if (!s || !s.id) return false;
+        const sid = String(s.id);
+        if (seen.has(sid) || deletedSet.has(sid)) return false;
+        seen.add(sid);
+        s.favorite = userFavorites.map(String).includes(sid);
+        s.inLibrary = userLibrary.map(String).includes(sid);
+        if (stationCategoryOverrides[sid]) {
+          s.category = stationCategoryOverrides[sid];
         }
         return true;
       });
@@ -2874,12 +2936,19 @@
 
     function updateCounts() {
       const all = getAllStations();
-      document.getElementById('fav-count').textContent = userFavorites.length;
-      document.getElementById('lib-count').textContent = userLibrary.length;
+      const favEl = document.getElementById('fav-count');
+      if (favEl) favEl.textContent = userFavorites.length;
+      const libEl = document.getElementById('lib-count');
+      if (libEl) libEl.textContent = userLibrary.length;
+      const delEl = document.getElementById('deleted-count-badge');
+      if (delEl) delEl.textContent = deletedStationIds.length;
       renderCategories();
-      document.getElementById('side-history-badge').textContent = trackHistory.length;
-      document.getElementById('side-alarm-badge').textContent = alarmSettings.enabled ? alarmSettings.time : 'Off';
-      document.getElementById('side-dvr-badge').textContent = dvrSettings.enabled ? dvrSettings.time : 'Off';
+      const histEl = document.getElementById('side-history-badge');
+      if (histEl) histEl.textContent = trackHistory.length;
+      const alarmEl = document.getElementById('side-alarm-badge');
+      if (alarmEl) alarmEl.textContent = alarmSettings.enabled ? alarmSettings.time : 'Off';
+      const dvrEl = document.getElementById('side-dvr-badge');
+      if (dvrEl) dvrEl.textContent = dvrSettings.enabled ? dvrSettings.time : 'Off';
     }
 
     function getCurrentStation() {
@@ -3612,16 +3681,16 @@
                   <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
                     ${s.flag || '🌐'} ${safeCountry}
                   </span>
-                  <button onclick="openStationCategoryModal('${s.id}', event)" class="p-1 rounded-lg text-slate-400 hover:text-purple-400 hover:bg-purple-500/10 transition text-sm" title="Mover para Categoria">
+                  <button onclick="event.stopPropagation(); openStationCategoryModal('${s.id}', event);" class="p-1 rounded-lg text-slate-400 hover:text-purple-400 hover:bg-purple-500/10 transition text-sm" title="Mover para Categoria">
                     🏷️
                   </button>
-                  <button onclick="toggleLibraryInclusion('${s.id}', event)" class="p-1 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition text-sm" title="${isInLib ? 'Remover da Biblioteca' : 'Incluir na Biblioteca'}">
+                  <button onclick="event.stopPropagation(); toggleLibraryInclusion('${s.id}', event);" class="p-1 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition text-sm" title="${isInLib ? 'Remover da Biblioteca' : 'Incluir na Biblioteca'}">
                     ${isInLib ? '📌' : '➕'}
                   </button>
-                  <button onclick="toggleFavorite('${s.id}', event)" class="p-1 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition" title="Favorito">
+                  <button onclick="event.stopPropagation(); toggleFavorite('${s.id}', event);" class="p-1 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition" title="Favorito">
                     ${isFav ? '⭐' : '☆'}
                   </button>
-                  <button onclick="openDeleteStationModal('${s.id}', event)" class="p-1 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition text-sm" title="Eliminar / Remover Rádio">
+                  <button onclick="event.stopPropagation(); openDeleteStationModal('${s.id}', event);" class="p-1 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition text-sm" title="Eliminar / Remover Rádio">
                     🗑️
                   </button>
                 </div>
