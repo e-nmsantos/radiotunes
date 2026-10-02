@@ -23,9 +23,12 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   
-  <!-- Leaflet.js for Interactive World Radio Map -->
+  <!-- Leaflet.js & MarkerCluster for Interactive World Radio Map -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
   <script>
     tailwind.config = {
@@ -224,6 +227,55 @@
       transform: scale(1.12);
       border-color: #38bdf8;
       background: rgba(15, 23, 42, 1);
+    }
+    /* Neon Clusters for MarkerCluster */
+    .marker-cluster-small {
+      background-color: rgba(6, 182, 212, 0.35) !important;
+      border: 2px solid rgba(6, 182, 212, 0.8) !important;
+      border-radius: 50% !important;
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.5) !important;
+    }
+    .marker-cluster-small div {
+      background-color: rgba(15, 23, 42, 0.92) !important;
+      color: #22d3ee !important;
+      font-weight: 900 !important;
+      font-size: 11px !important;
+      border-radius: 50% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    .marker-cluster-medium {
+      background-color: rgba(59, 130, 246, 0.35) !important;
+      border: 2px solid rgba(59, 130, 246, 0.8) !important;
+      border-radius: 50% !important;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.5) !important;
+    }
+    .marker-cluster-medium div {
+      background-color: rgba(15, 23, 42, 0.92) !important;
+      color: #60a5fa !important;
+      font-weight: 900 !important;
+      font-size: 11px !important;
+      border-radius: 50% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    .marker-cluster-large {
+      background-color: rgba(168, 85, 247, 0.35) !important;
+      border: 2px solid rgba(168, 85, 247, 0.8) !important;
+      border-radius: 50% !important;
+      box-shadow: 0 0 25px rgba(168, 85, 247, 0.6) !important;
+    }
+    .marker-cluster-large div {
+      background-color: rgba(15, 23, 42, 0.92) !important;
+      color: #c084fc !important;
+      font-weight: 900 !important;
+      font-size: 11px !important;
+      border-radius: 50% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
   </style>
 </head>
@@ -4601,11 +4653,13 @@
       }
     }
 
-    // World Interactive Radio Map (Leaflet) with Dynamic Live Geo-Discovery
+    // World Interactive Radio Map (Leaflet & MarkerCluster) with Massive Live Geo-Discovery
     let currentMapRegion = 'all';
     let mapDiscoveredStations = [];
     let mapViewportTimer = null;
     let isFetchingGeoRadios = false;
+    let mapClusterGroup = null;
+    let hasStartedMassiveDiscovery = false;
 
     function initWorldMap() {
       if (!leafletMap) {
@@ -4613,7 +4667,7 @@
           center: [20, 0],
           zoom: 2,
           minZoom: 2,
-          maxZoom: 14
+          maxZoom: 16
         });
 
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
@@ -4626,7 +4680,17 @@
           maxZoom: 16
         }).addTo(leafletMap);
 
-        // Dynamic discovery as user zooms into countries & cities
+        if (typeof L.markerClusterGroup === 'function') {
+          mapClusterGroup = L.markerClusterGroup({
+            maxClusterRadius: 40,
+            disableClusteringAtZoom: 11,
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false
+          });
+          leafletMap.addLayer(mapClusterGroup);
+        }
+
+        // Dynamic discovery as user zooms or pans into countries & cities
         leafletMap.on('moveend zoomend', () => {
           onMapViewportChanged();
         });
@@ -4636,13 +4700,18 @@
 
       const totalCountEl = document.getElementById('map-total-count');
       const allMappable = getAllMappableStations();
-      if (totalCountEl) totalCountEl.textContent = allMappable.length;
+      if (totalCountEl) totalCountEl.textContent = allMappable.length > 0 ? allMappable.length.toLocaleString('pt-PT') : '...';
 
       filterMapByRegion(currentMapRegion);
 
       setTimeout(() => {
         if (leafletMap) leafletMap.invalidateSize();
       }, 250);
+
+      // Start massive background discovery of thousands of stations across the globe
+      if (!hasStartedMassiveDiscovery) {
+        startMassiveRadioDiscovery();
+      }
     }
 
     function getAllMappableStations() {
@@ -4662,22 +4731,31 @@
     function renderAllMapMarkers() {
       if (!leafletMap) return;
 
-      mapMarkers.forEach(m => leafletMap.removeLayer(m));
+      if (mapClusterGroup) {
+        mapClusterGroup.clearLayers();
+      } else {
+        mapMarkers.forEach(m => leafletMap.removeLayer(m));
+      }
       mapMarkers = [];
 
       const mappableStations = getAllMappableStations();
+      const newLayers = [];
 
       mappableStations.forEach(st => {
-        addMarkerForStation(st);
+        const marker = createMarkerObject(st);
+        if (marker) {
+          mapMarkers.push(marker);
+          newLayers.push(marker);
+        }
       });
+
+      if (mapClusterGroup) {
+        mapClusterGroup.addLayers(newLayers);
+      }
     }
 
-    function addMarkerForStation(st) {
-      if (!leafletMap || st.lat == null || st.lon == null) return null;
-
-      // Check if already added
-      const existing = mapMarkers.find(m => String(m.stationId) === String(st.id));
-      if (existing) return existing;
+    function createMarkerObject(st) {
+      if (!st || st.lat == null || st.lon == null) return null;
 
       const isCurrent = String(st.id) === String(currentStationId);
       const customIcon = L.divIcon({
@@ -4693,18 +4771,22 @@
         popupAnchor: [0, -14]
       });
 
-      const marker = L.marker([st.lat, st.lon], { icon: customIcon }).addTo(leafletMap);
+      const marker = L.marker([st.lat, st.lon], { icon: customIcon });
       marker.stationId = String(st.id);
       marker.stationData = st;
+
+      const safeName = (st.name || 'Rádio').replace(/"/g, '&quot;');
+      const safeCity = (st.city ? st.city + ', ' : '') + (st.country || 'Mundo');
+      const safeGenre = (st.genre || st.category || 'Música').replace(/"/g, '&quot;');
 
       marker.bindPopup(`
         <div class="p-2 space-y-2.5 text-slate-100 min-w-[220px]">
           <div class="flex items-center gap-2.5 border-b border-slate-700/80 pb-2">
             <span class="text-2xl flex-shrink-0">${st.flag || '🌐'}</span>
             <div class="min-w-0">
-              <h4 class="font-black text-sm text-cyan-400 leading-tight truncate">${st.name}</h4>
-              <p class="text-[11px] text-slate-300 font-semibold">${st.city ? st.city + ', ' : ''}${st.country || 'Mundo'}</p>
-              <p class="text-[10px] text-slate-400 truncate">${st.genre || st.category || 'Música'}</p>
+              <h4 class="font-black text-sm text-cyan-400 leading-tight truncate">${safeName}</h4>
+              <p class="text-[11px] text-slate-300 font-semibold truncate">${safeCity}</p>
+              <p class="text-[10px] text-slate-400 truncate">${safeGenre}</p>
             </div>
           </div>
           <div class="flex items-center justify-between text-[10px] text-slate-400">
@@ -4717,8 +4799,139 @@
         </div>
       `);
 
+      return marker;
+    }
+
+    function addMarkerForStation(st) {
+      if (!leafletMap || st.lat == null || st.lon == null) return null;
+
+      const existing = mapMarkers.find(m => String(m.stationId) === String(st.id));
+      if (existing) return existing;
+
+      const marker = createMarkerObject(st);
+      if (!marker) return null;
+
+      if (mapClusterGroup) {
+        mapClusterGroup.addLayer(marker);
+      } else {
+        marker.addTo(leafletMap);
+      }
+
       mapMarkers.push(marker);
       return marker;
+    }
+
+    // Massive global radio discovery: streams thousands of stations across the globe in progressive chunks
+    async function startMassiveRadioDiscovery() {
+      if (hasStartedMassiveDiscovery) return;
+      hasStartedMassiveDiscovery = true;
+
+      const servers = [
+        'https://de1.api.radio-browser.info',
+        'https://nl1.api.radio-browser.info',
+        'https://at1.api.radio-browser.info',
+        'https://all.api.radio-browser.info'
+      ];
+
+      const batches = [
+        { limit: 3500, offset: 0 },
+        { limit: 4000, offset: 3500 },
+        { limit: 4500, offset: 7500 },
+        { limit: 3000, offset: 12000 }
+      ];
+
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        let success = false;
+
+        for (const srv of servers) {
+          try {
+            const url = `${srv}/json/stations/search?has_geo_info=true&limit=${batch.limit}&offset=${batch.offset}&order=clickcount&reverse=true`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 6500);
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
+            if (res.ok) {
+              const list = await res.json();
+              if (Array.isArray(list) && list.length > 0) {
+                processAndAddGeoStations(list);
+                success = true;
+                break;
+              }
+            }
+          } catch (err) {
+            console.warn(`Server ${srv} error on batch ${i}:`, err.message);
+          }
+        }
+
+        // Brief delay between batches to keep UI super smooth
+        await new Promise(r => setTimeout(r, 400));
+      }
+    }
+
+    function processAndAddGeoStations(list) {
+      const newStations = [];
+      const newMarkers = [];
+      const seenIds = new Set(mapDiscoveredStations.map(s => String(s.id)));
+
+      list.forEach((item, idx) => {
+        const lat = parseFloat(item.geo_lat);
+        const lon = parseFloat(item.geo_long);
+
+        if (!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
+          const sid = `geo_${item.stationuuid || item.changeuuid || (Date.now() + '_' + idx)}`;
+          if (!seenIds.has(sid)) {
+            seenIds.add(sid);
+            const cat = getCategoryFromTags(item.tags || item.name || "");
+            const flag = getFlagEmoji(item.countrycode || "");
+            const safeCountry = item.country || (item.countrycode ? item.countrycode.toUpperCase() : "Global");
+
+            const newSt = {
+              id: sid,
+              name: (item.name || 'Rádio Local').trim(),
+              stream_url: item.url_resolved || item.url,
+              category: cat,
+              tags: item.tags || "",
+              genre: item.tags ? item.tags.split(',').slice(0, 2).map(t => t.trim()).join(' / ') : cat,
+              country: safeCountry,
+              city: item.state || safeCountry,
+              flag: flag,
+              lat: lat,
+              lon: lon,
+              bit_rate: item.bitrate || 128,
+              favorite: false,
+              inLibrary: false,
+              image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
+              color: getRandomGradient(item.stationuuid || String(idx)),
+              desc: item.state ? `${item.state}, ${safeCountry}` : safeCountry
+            };
+
+            newStations.push(newSt);
+            mapDiscoveredStations.push(newSt);
+
+            const marker = createMarkerObject(newSt);
+            if (marker) {
+              mapMarkers.push(marker);
+              newMarkers.push(marker);
+            }
+          }
+        }
+      });
+
+      if (mapClusterGroup && newMarkers.length > 0) {
+        mapClusterGroup.addLayers(newMarkers);
+      }
+
+      const totalMappable = getAllMappableStations();
+      const totalCountEl = document.getElementById('map-total-count');
+      if (totalCountEl) {
+        totalCountEl.textContent = totalMappable.length.toLocaleString('pt-PT');
+      }
+
+      if (leafletMap) {
+        populateMapPickerForBounds(leafletMap.getBounds(), leafletMap.getZoom());
+      }
     }
 
     function onMapViewportChanged() {
@@ -4732,8 +4945,8 @@
         // 1. Update station picker with radios inside current visible viewport
         populateMapPickerForBounds(bounds, zoom);
 
-        // 2. If zoom >= 4, dynamically discover more local radios in this visible area
-        if (zoom >= 4 && !isFetchingGeoRadios) {
+        // 2. If zoom >= 5, dynamically fetch any additional regional radios in this visible area
+        if (zoom >= 5 && !isFetchingGeoRadios) {
           fetchDynamicGeoStations(bounds, zoom);
         }
       }, 300);
@@ -4745,7 +4958,7 @@
 
       const countEl = document.getElementById('map-visible-count');
       if (countEl) {
-        countEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> A descobrir rádios locais nesta área...`;
+        countEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> A sintonizar rádios locais nesta área...`;
       }
 
       const north = bounds.getNorth();
@@ -4755,12 +4968,13 @@
 
       const servers = [
         'https://de1.api.radio-browser.info',
+        'https://nl1.api.radio-browser.info',
         'https://all.api.radio-browser.info'
       ];
 
       try {
         let rawData = [];
-        const limit = zoom >= 8 ? 60 : 35;
+        const limit = zoom >= 8 ? 100 : 50;
         const url = `${servers[0]}/json/stations/search?has_geo_info=true&limit=${limit}&order=clickcount&reverse=true`;
 
         const controller = new AbortController();
@@ -4771,56 +4985,9 @@
         if (res.ok) {
           const list = await res.json();
           if (Array.isArray(list)) {
-            rawData = list;
+            processAndAddGeoStations(list);
           }
         }
-
-        let newFound = 0;
-        rawData.forEach((item, idx) => {
-          const lat = parseFloat(item.geo_lat);
-          const lon = parseFloat(item.geo_long);
-
-          if (!isNaN(lat) && !isNaN(lon) && lat >= south && lat <= north && lon >= west && lon <= east) {
-            const sid = `geo_${item.stationuuid || idx}`;
-            if (!mapDiscoveredStations.some(s => String(s.id) === sid)) {
-              const cat = getCategoryFromTags(item.tags || item.name || "");
-              const flag = getFlagEmoji(item.countrycode || "");
-              const safeCountry = item.country || (item.countrycode ? item.countrycode.toUpperCase() : "Global");
-
-              const newSt = {
-                id: sid,
-                name: (item.name || 'Rádio Local').trim(),
-                stream_url: item.url_resolved || item.url,
-                category: cat,
-                tags: item.tags || "",
-                genre: item.tags ? item.tags.split(',').slice(0, 2).map(t => t.trim()).join(' / ') : cat,
-                country: safeCountry,
-                city: item.state || safeCountry,
-                flag: flag,
-                lat: lat,
-                lon: lon,
-                bit_rate: item.bitrate || 128,
-                favorite: false,
-                inLibrary: false,
-                image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
-                color: getRandomGradient(item.stationuuid || String(idx)),
-                desc: item.state ? `${item.state}, ${safeCountry}` : safeCountry
-              };
-
-              mapDiscoveredStations.push(newSt);
-              addMarkerForStation(newSt);
-              newFound++;
-            }
-          }
-        });
-
-        const totalMappable = getAllMappableStations();
-        const totalCountEl = document.getElementById('map-total-count');
-        if (totalCountEl) totalCountEl.textContent = totalMappable.length;
-
-        // Re-populate picker with updated stations in viewport
-        populateMapPickerForBounds(bounds, zoom);
-
       } catch (err) {
         console.warn('Geo discovery background fetch error:', err);
       } finally {
