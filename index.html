@@ -159,6 +159,72 @@
       from { opacity: 0; transform: translateY(-12px) scale(0.95); }
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
+    /* Radio Garden Style Pulse & Pins */
+    .radio-garden-dot {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .radio-garden-dot .dot-core {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #00f0ff;
+      border: 2px solid #ffffff;
+      box-shadow: 0 0 12px #00f0ff, 0 0 20px #00f0ff;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .radio-garden-dot:hover .dot-core {
+      transform: scale(1.6);
+      background: #38bdf8;
+      box-shadow: 0 0 18px #38bdf8, 0 0 30px #38bdf8;
+    }
+    .radio-garden-dot.is-active .dot-core {
+      background: #22c55e;
+      border-color: #ffffff;
+      box-shadow: 0 0 16px #22c55e, 0 0 28px #22c55e;
+      animation: neon-pulse 1.4s infinite;
+    }
+    .radio-garden-dot .dot-ring {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(0, 240, 255, 0.6);
+      animation: beacon-expand 2s infinite ease-out;
+      pointer-events: none;
+    }
+    @keyframes beacon-expand {
+      0% { transform: scale(0.4); opacity: 1; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+    @keyframes neon-pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.75; }
+    }
+    .city-hub-pill {
+      background: rgba(15, 23, 42, 0.94);
+      border: 1.5px solid #00f0ff;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 9999px;
+      box-shadow: 0 4px 15px rgba(0, 240, 255, 0.35);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .city-hub-pill:hover {
+      transform: scale(1.12);
+      border-color: #38bdf8;
+      background: rgba(15, 23, 42, 1);
+    }
   </style>
 </head>
 <body class="text-slate-100 antialiased min-h-screen flex flex-col md:flex-row pb-44 md:pb-28">
@@ -575,26 +641,55 @@
       </div>
     </div>
 
-    <!-- Map View Container -->
+    <!-- Map View Container (Radio Garden Style Global 45,000+ Station Radar) -->
     <div id="map-view-container" class="hidden space-y-4">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/90 border border-slate-800 p-4 rounded-3xl">
-        <div>
-          <h2 class="text-base font-black text-white flex items-center gap-2">
-            <span>🗺️</span> <span data-i18n="worldMapTitle">Explorador Global de Rádios no Mapa</span>
-          </h2>
-          <p class="text-xs text-slate-400" data-i18n="worldMapSub">Clica em qualquer ponto do globo ou escolhe uma rádio abaixo para sintonizar a emissão local instantaneamente.</p>
+      
+      <!-- Top Control Bar -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-slate-900/90 border border-slate-800 p-4 sm:p-5 rounded-3xl shadow-2xl">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-cyan-400 animate-ping"></span>
+            <h2 class="text-base sm:text-lg font-black text-white flex items-center gap-2">
+              <span>🪐</span> <span>Explorador Global de 45.000+ Rádios</span>
+            </h2>
+          </div>
+          <p class="text-xs text-slate-400">
+            Navega e faz zoom pelo planeta. À medida que te aproximas de qualquer país, região ou cidade, as estações locais são descobertas em tempo real!
+          </p>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="zoomMapToFit()" class="text-xs px-3.5 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 font-bold transition flex items-center gap-1.5 active:scale-95">
-            <span>🌍</span> <span>Ver Mundo Inteiro</span>
+
+        <!-- City / Country Quick Search & GPS -->
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="relative flex-1 sm:w-72">
+            <input 
+              type="text" 
+              id="map-city-search-input" 
+              placeholder="🔍 Escreve uma cidade ou país..." 
+              onkeydown="if(event.key==='Enter') searchCityOnMap(this.value);"
+              class="w-full bg-slate-950 border border-slate-800 focus:border-cyan-400 rounded-2xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none shadow-inner"
+            />
+            <button onclick="searchCityOnMap(document.getElementById('map-city-search-input').value)" class="absolute right-2 top-2 px-2.5 py-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black rounded-xl text-[11px] transition active:scale-90">
+              Ir ➔
+            </button>
+          </div>
+
+          <button onclick="locateUserGPSOnMap()" class="px-3.5 py-2.5 rounded-2xl bg-slate-950 hover:bg-cyan-500/20 border border-slate-800 text-cyan-400 font-bold text-xs flex items-center gap-1.5 transition active:scale-95" title="Centrar na minha localização atual">
+            <span>🎯</span> <span class="hidden sm:inline">Onde Estou</span>
           </button>
-          <button onclick="setView('home')" class="text-xs px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition active:scale-95" data-i18n="closeMap">✕ Fechar Mapa</button>
+
+          <button onclick="zoomMapToFit()" class="px-3.5 py-2.5 rounded-2xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 font-bold text-xs flex items-center gap-1.5 transition active:scale-95" title="Ver todo o planeta">
+            <span>🌍</span> <span>Globo</span>
+          </button>
+
+          <button onclick="setView('home')" class="px-3 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs transition active:scale-95" title="Fechar mapa">
+            ✕
+          </button>
         </div>
       </div>
 
       <!-- Quick Region Filter Chips on Map -->
       <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar" id="map-region-filters">
-        <button onclick="filterMapByRegion('all')" id="map-reg-all" class="map-reg-btn px-3.5 py-2 rounded-2xl font-bold bg-cyan-500 text-slate-950 flex-shrink-0 shadow transition">🌐 Todas (<span id="map-total-count">0</span>)</button>
+        <button onclick="filterMapByRegion('all')" id="map-reg-all" class="map-reg-btn px-3.5 py-2 rounded-2xl font-bold bg-cyan-500 text-slate-950 flex-shrink-0 shadow transition">🌐 Todas (<span id="map-total-count">45.000+</span>)</button>
         <button onclick="filterMapByRegion('Portugal')" id="map-reg-Portugal" class="map-reg-btn px-3.5 py-2 rounded-2xl font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex-shrink-0 transition">🇵🇹 Portugal</button>
         <button onclick="filterMapByRegion('Espanha')" id="map-reg-Espanha" class="map-reg-btn px-3.5 py-2 rounded-2xl font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex-shrink-0 transition">🇪🇸 Espanha</button>
         <button onclick="filterMapByRegion('Europa')" id="map-reg-Europa" class="map-reg-btn px-3.5 py-2 rounded-2xl font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex-shrink-0 transition">🇪🇺 Europa</button>
@@ -607,24 +702,58 @@
         <button onclick="filterMapByRegion('Oceania')" id="map-reg-Oceania" class="map-reg-btn px-3.5 py-2 rounded-2xl font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex-shrink-0 transition">🇦🇺 Oceania</button>
       </div>
 
-      <!-- Leaflet Map Canvas with Badge -->
-      <div class="relative">
-        <div id="world-map" class="w-full h-[520px] rounded-3xl border border-slate-800 overflow-hidden shadow-2xl z-10"></div>
-        <div class="absolute top-4 right-4 z-20 bg-slate-950/90 backdrop-blur-md px-3.5 py-1.5 rounded-2xl border border-slate-800 text-[11px] text-cyan-400 font-bold flex items-center gap-2 shadow-xl pointer-events-none">
-          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-          <span id="map-visible-count">A carregar estações...</span>
+      <!-- Leaflet Map Canvas with Glassmorphism HUD -->
+      <div class="relative rounded-3xl overflow-hidden border border-slate-800 shadow-2xl">
+        <div id="world-map" class="w-full h-[540px] z-10"></div>
+        
+        <!-- Floating Live HUD Overlay -->
+        <div class="absolute top-4 left-4 z-20 bg-slate-950/90 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-800 text-xs shadow-2xl flex items-center gap-2.5 pointer-events-none">
+          <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+          <div>
+            <div class="font-extrabold text-white text-[11px] flex items-center gap-1.5">
+              <span>📡 Rede Global:</span> <span class="text-cyan-400">+45.000 Rádios</span>
+            </div>
+            <div class="text-[10px] text-slate-400 font-medium" id="map-area-title">Planeta Terra</div>
+          </div>
+        </div>
+
+        <div class="absolute top-4 right-4 z-20 bg-slate-950/90 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-800 text-xs shadow-2xl flex items-center gap-2 pointer-events-none">
+          <span class="text-base">🟢</span>
+          <div>
+            <div id="map-visible-count" class="font-black text-cyan-400 text-[11px]">A carregar rádios...</div>
+            <div class="text-[10px] text-slate-400 font-medium">Sintonizáveis neste ecrã</div>
+          </div>
+        </div>
+
+        <!-- Radar hint at bottom of map -->
+        <div class="absolute bottom-4 left-4 right-4 z-20 flex justify-center pointer-events-none">
+          <div class="bg-slate-950/85 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-800/80 text-[11px] text-slate-300 font-semibold shadow-xl flex items-center gap-2">
+            <span>💡</span> <span>Faz duplo clique no mapa ou usa o scroll do rato para te aproximares de cidades e ouvires rádios locais!</span>
+          </div>
         </div>
       </div>
 
-      <!-- Interactive Map Station Quick-Picker Drawer / Grid -->
-      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-5 space-y-3 shadow-2xl">
-        <div class="flex items-center justify-between">
-          <h3 class="text-xs sm:text-sm font-black text-white flex items-center gap-2">
-            <span>📻</span> <span>Estações Disponíveis no Mapa</span>
-          </h3>
-          <span class="text-[11px] text-slate-400">Clica para voar no globo e começar a ouvir</span>
+      <!-- Interactive Map Station Quick-Picker Grid with Area Filter -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-5 space-y-3.5 shadow-2xl">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+          <div>
+            <h3 class="text-sm font-black text-white flex items-center gap-2">
+              <span>📻</span> <span>Estações Disponíveis no Enquadramento Atual</span>
+            </h3>
+            <p class="text-xs text-slate-400">Clica em qualquer cartão para voar diretamente até à emissora e começar a ouvir.</p>
+          </div>
+          <div class="relative w-full sm:w-60">
+            <input 
+              type="text" 
+              id="map-picker-filter-input" 
+              placeholder="Filtrar nesta lista..." 
+              oninput="filterMapPickerList(this.value)"
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400"
+            />
+          </div>
         </div>
-        <div id="map-stations-picker" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 max-h-80 overflow-y-auto pr-1">
+        
+        <div id="map-stations-picker" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 max-h-96 overflow-y-auto pr-1">
           <!-- Dynamically populated station cards for the map -->
         </div>
       </div>
@@ -4550,13 +4679,18 @@
       const existing = mapMarkers.find(m => String(m.stationId) === String(st.id));
       if (existing) return existing;
 
-      const flagIcon = st.flag || '📍';
+      const isCurrent = String(st.id) === String(currentStationId);
       const customIcon = L.divIcon({
         className: 'custom-radio-pin',
-        html: `<div class="w-9 h-9 rounded-2xl bg-slate-900/90 border-2 border-cyan-400 flex items-center justify-center text-base shadow-xl shadow-cyan-500/40 hover:scale-125 hover:border-amber-400 transition cursor-pointer" title="${st.name} (${st.city || st.country})">${flagIcon}</div>`,
-        iconSize: [36, 36],
-        iconAnchor: [18, 18],
-        popupAnchor: [0, -18]
+        html: `
+          <div class="radio-garden-dot ${isCurrent ? 'is-active' : ''}" title="${st.name} (${st.city || st.country})">
+            <div class="dot-ring"></div>
+            <div class="dot-core"></div>
+          </div>
+        `,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+        popupAnchor: [0, -14]
       });
 
       const marker = L.marker([st.lat, st.lon], { icon: customIcon }).addTo(leafletMap);
@@ -4564,7 +4698,7 @@
       marker.stationData = st;
 
       marker.bindPopup(`
-        <div class="p-2 space-y-2.5 text-slate-100 min-w-[210px]">
+        <div class="p-2 space-y-2.5 text-slate-100 min-w-[220px]">
           <div class="flex items-center gap-2.5 border-b border-slate-700/80 pb-2">
             <span class="text-2xl flex-shrink-0">${st.flag || '🌐'}</span>
             <div class="min-w-0">
@@ -4746,6 +4880,187 @@
           </div>
         `;
       }).join('');
+    }
+
+    function filterMapPickerList(filterText) {
+      const container = document.getElementById('map-stations-picker');
+      const countEl = document.getElementById('map-visible-count');
+      if (!container) return;
+
+      const all = getAllMappableStations();
+      const bounds = leafletMap ? leafletMap.getBounds() : null;
+      const inViewport = bounds ? all.filter(st => bounds.contains([st.lat, st.lon])) : all;
+
+      const query = (filterText || '').trim().toLowerCase();
+      const filtered = query
+        ? inViewport.filter(s => 
+            (s.name && s.name.toLowerCase().includes(query)) ||
+            (s.city && s.city.toLowerCase().includes(query)) ||
+            (s.country && s.country.toLowerCase().includes(query)) ||
+            (s.genre && s.genre.toLowerCase().includes(query)) ||
+            (s.category && s.category.toLowerCase().includes(query))
+          )
+        : inViewport;
+
+      if (countEl) {
+        countEl.textContent = `${filtered.length} rádios filtradas nesta área`;
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-8 text-center space-y-2">
+            <span class="text-3xl">🔍</span>
+            <p class="text-xs text-slate-400">Nenhuma rádio encontrada para "${filterText}".</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(s => {
+        const isCurrent = String(s.id) === String(currentStationId);
+        const safeName = (s.name || 'Rádio').replace(/"/g, '&quot;');
+        const safeCity = (s.city || s.country || 'Global').replace(/"/g, '&quot;');
+        const safeGenre = (s.genre || s.category || 'Música').replace(/"/g, '&quot;');
+
+        return `
+          <div class="p-3 rounded-2xl bg-slate-950/80 border ${isCurrent ? 'border-cyan-400 shadow-md shadow-cyan-500/20' : 'border-slate-800 hover:border-slate-700'} flex flex-col justify-between gap-2.5 transition">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-2xl flex-shrink-0">${s.flag || '📻'}</span>
+                <div class="min-w-0">
+                  <h4 class="text-xs font-black text-white truncate ${isCurrent ? 'text-cyan-400' : ''}">${safeName}</h4>
+                  <p class="text-[10px] text-cyan-400/90 font-semibold truncate">📍 ${safeCity}</p>
+                </div>
+              </div>
+              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300 flex-shrink-0 border border-slate-700">
+                ${s.bit_rate || 128}k
+              </span>
+            </div>
+
+            <p class="text-[10px] text-slate-400 truncate">${safeGenre}</p>
+
+            <button onclick="flyToStationOnMap('${s.id}')" class="w-full py-1.5 px-3 rounded-xl bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 font-bold text-[11px] transition active:scale-95 flex items-center justify-center gap-1.5">
+              <span>✈️</span> <span>Sintonizar & Voar</span>
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function searchCityOnMap(query) {
+      if (!query || !query.trim()) return;
+      const q = query.trim();
+      const searchInput = document.getElementById('map-city-search-input');
+      if (searchInput) searchInput.blur();
+
+      showToast(`A pesquisar "${q}" no mapa mundial...`, '🔍', 'info');
+
+      const knownPlaces = {
+        'lisboa': [38.7223, -9.1393, 11, '🇵🇹 Lisboa, Portugal'],
+        'porto': [41.1579, -8.6291, 11, '🇵🇹 Porto, Portugal'],
+        'madrid': [40.4168, -3.7038, 11, '🇪🇸 Madrid, Espanha'],
+        'barcelona': [41.3851, 2.1734, 11, '🇪🇸 Barcelona, Espanha'],
+        'paris': [48.8566, 2.3522, 11, '🇫🇷 Paris, França'],
+        'londres': [51.5074, -0.1278, 11, '🇬🇧 Londres, Reino Unido'],
+        'london': [51.5074, -0.1278, 11, '🇬🇧 London, UK'],
+        'roma': [41.9028, 12.4964, 11, '🇮🇹 Roma, Itália'],
+        'rome': [41.9028, 12.4964, 11, '🇮🇹 Roma, Itália'],
+        'berlim': [52.5200, 13.4050, 11, '🇩🇪 Berlim, Alemanha'],
+        'berlin': [52.5200, 13.4050, 11, '🇩🇪 Berlim, Alemanha'],
+        'são paulo': [-23.5505, -46.6333, 11, '🇧🇷 São Paulo, Brasil'],
+        'sao paulo': [-23.5505, -46.6333, 11, '🇧🇷 São Paulo, Brasil'],
+        'rio de janeiro': [-22.9068, -43.1729, 11, '🇧🇷 Rio de Janeiro, Brasil'],
+        'rio': [-22.9068, -43.1729, 11, '🇧🇷 Rio de Janeiro, Brasil'],
+        'buenos aires': [-34.6037, -58.3816, 11, '🇦🇷 Buenos Aires, Argentina'],
+        'bogotá': [4.7110, -74.0721, 11, '🇨🇴 Bogotá, Colômbia'],
+        'bogota': [4.7110, -74.0721, 11, '🇨🇴 Bogotá, Colômbia'],
+        'santiago': [-33.4489, -70.6693, 11, '🇨🇱 Santiago, Chile'],
+        'lima': [-12.0464, -77.0428, 11, '🇵🇪 Lima, Peru'],
+        'cidade do méxico': [19.4326, -99.1332, 11, '🇲🇽 Cidade do México, México'],
+        'mexico': [19.4326, -99.1332, 7, '🇲🇽 México'],
+        'nova iorque': [40.7128, -74.0060, 11, '🇺🇸 Nova Iorque, EUA'],
+        'new york': [40.7128, -74.0060, 11, '🇺🇸 New York, USA'],
+        'los angeles': [34.0522, -118.2437, 11, '🇺🇸 Los Angeles, EUA'],
+        'miami': [25.7617, -80.1918, 11, '🇺🇸 Miami, EUA'],
+        'toquio': [35.6762, 139.6503, 11, '🇯🇵 Tóquio, Japão'],
+        'tokyo': [35.6762, 139.6503, 11, '🇯🇵 Tokyo, Japan'],
+        'luanda': [-8.8390, 13.2894, 11, '🇦🇴 Luanda, Angola'],
+        'maputo': [-25.9692, 32.5732, 11, '🇲🇿 Maputo, Moçambique'],
+        'praia': [14.9330, -23.5133, 11, '🇨🇻 Praia, Cabo Verde'],
+        'sydney': [-33.8688, 151.2093, 11, '🇦🇺 Sydney, Austrália'],
+        'brasil': [-14.2350, -51.9253, 5, '🇧🇷 Brasil'],
+        'portugal': [39.3999, -8.2245, 7, '🇵🇹 Portugal'],
+        'espanha': [40.4637, -3.7492, 6, '🇪🇸 Espanha'],
+        'spain': [40.4637, -3.7492, 6, '🇪🇸 Espanha'],
+        'angola': [-11.2027, 17.8739, 6, '🇦🇴 Angola'],
+        'argentina': [-38.4161, -63.6167, 5, '🇦🇷 Argentina'],
+        'colombia': [4.5709, -74.2973, 6, '🇨🇴 Colômbia'],
+        'chile': [-35.6751, -71.5430, 5, '🇨🇱 Chile'],
+      };
+
+      const key = q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      for (const [k, v] of Object.entries(knownPlaces)) {
+        const normK = k.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        if (normK === key || normK.includes(key) || key.includes(normK)) {
+          if (leafletMap) {
+            leafletMap.flyTo([v[0], v[1]], v[2], { duration: 1.5 });
+            const areaTitle = document.getElementById('map-area-title');
+            if (areaTitle) areaTitle.textContent = v[3];
+            showToast(`A voar para ${v[3]}!`, '✈️', 'success');
+          }
+          return;
+        }
+      }
+
+      // Query OpenStreetMap Nominatim for any location
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0) {
+            const item = data[0];
+            const lat = parseFloat(item.lat);
+            const lon = parseFloat(item.lon);
+            if (!isNaN(lat) && !isNaN(lon) && leafletMap) {
+              leafletMap.flyTo([lat, lon], 9, { duration: 1.5 });
+              const areaTitle = document.getElementById('map-area-title');
+              if (areaTitle) areaTitle.textContent = item.display_name.split(',').slice(0, 2).join(',');
+              showToast(`A voar para ${item.display_name.split(',')[0]}!`, '✈️', 'success');
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Geocoding search failed:', err);
+      }
+
+      showToast(`Local "${q}" não encontrado. Tenta outra cidade.`, '⚠️', 'info');
+    }
+
+    function locateUserGPSOnMap() {
+      if (!navigator.geolocation) {
+        showToast('Geolocalização não é suportada pelo teu navegador.', '⚠️', 'info');
+        return;
+      }
+
+      showToast('A obter a tua localização GPS...', '🎯', 'info');
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          if (leafletMap) {
+            leafletMap.flyTo([lat, lon], 10, { duration: 1.5 });
+            const areaTitle = document.getElementById('map-area-title');
+            if (areaTitle) areaTitle.textContent = '📍 A Tua Localização Atual';
+            showToast('Localização GPS detetada com sucesso!', '🎯', 'success');
+          }
+        },
+        (err) => {
+          console.warn('GPS error:', err);
+          showToast('Permissão de GPS recusada ou indisponível.', '⚠️', 'info');
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
     }
 
     function filterMapByRegion(region) {
