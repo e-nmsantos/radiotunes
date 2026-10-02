@@ -166,8 +166,8 @@
   <!-- Toast Notification Floating Container -->
   <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full px-3"></div>
 
-  <!-- Sidebar Navigation -->
-  <aside class="w-full md:w-64 bg-slate-900/90 backdrop-blur-md border-r border-slate-800 p-5 flex flex-col justify-between flex-shrink-0">
+  <!-- Sidebar Navigation (Desktop Only) -->
+  <aside class="hidden md:flex md:w-64 bg-slate-900/90 backdrop-blur-md border-r border-slate-800 p-5 flex-col justify-between flex-shrink-0 min-h-screen">
     <div class="space-y-6">
       
       <!-- Brand Logo & Lang Switcher -->
@@ -328,7 +328,34 @@
   </aside>
 
   <!-- Main Content Area -->
-  <main class="flex-1 p-4 md:p-8 overflow-y-auto max-w-7xl mx-auto w-full space-y-6">
+  <main class="flex-1 p-3 md:p-8 overflow-y-auto max-w-7xl mx-auto w-full space-y-4 md:space-y-6">
+
+    <!-- Mobile Top Header Bar (< md) -->
+    <header class="md:hidden flex items-center justify-between p-3 bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-2xl shadow-lg sticky top-0 z-30 mb-2">
+      <div class="flex items-center gap-2.5 cursor-pointer" onclick="setView('home')">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white text-lg font-black shadow-md shadow-cyan-500/20">
+          📻
+        </div>
+        <div>
+          <div class="text-sm font-black text-white tracking-tight flex items-center gap-1">
+            ROC <span class="text-cyan-400">TUNEIN</span>
+          </div>
+          <div class="text-[9px] text-slate-400 font-medium">© 2026 Nuno Santos</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <select id="mob-lang-select" onchange="changeLanguage(this.value)" class="bg-slate-950 border border-slate-800 text-[10px] text-cyan-400 rounded-lg px-2 py-1 font-bold focus:outline-none">
+          <option value="pt">🇵🇹 PT</option>
+          <option value="en">🇬🇧 EN</option>
+          <option value="es">🇪🇸 ES</option>
+          <option value="fr">🇫🇷 FR</option>
+        </select>
+        <button onclick="openMobileToolsDrawer()" class="p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs flex items-center gap-1 font-bold border border-slate-700 active:scale-95" title="Menu & Ferramentas">
+          <span>🛠️</span>
+        </button>
+      </div>
+    </header>
 
     <!-- Active Alarm Ringing Alert Banner -->
     <div id="alarm-ringing-banner" class="hidden p-4 rounded-2xl bg-amber-500 text-slate-950 font-bold flex items-center justify-between shadow-2xl animate-bounce">
@@ -357,6 +384,22 @@
       <button onclick="stopRecording()" class="px-3 py-1.5 rounded-xl bg-red-500 hover:bg-red-400 text-slate-950 font-black text-xs transition">
         Parar & Guardar Ficheiro 📥
       </button>
+    </div>
+
+    <!-- View & Concept Explainer Banner (Clarifies difference between Favoritos, Biblioteca, Categorias) -->
+    <div id="view-explainer-banner" class="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 border border-cyan-500/20 text-xs flex items-center justify-between shadow-sm">
+      <div class="flex items-center gap-2.5">
+        <span id="explainer-icon" class="text-2xl flex-shrink-0">🔥</span>
+        <div>
+          <h4 id="explainer-title" class="font-bold text-white text-xs sm:text-sm">Catálogo Global & Tendências</h4>
+          <p id="explainer-desc" class="text-[11px] text-slate-400">Todas as rádios disponíveis organizadas por país e categorias musicais.</p>
+        </div>
+      </div>
+      <div class="hidden lg:flex items-center gap-1.5 text-[10px]">
+        <span class="px-2 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-slate-300">⭐ Favoritos = Atalhos</span>
+        <span class="px-2 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-slate-300">📌 Biblioteca = Minha Coleção</span>
+        <span class="px-2 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-slate-300">🏷️ Categorias = Estilos</span>
+      </div>
     </div>
 
     <!-- Super Search & Advanced Filters Header -->
@@ -1300,7 +1343,11 @@
       <div id="station-category-options-list" class="space-y-1.5 max-h-60 overflow-y-auto pr-1">
         <!-- Category choices dynamically injected -->
       </div>
-      <div class="pt-2">
+      <div class="pt-2 flex flex-col gap-2">
+        <button onclick="closeStationCategoryModal(); openDeleteStationModal(targetStationForCategory);" class="w-full p-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-800/60 flex items-center justify-between text-xs text-red-300 font-bold transition">
+          <span class="flex items-center gap-2"><span>🗑️</span> <span>Eliminar / Remover esta Estação</span></span>
+          <span class="text-red-400">✕</span>
+        </button>
         <button onclick="closeStationCategoryModal()" class="w-full px-4 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition">Fechar</button>
       </div>
     </div>
@@ -1328,11 +1375,12 @@
         <p id="sheet-now-playing" class="text-xs text-cyan-400 font-medium truncate">Pop & Top 40 Hits</p>
       </div>
 
-      <!-- Quick Actions (Favorite, Library, Change Category) -->
-      <div class="flex items-center gap-2 pt-2">
-        <button id="sheet-fav-btn" onclick="toggleCurrentFav()" class="px-3.5 py-2 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-amber-400 font-bold active:scale-95">☆ Favorito</button>
-        <button id="sheet-lib-btn" onclick="toggleCurrentLib()" class="px-3.5 py-2 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-cyan-400 font-bold active:scale-95">📌 Biblioteca</button>
-        <button onclick="openStationCategoryModal(currentStationId)" class="px-3.5 py-2 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-purple-400 font-bold active:scale-95">🏷️ Categoria</button>
+      <!-- Quick Actions (Favorite, Library, Change Category, Delete) -->
+      <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
+        <button id="sheet-fav-btn" onclick="toggleCurrentFav()" class="px-3 py-2 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-amber-400 font-bold active:scale-95">☆ Favorito</button>
+        <button id="sheet-lib-btn" onclick="toggleCurrentLib()" class="px-3 py-2 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-cyan-400 font-bold active:scale-95">📌 Biblioteca</button>
+        <button onclick="openStationCategoryModal(currentStationId)" class="px-3 py-2 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-purple-400 font-bold active:scale-95">🏷️ Categoria</button>
+        <button onclick="closeMobileSheetPlayer(); openDeleteStationModal(currentStationId);" class="px-3 py-2 rounded-2xl bg-red-950/40 border border-red-800/60 text-xs text-red-400 font-bold active:scale-95">🗑️ Eliminar</button>
       </div>
     </div>
 
@@ -1412,6 +1460,29 @@
 
       <div class="pt-1">
         <button onclick="closeMobileToolsDrawer()" class="w-full px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-bold transition">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 15: Confirm Delete Station Modal -->
+  <div id="delete-confirm-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-red-400 flex items-center gap-2">🗑️ Eliminar / Remover Estação</h3>
+        <button onclick="closeDeleteStationModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+
+      <div id="delete-station-info" class="p-3.5 bg-slate-950 rounded-2xl border border-slate-800 flex items-center gap-3">
+        <!-- Station details dynamically injected -->
+      </div>
+
+      <p class="text-xs text-slate-300">
+        Tens a certeza que desejas remover esta estação de rádio da tua lista? Se for uma rádio personalizada, será apagada definitivamente.
+      </p>
+
+      <div class="flex gap-3 pt-2">
+        <button onclick="closeDeleteStationModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition">Cancelar</button>
+        <button onclick="confirmDeleteStation()" class="flex-1 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-black shadow-lg shadow-red-500/20 transition active:scale-95">Sim, Eliminar</button>
       </div>
     </div>
   </div>
@@ -2202,6 +2273,7 @@
       { id: "Relax", name: "Lo-Fi, Jazz & Relax", icon: "☕" }
     ]));
     let stationCategoryOverrides = JSON.parse(localStorage.getItem('roc_user_station_cats') || '{}');
+    let deletedStationIds = JSON.parse(localStorage.getItem('roc_user_deleted_stations') || '[]');
     let userCustomStations = JSON.parse(localStorage.getItem('roc_user_custom_stations') || '[]');
     let recentIds = JSON.parse(localStorage.getItem('roc_user_recents') || '["m_101", "m_201", "m_301", "m_1", "m_2"]');
     let trackHistory = JSON.parse(localStorage.getItem('roc_user_track_history') || '[]');
@@ -2209,6 +2281,7 @@
     
     let draggedStationId = null;
     let targetStationForCategory = null;
+    let stationToDeleteId = null;
     
     let eq10Bands = JSON.parse(localStorage.getItem('roc_user_eq10') || '{"32":0,"64":0,"125":0,"250":0,"500":0,"1k":0,"2k":0,"4k":0,"8k":0,"16k":0}');
     let spatialValue = parseInt(localStorage.getItem('roc_user_spatial') || '0', 10);
@@ -2687,6 +2760,80 @@
       document.getElementById('mobile-tools-modal').classList.add('hidden');
     }
 
+    // Delete / Hide Station Engine
+    function openDeleteStationModal(stationId, event) {
+      if (event) event.stopPropagation();
+      stationToDeleteId = String(stationId);
+      const all = getAllStations();
+      const station = all.find(s => String(s.id) === stationToDeleteId) || getCurrentStation();
+
+      const infoEl = document.getElementById('delete-station-info');
+      if (infoEl) {
+        infoEl.innerHTML = `
+          <span class="text-3xl">${station.flag || '📻'}</span>
+          <div class="min-w-0 flex-1">
+            <h4 class="text-sm font-extrabold text-white truncate">${station.name}</h4>
+            <p class="text-xs text-slate-400">${station.country || 'Global'} • ${station.category || 'Música'}</p>
+          </div>
+        `;
+      }
+      document.getElementById('delete-confirm-modal').classList.remove('hidden');
+    }
+
+    function closeDeleteStationModal() {
+      document.getElementById('delete-confirm-modal').classList.add('hidden');
+      stationToDeleteId = null;
+    }
+
+    function confirmDeleteStation() {
+      if (!stationToDeleteId) return;
+      const strId = String(stationToDeleteId);
+      const all = getAllStations();
+      const station = all.find(s => String(s.id) === strId);
+      const stName = station ? station.name : 'Rádio';
+
+      // 1. If it is a custom station, remove from userCustomStations
+      userCustomStations = userCustomStations.filter(s => String(s.id) !== strId);
+
+      // 2. Remove from favorites, library, recents, playlists
+      userFavorites = userFavorites.filter(id => String(id) !== strId);
+      userLibrary = userLibrary.filter(id => String(id) !== strId);
+      recentIds = recentIds.filter(id => String(id) !== strId);
+      userPlaylists.forEach(pl => {
+        pl.stationIds = pl.stationIds.filter(id => String(id) !== strId);
+      });
+
+      // 3. Mark as deleted/hidden from catalog
+      if (!deletedStationIds.includes(strId)) {
+        deletedStationIds.push(strId);
+        localStorage.setItem('roc_user_deleted_stations', JSON.stringify(deletedStationIds));
+      }
+
+      // 4. Delete category override
+      delete stationCategoryOverrides[strId];
+      localStorage.setItem('roc_user_station_cats', JSON.stringify(stationCategoryOverrides));
+
+      showToast(`Rádio "${stName}" eliminada da tua lista com sucesso!`, '🗑️', 'info');
+
+      closeDeleteStationModal();
+      saveState();
+
+      // If current station was deleted, play next
+      if (String(currentStationId) === strId) {
+        playNext();
+      }
+    }
+
+    // View Explainer Banner Helper
+    function updateExplainerBanner(icon, title, desc) {
+      const iconEl = document.getElementById('explainer-icon');
+      const titleEl = document.getElementById('explainer-title');
+      const descEl = document.getElementById('explainer-desc');
+      if (iconEl) iconEl.textContent = icon;
+      if (titleEl) titleEl.textContent = title;
+      if (descEl) descEl.textContent = desc;
+    }
+
     function getAllStations() {
       const combined = searchQuery.trim() !== ''
         ? [...apiSearchResults, ...userCustomStations, ...MASTER_CATALOG]
@@ -2694,7 +2841,7 @@
 
       const seen = new Set();
       return combined.filter(s => {
-        if (!s || !s.id || seen.has(String(s.id))) return false;
+        if (!s || !s.id || seen.has(String(s.id)) || deletedStationIds.includes(String(s.id))) return false;
         seen.add(String(s.id));
         s.favorite = userFavorites.includes(String(s.id));
         s.inLibrary = userLibrary.includes(String(s.id));
@@ -2711,6 +2858,7 @@
       localStorage.setItem('roc_user_playlists', JSON.stringify(userPlaylists));
       localStorage.setItem('roc_user_categories', JSON.stringify(userCategories));
       localStorage.setItem('roc_user_station_cats', JSON.stringify(stationCategoryOverrides));
+      localStorage.setItem('roc_user_deleted_stations', JSON.stringify(deletedStationIds));
       localStorage.setItem('roc_user_custom_stations', JSON.stringify(userCustomStations));
       localStorage.setItem('roc_user_recents', JSON.stringify(recentIds));
       localStorage.setItem('roc_user_track_history', JSON.stringify(trackHistory));
@@ -3132,11 +3280,32 @@
       
       const titleEl = document.getElementById('section-title');
       const dict = I18N[currentLang] || I18N.pt;
-      if (view === 'favorites') titleEl.innerHTML = `<span>⭐</span> ${dict.myFavorites}`;
-      else if (view === 'library') titleEl.innerHTML = `<span>📌</span> ${dict.myLibrary}`;
-      else if (view === 'recents') titleEl.innerHTML = `<span>🕒</span> ${dict.recentlyPlayed}`;
-      else if (view === 'topworld') titleEl.innerHTML = `<span>🌍</span> ${dict.top50World}`;
-      else titleEl.innerHTML = `<span>🔥</span> ${dict.popularStations}`;
+      if (view === 'favorites') {
+        titleEl.innerHTML = `<span>⭐</span> ${dict.myFavorites}`;
+        updateExplainerBanner('⭐', 'Os Teus Favoritos Rápidos', 'As tuas rádios de eleição marcadas com estrela para acesso imediato.');
+      } else if (view === 'library') {
+        titleEl.innerHTML = `<span>📌</span> ${dict.myLibrary}`;
+        updateExplainerBanner('📌', 'A Tua Biblioteca Pessoal', 'O teu acervo completo de rádios guardadas, personalizadas e organizadas por ti.');
+      } else if (view === 'recents') {
+        titleEl.innerHTML = `<span>🕒</span> ${dict.recentlyPlayed}`;
+        updateExplainerBanner('🕒', 'Histórico de Reprodução Recente', 'As últimas estações que sintonizaste para retomares de onde paraste.');
+      } else if (view === 'topworld') {
+        titleEl.innerHTML = `<span>🌍</span> ${dict.top50World}`;
+        updateExplainerBanner('🌍', 'Top 50 Rádios Mundiais', 'As estações mais populares e icónicas de todos os continentes.');
+      } else if (view === 'playlists') {
+        titleEl.innerHTML = `<span>📂</span> Playlists Temáticas`;
+        updateExplainerBanner('📂', 'As Tuas Pastas & Playlists', 'Cria agrupamentos personalizados de rádios para momentos específicos.');
+      } else if (view === 'map') {
+        titleEl.innerHTML = `<span>🗺️</span> Mapa Interativo Mundial`;
+        updateExplainerBanner('🗺️', 'Exploração Geográfica Global', 'Navega pelo globo e clica nas cidades para ouvir as emissões locais.');
+      } else {
+        titleEl.innerHTML = `<span>🔥</span> ${dict.popularStations}`;
+        if (selectedCategory && selectedCategory !== 'all') {
+          updateExplainerBanner('🏷️', `Género: ${selectedCategory}`, `Estações classificadas no género musical ou tema "${selectedCategory}".`);
+        } else {
+          updateExplainerBanner('📻', 'Catálogo Geral de Estações', 'Explora todas as rádios disponíveis por país, género musical ou pesquisa.');
+        }
+      }
       
       render();
     }
@@ -3259,6 +3428,9 @@
       currentView = 'home';
       renderCategories();
       setView('home');
+      if (cat !== 'all') {
+        updateExplainerBanner('🏷️', `Género: ${cat}`, `Estações classificadas no género musical ou tema "${cat}".`);
+      }
       render();
     }
 
@@ -3448,6 +3620,9 @@
                   </button>
                   <button onclick="toggleFavorite('${s.id}', event)" class="p-1 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition" title="Favorito">
                     ${isFav ? '⭐' : '☆'}
+                  </button>
+                  <button onclick="openDeleteStationModal('${s.id}', event)" class="p-1 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition text-sm" title="Eliminar / Remover Rádio">
+                    🗑️
                   </button>
                 </div>
               </div>

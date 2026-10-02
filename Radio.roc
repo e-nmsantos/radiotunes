@@ -151,6 +151,12 @@ create_custom_category = |categories, id, name, icon| {
 	List.append(categories, { id, name, icon })
 }
 
+## Elimina ou remove uma estação de rádio da lista ativa
+delete_station : StationList, U64 -> StationList
+delete_station = |stations, target_id| {
+	List.drop_if(stations, |s| s.id == target_id)
+}
+
 ## Filtro avançado por múltiplos critérios
 apply_advanced_filter : StationList, AdvancedFilter -> StationList
 apply_advanced_filter = |stations, filter| {
@@ -567,4 +573,15 @@ expect {
 	List.len(matching_90s) == 1
 		and List.len(new_cats) == 2
 }
+
+# Teste 14: Eliminar / Remover Estação de Rádio
+expect {
+	s1 = create_station(1, "Rádio 1", "url1", "Música", "Portugal", 128)
+	s2 = create_station(2, "Rádio 2", "url2", "Rock", "Portugal", 128)
+	remaining = delete_station([s1, s2], 1)
+
+	List.len(remaining) == 1
+		and List.contains(remaining, s2)
+}
+
 
