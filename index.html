@@ -148,7 +148,12 @@
             <h1 class="text-lg font-black tracking-tight flex items-center gap-1.5 text-white">
               ROC <span class="text-brand-400">TUNEIN</span>
             </h1>
-            <p class="text-[11px] text-slate-400" data-i18n="tagline">Rádio Global & Hi-Fi DSP</p>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-950 border border-slate-800 text-[10px] shadow-sm">
+                <span class="text-cyan-400 font-bold">© 2026</span>
+                <span class="text-white font-medium">Nuno Santos</span>
+              </span>
+            </div>
           </div>
         </div>
 
@@ -2011,12 +2016,17 @@
       noise: { gain: null, node: null, vol: 0 }
     };
 
-    // PWA Service Worker Registration
+    // PWA Service Worker Registration & Cache Auto-Update
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => {
+        navigator.serviceWorker.register('./sw.js').then((reg) => {
+          reg.update();
+        }).catch(err => {
           console.warn('SW register fail:', err);
         });
+      });
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        console.log('Nova versão ativada!');
       });
     }
 

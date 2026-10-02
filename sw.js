@@ -1,5 +1,5 @@
-// Service Worker para Roc TuneIn PWA
-const CACHE_NAME = 'roc-tunein-v2';
+// Service Worker para Roc Waves / RadioTunes
+const CACHE_NAME = 'radiotunes-v4-live';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -7,12 +7,12 @@ const ASSETS_TO_CACHE = [
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -21,29 +21,43 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
+            console.log('A remover cache antiga:', key);
             return caches.delete(key);
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  // Streams de áudio e chamadas de API devem passar pela rede sem cache estático
+  const url = event.request.url;
+
+  // Streams de áudio e APIs externas sempre diretos pela rede
   if (
-    event.request.url.includes('.mp3') ||
-    event.request.url.includes('.m3u8') ||
-    event.request.url.includes('api.radio-browser.info') ||
-    event.request.url.includes('stream')
+    url.includes('.mp3') ||
+    url.includes('.m3u8') ||
+    url.includes('.aac') ||
+    url.includes('stream') ||
+    url.includes('radio-browser.info') ||
+    url.includes('streamtheworld') ||
+    url.includes('bauermedia')
   ) {
     return;
   }
 
+  // Network-First para HTML e ficheiros da app: garante sempre a versão mais recente!
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request);
-    })
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(event.request);
+      })
   );
 });
