@@ -98,3 +98,10 @@ Aplicação completa de streaming de mais de **45.000 estações de rádio mundi
 * `M` : Mudo (*Mute*)
 * `F` : Abrir Modo TV / Ecrã Gigante
 * `Esc` : Fechar Modo TV
+
+---
+
+## 👨‍💻 Autor & Marca
+
+**© 2026 Nuno Santos** — *Todos os direitos reservados.*
+
