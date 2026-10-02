@@ -1473,7 +1473,7 @@
   </div>
 
   <!-- Modal 15: Confirm Delete Station Modal -->
-  <div id="delete-confirm-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[9999] hidden flex items-center justify-center p-4">
+  <div id="delete-confirm-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[9999] hidden items-center justify-center p-4" style="display: none;">
     <div class="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <h3 class="text-base font-black text-red-400 flex items-center gap-2">🗑️ Eliminar Rádio</h3>
@@ -2768,12 +2768,53 @@
       document.getElementById('mobile-tools-modal').classList.add('hidden');
     }
 
+    // Explicit Card Action Handlers
+    function handleCardDeleteClick(stationId, event) {
+      if (event) {
+        try {
+          if (event.stopPropagation) event.stopPropagation();
+          if (event.preventDefault) event.preventDefault();
+        } catch(e) {}
+      }
+      openDeleteStationModal(stationId, event);
+    }
+
+    function handleCardCategoryClick(stationId, event) {
+      if (event) {
+        try {
+          if (event.stopPropagation) event.stopPropagation();
+          if (event.preventDefault) event.preventDefault();
+        } catch(e) {}
+      }
+      openStationCategoryModal(stationId, event);
+    }
+
+    function handleCardLibraryClick(stationId, event) {
+      if (event) {
+        try {
+          if (event.stopPropagation) event.stopPropagation();
+          if (event.preventDefault) event.preventDefault();
+        } catch(e) {}
+      }
+      toggleLibraryInclusion(stationId, event);
+    }
+
+    function handleCardFavClick(stationId, event) {
+      if (event) {
+        try {
+          if (event.stopPropagation) event.stopPropagation();
+          if (event.preventDefault) event.preventDefault();
+        } catch(e) {}
+      }
+      toggleFavorite(stationId, event);
+    }
+
     // Delete / Hide Station Engine
     function openDeleteStationModal(stationId, event) {
       if (event) {
         try {
-          if (typeof event.stopPropagation === 'function') event.stopPropagation();
-          if (typeof event.preventDefault === 'function') event.preventDefault();
+          if (event.stopPropagation) event.stopPropagation();
+          if (event.preventDefault) event.preventDefault();
         } catch(e) {}
       }
       if (!stationId) stationId = currentStationId;
@@ -2797,7 +2838,7 @@
         const country = station.country || 'Global';
         const category = station.category || 'Música';
         const imgTag = station.image 
-          ? `<img src="${station.image}" class="w-10 h-10 rounded-xl object-cover border border-slate-700 flex-shrink-0" onerror="this.outerHTML='<span class=\\'text-3xl flex-shrink-0\\'>${flag}</span>'" />`
+          ? `<img src="${station.image}" class="w-12 h-12 rounded-xl object-cover border border-slate-700 flex-shrink-0 shadow" onerror="this.outerHTML='<span class=\\'text-3xl flex-shrink-0\\'>${flag}</span>'" />`
           : `<span class="text-3xl flex-shrink-0">${flag}</span>`;
 
         infoEl.innerHTML = `
@@ -2809,13 +2850,24 @@
         `;
       }
       const modal = document.getElementById('delete-confirm-modal');
-      if (modal) modal.classList.remove('hidden');
+      if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
+      }
     }
 
     function closeDeleteStationModal() {
       const modal = document.getElementById('delete-confirm-modal');
-      if (modal) modal.classList.add('hidden');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.classList.add('hidden');
+      }
       stationToDeleteId = null;
+    }
+
+    function deleteStationDirect(stationId) {
+      stationToDeleteId = String(stationId);
+      confirmDeleteStation();
     }
 
     function confirmDeleteStation() {
@@ -3681,16 +3733,16 @@
                   <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
                     ${s.flag || '🌐'} ${safeCountry}
                   </span>
-                  <button onclick="event.stopPropagation(); openStationCategoryModal('${s.id}', event);" class="p-1 rounded-lg text-slate-400 hover:text-purple-400 hover:bg-purple-500/10 transition text-sm" title="Mover para Categoria">
+                  <button onclick="handleCardCategoryClick('${s.id}', event)" class="p-1.5 rounded-lg text-slate-400 hover:text-purple-400 hover:bg-purple-500/10 transition text-sm active:scale-90" title="Mover para Categoria">
                     🏷️
                   </button>
-                  <button onclick="event.stopPropagation(); toggleLibraryInclusion('${s.id}', event);" class="p-1 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition text-sm" title="${isInLib ? 'Remover da Biblioteca' : 'Incluir na Biblioteca'}">
+                  <button onclick="handleCardLibraryClick('${s.id}', event)" class="p-1.5 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition text-sm active:scale-90" title="${isInLib ? 'Remover da Biblioteca' : 'Incluir na Biblioteca'}">
                     ${isInLib ? '📌' : '➕'}
                   </button>
-                  <button onclick="event.stopPropagation(); toggleFavorite('${s.id}', event);" class="p-1 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition" title="Favorito">
+                  <button onclick="handleCardFavClick('${s.id}', event)" class="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition text-sm active:scale-90" title="Favorito">
                     ${isFav ? '⭐' : '☆'}
                   </button>
-                  <button onclick="event.stopPropagation(); openDeleteStationModal('${s.id}', event);" class="p-1 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition text-sm" title="Eliminar / Remover Rádio">
+                  <button onclick="handleCardDeleteClick('${s.id}', event)" class="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition text-sm active:scale-90" title="Eliminar / Remover Rádio">
                     🗑️
                   </button>
                 </div>
