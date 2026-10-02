@@ -576,17 +576,58 @@
     </div>
 
     <!-- Map View Container -->
-    <div id="map-view-container" class="hidden space-y-3">
-      <div class="flex items-center justify-between">
+    <div id="map-view-container" class="hidden space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/90 border border-slate-800 p-4 rounded-3xl">
         <div>
           <h2 class="text-base font-black text-white flex items-center gap-2">
-            <span>🗺️</span> <span data-i18n="worldMapTitle">Mapa Mundial de Rádios em Direto</span>
+            <span>🗺️</span> <span data-i18n="worldMapTitle">Explorador Global de Rádios no Mapa</span>
           </h2>
-          <p class="text-xs text-slate-400" data-i18n="worldMapSub">Clica em qualquer ponto ou cidade do globo para sintonizar a rádio local instantaneamente.</p>
+          <p class="text-xs text-slate-400" data-i18n="worldMapSub">Clica em qualquer ponto do globo ou escolhe uma rádio abaixo para sintonizar a emissão local instantaneamente.</p>
         </div>
-        <button onclick="setView('home')" class="text-xs px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white" data-i18n="closeMap">✕ Fechar Mapa</button>
+        <div class="flex items-center gap-2">
+          <button onclick="zoomMapToFit()" class="text-xs px-3.5 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 font-bold transition flex items-center gap-1.5 active:scale-95">
+            <span>🌍</span> <span>Ver Mundo Inteiro</span>
+          </button>
+          <button onclick="setView('home')" class="text-xs px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition active:scale-95" data-i18n="closeMap">✕ Fechar Mapa</button>
+        </div>
       </div>
-      <div id="world-map" class="w-full h-[520px] rounded-3xl border border-slate-800 overflow-hidden shadow-2xl z-10"></div>
+
+      <!-- Quick Region Filter Chips on Map -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar" id="map-region-filters">
+        <button onclick="filterMapByRegion('all')" id="map-reg-all" class="map-reg-btn px-3.5 py-2 rounded-2xl font-bold bg-cyan-500 text-slate-950 flex-shrink-0 shadow transition">🌐 Todas (<span id="map-total-count">0</span>)</button>
+        <button onclick="filterMapByRegion('Portugal')" id="map-reg-Portugal" class="map-reg-btn px-3.5 py-2 rounded-2xl font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex-shrink-0 transition">🇵🇹 Portugal</button>
+        <button onclick="filterMapByRegion('Espanha')" id="map-reg-Espanha" class="map-reg-btn px-3.5 py-2 rounded-2xl font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex-shrink-0 transition">🇪🇸 Espanha</button>
+        <button onclick="filterMapByRegion('Europa')" id="map-reg-Europa" class="map-reg-btn px-3.5 py-2 rounded-2xl font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex-shrink-0 transition">🇪🇺 Europa</button>
+        <button onclick="filterMapByRegion('Reino Unido')" id="map-reg-Reino Unido" class="map-reg-btn px-3.5 py-2 rounded-2xl font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex-shrink-0 transition">🇬🇧 Reino Unido</button>
+        <button onclick="filterMapByRegion('Brasil')" id="map-reg-Brasil" class="map-reg-btn px-3.5 py-2 rounded-2xl font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex-shrink-0 transition">🇧🇷 Brasil</button>
+        <button onclick="filterMapByRegion('Estados Unidos')" id="map-reg-Estados Unidos" class="map-reg-btn px-3.5 py-2 rounded-2xl font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex-shrink-0 transition">🇺🇸 EUA & Canadá</button>
+        <button onclick="filterMapByRegion('América Latina')" id="map-reg-América Latina" class="map-reg-btn px-3.5 py-2 rounded-2xl font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex-shrink-0 transition">🌎 América Latina</button>
+        <button onclick="filterMapByRegion('Ásia')" id="map-reg-Ásia" class="map-reg-btn px-3.5 py-2 rounded-2xl font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex-shrink-0 transition">🇯🇵 Ásia & Médio Oriente</button>
+        <button onclick="filterMapByRegion('África')" id="map-reg-África" class="map-reg-btn px-3.5 py-2 rounded-2xl font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex-shrink-0 transition">🌍 África</button>
+        <button onclick="filterMapByRegion('Oceania')" id="map-reg-Oceania" class="map-reg-btn px-3.5 py-2 rounded-2xl font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex-shrink-0 transition">🇦🇺 Oceania</button>
+      </div>
+
+      <!-- Leaflet Map Canvas with Badge -->
+      <div class="relative">
+        <div id="world-map" class="w-full h-[520px] rounded-3xl border border-slate-800 overflow-hidden shadow-2xl z-10"></div>
+        <div class="absolute top-4 right-4 z-20 bg-slate-950/90 backdrop-blur-md px-3.5 py-1.5 rounded-2xl border border-slate-800 text-[11px] text-cyan-400 font-bold flex items-center gap-2 shadow-xl pointer-events-none">
+          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+          <span id="map-visible-count">A carregar estações...</span>
+        </div>
+      </div>
+
+      <!-- Interactive Map Station Quick-Picker Drawer / Grid -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-5 space-y-3 shadow-2xl">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs sm:text-sm font-black text-white flex items-center gap-2">
+            <span>📻</span> <span>Estações Disponíveis no Mapa</span>
+          </h3>
+          <span class="text-[11px] text-slate-400">Clica para voar no globo e começar a ouvir</span>
+        </div>
+        <div id="map-stations-picker" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 max-h-80 overflow-y-auto pr-1">
+          <!-- Dynamically populated station cards for the map -->
+        </div>
+      </div>
     </div>
 
     <!-- Stations Grid Section -->
@@ -1500,6 +1541,283 @@
   <script>
     // Master Curated Catalog
     const MASTER_CATALOG = [
+      // ==========================================
+      // --- PORTUGAL (Continente & Ilhas) ---
+      // ==========================================
+      { 
+        id: "m_1", 
+        name: "Rádio Comercial", 
+        stream_url: "https://stream-icy.bauermedia.pt/comercial.mp3", 
+        category: "Música", 
+        genre: "Pop & Top 40", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6706g.png",
+        color: "from-amber-500 to-red-600",
+        desc: "A Melhor Música de Sempre • Lisboa" 
+      },
+      { 
+        id: "m_2", 
+        name: "RFM Portugal", 
+        stream_url: "https://23603.live.streamtheworld.com/RFMAAC.aac", 
+        category: "Música", 
+        genre: "Pop & Top Hits", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6708g.png",
+        color: "from-blue-500 to-cyan-400",
+        desc: "Só Grandes Músicas • Lisboa" 
+      },
+      { 
+        id: "m_3", 
+        name: "M80 Portugal", 
+        stream_url: "https://stream-icy.bauermedia.pt/m80.mp3", 
+        category: "Rock", 
+        genre: "Rock Classics 70s/80s/90s", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s151475g.png",
+        color: "from-purple-600 to-pink-500",
+        desc: "Se a sua vida tem uma música, passa na M80" 
+      },
+      { 
+        id: "m_4", 
+        name: "TSF Rádio Notícias", 
+        stream_url: "https://directo.tsf.pt/tsfdirecto.mp3", 
+        category: "Notícias", 
+        genre: "Notícias & Debate 24h", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6704g.png",
+        color: "from-red-600 to-slate-900",
+        desc: "Informação e Notícias em Direto 24h" 
+      },
+      { 
+        id: "m_5", 
+        name: "Antena 1 (RTP)", 
+        stream_url: "https://streaming-live.rtp.pt/liveradio/antena180a/playlist.m3u8", 
+        category: "Notícias", 
+        genre: "Informação & Cultura", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6702g.png",
+        color: "from-blue-700 to-indigo-900",
+        desc: "A Rádio Pública de Portugal" 
+      },
+      { 
+        id: "m_6", 
+        name: "Antena 3 (RTP)", 
+        stream_url: "https://streaming-live.rtp.pt/liveradio/antena380a/playlist.m3u8", 
+        category: "Música", 
+        genre: "Indie & Música Portuguesa", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 41.1579, lon: -8.6291, city: "Porto",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6705g.png",
+        color: "from-emerald-500 to-teal-700",
+        desc: "Música Portuguesa e Alternativa • Porto" 
+      },
+      { 
+        id: "m_7", 
+        name: "Mega Hits", 
+        stream_url: "https://25603.live.streamtheworld.com/MEGA_HITS_SC", 
+        category: "Música", 
+        genre: "Pop & Teen Hits", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6709g.png",
+        color: "from-pink-500 to-purple-600",
+        desc: "A rádio dos grandes sucessos jovens" 
+      },
+      { 
+        id: "m_8", 
+        name: "Smooth FM", 
+        stream_url: "https://stream-icy.bauermedia.pt/smooth.mp3", 
+        category: "Relax", 
+        genre: "Jazz, Soul & Blues", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s151475g.png",
+        color: "from-amber-600 to-amber-900",
+        desc: "Jazz, Soul & Blues Suave" 
+      },
+      { 
+        id: "m_9", 
+        name: "Cidade FM", 
+        stream_url: "https://stream-icy.bauermedia.pt/cidade.mp3", 
+        category: "Música", 
+        genre: "Urban Pop & Hip-Hop", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6709g.png",
+        color: "from-red-500 to-pink-600",
+        desc: "A Tua Rádio de Sucessos Urbanos" 
+      },
+      { 
+        id: "m_10", 
+        name: "Rádio Renascença", 
+        stream_url: "https://22593.live.streamtheworld.com/RADIO_RENASCENCAAAC.aac", 
+        category: "Notícias", 
+        genre: "Informação & Família", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6703g.png",
+        color: "from-blue-600 to-sky-500",
+        desc: "A par com o mundo • Lisboa" 
+      },
+      { 
+        id: "m_pt_11", 
+        name: "Rádio Nova Era", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Eletrónica", 
+        genre: "Dance, EDM & House", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 41.1579, lon: -8.6291, city: "Porto",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6715g.png",
+        color: "from-cyan-500 to-blue-600",
+        desc: "A maior rádio de dança do Norte • Porto" 
+      },
+      { 
+        id: "m_pt_12", 
+        name: "Rádio Radar 97.8", 
+        stream_url: "https://stream-icy.bauermedia.pt/radar.mp3", 
+        category: "Rock", 
+        genre: "Indie Rock & Post-Punk", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6713g.png",
+        color: "from-purple-700 to-slate-900",
+        desc: "Excelente música indie na capital" 
+      },
+      { 
+        id: "m_pt_13", 
+        name: "Rádio Observador", 
+        stream_url: "https://stream-icy.bauermedia.pt/observador.mp3", 
+        category: "Notícias", 
+        genre: "Opinião & Informação Viva", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s295096g.png",
+        color: "from-amber-600 to-orange-700",
+        desc: "Jornalismo rigoroso e debate em direto" 
+      },
+      { 
+        id: "m_pt_14", 
+        name: "Rádio Universitária de Coimbra (RUC)", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Rock", 
+        genre: "Alternativa & Académica", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 40.2033, lon: -8.4103, city: "Coimbra",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6717g.png",
+        color: "from-blue-800 to-indigo-900",
+        desc: "Voz académica e independente de Coimbra" 
+      },
+      { 
+        id: "m_pt_15", 
+        name: "Rádio Universitária do Minho (RUM)", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Cultura & Indie Pop", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 41.5454, lon: -8.4265, city: "Braga",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6718g.png",
+        color: "from-red-600 to-slate-900",
+        desc: "A rádio universitária de Braga e Guimarães" 
+      },
+      { 
+        id: "m_pt_16", 
+        name: "Rádio Foia Algarve", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Música Ligeira & Notícias do Sul", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 37.0194, lon: -7.9304, city: "Faro",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6720g.png",
+        color: "from-cyan-600 to-teal-800",
+        desc: "A voz e música do Algarve e Monchique" 
+      },
+      { 
+        id: "m_pt_17", 
+        name: "Posto Emissor do Funchal", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Tradição Madeirense & Notícias", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 32.6500, lon: -16.9080, city: "Funchal",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6724g.png",
+        color: "from-amber-600 to-blue-800",
+        desc: "Emissora histórica da Ilha da Madeira" 
+      },
+      { 
+        id: "m_pt_18", 
+        name: "Antena 9 Açores", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Pop & Cultura Açoriana", 
+        country: "Portugal", 
+        region: "Portugal",
+        flag: "🇵🇹", 
+        lat: 37.7412, lon: -25.6756, city: "Ponta Delgada",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6727g.png",
+        color: "from-blue-600 to-emerald-700",
+        desc: "Direto do Arquipélago dos Açores" 
+      },
+
+      // ==========================================
+      // --- ESPANHA ---
+      // ==========================================
       { 
         id: "m_101", 
         name: "LOS 40 España", 
@@ -1507,6 +1825,7 @@
         category: "Música", 
         genre: "Pop & Top 40 Hits", 
         country: "Espanha", 
+        region: "Espanha",
         flag: "🇪🇸", 
         lat: 40.4168, lon: -3.7038, city: "Madrid",
         bit_rate: 128, 
@@ -1521,6 +1840,7 @@
         category: "Rock", 
         genre: "Classics 80s & 90s", 
         country: "Espanha", 
+        region: "Espanha",
         flag: "🇪🇸", 
         lat: 40.4168, lon: -3.7038, city: "Madrid",
         bit_rate: 128, 
@@ -1535,6 +1855,7 @@
         category: "Música", 
         genre: "Reggaeton & Urban Pop", 
         country: "Espanha", 
+        region: "Espanha",
         flag: "🇪🇸", 
         lat: 40.4168, lon: -3.7038, city: "Madrid",
         bit_rate: 128, 
@@ -1549,6 +1870,7 @@
         category: "Notícias", 
         genre: "Notícias & Opinião", 
         country: "Espanha", 
+        region: "Espanha",
         flag: "🇪🇸", 
         lat: 40.4168, lon: -3.7038, city: "Madrid",
         bit_rate: 128, 
@@ -1563,6 +1885,7 @@
         category: "Desporto", 
         genre: "Futebol & Desporto", 
         country: "Espanha", 
+        region: "Espanha",
         flag: "🇪🇸", 
         lat: 40.4168, lon: -3.7038, city: "Madrid",
         bit_rate: 128, 
@@ -1577,6 +1900,7 @@
         category: "Eletrónica", 
         genre: "House & Electronic", 
         country: "Espanha", 
+        region: "Espanha",
         flag: "🇪🇸", 
         lat: 38.9067, lon: 1.4206, city: "Ibiza",
         bit_rate: 192, 
@@ -1584,8 +1908,40 @@
         color: "from-cyan-500 to-fuchsia-600",
         desc: "Direct from Ibiza Clubs" 
       },
+      { 
+        id: "m_es_107", 
+        name: "Flaix FM Barcelona", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Eletrónica", 
+        genre: "Dance & EDM Hits", 
+        country: "Espanha", 
+        region: "Espanha",
+        flag: "🇪🇸", 
+        lat: 41.3879, lon: 2.1699, city: "Barcelona",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s15217g.png",
+        color: "from-amber-500 to-red-600",
+        desc: "El poder del ritmo en Cataluña" 
+      },
+      { 
+        id: "m_es_108", 
+        name: "Canal Fiesta Radio", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Pop Latino & Flamenco Pop", 
+        country: "Espanha", 
+        region: "Espanha",
+        flag: "🇪🇸", 
+        lat: 37.3891, lon: -5.9845, city: "Sevilha",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s15219g.png",
+        color: "from-orange-500 to-amber-600",
+        desc: "La música del sur de España • Sevilla" 
+      },
 
-      // --- REINO UNIDO: BBC, CAPITAL, TALKSPORT, CLASSIC FM ---
+      // ==========================================
+      // --- REINO UNIDO ---
+      // ==========================================
       { 
         id: "m_201", 
         name: "BBC Radio 1", 
@@ -1593,12 +1949,13 @@
         category: "Música", 
         genre: "Pop & Top Charts", 
         country: "Reino Unido", 
+        region: "Reino Unido",
         flag: "🇬🇧", 
         lat: 51.5074, lon: -0.1278, city: "Londres",
         bit_rate: 192, 
         image: "https://cdn-radiotime-logos.tunein.com/s24939g.png",
         color: "from-purple-600 to-indigo-700",
-        desc: "The UK's biggest music hits" 
+        desc: "The UK's biggest music hits • London" 
       },
       { 
         id: "m_202", 
@@ -1607,6 +1964,7 @@
         category: "Notícias", 
         genre: "Notícias Mundiais", 
         country: "Reino Unido", 
+        region: "Reino Unido",
         flag: "🇬🇧", 
         lat: 51.5074, lon: -0.1278, city: "Londres",
         bit_rate: 192, 
@@ -1621,6 +1979,7 @@
         category: "Música", 
         genre: "Adult Contemporary", 
         country: "Reino Unido", 
+        region: "Reino Unido",
         flag: "🇬🇧", 
         lat: 51.5074, lon: -0.1278, city: "Londres",
         bit_rate: 192, 
@@ -1635,6 +1994,7 @@
         category: "Rock", 
         genre: "Indie & Alternative", 
         country: "Reino Unido", 
+        region: "Reino Unido",
         flag: "🇬🇧", 
         lat: 51.5074, lon: -0.1278, city: "Londres",
         bit_rate: 192, 
@@ -1649,6 +2009,7 @@
         category: "Desporto", 
         genre: "Premier League & Football", 
         country: "Reino Unido", 
+        region: "Reino Unido",
         flag: "🇬🇧", 
         lat: 51.5074, lon: -0.1278, city: "Londres",
         bit_rate: 128, 
@@ -1663,6 +2024,7 @@
         category: "Música", 
         genre: "Top 40 & Dance", 
         country: "Reino Unido", 
+        region: "Reino Unido",
         flag: "🇬🇧", 
         lat: 51.5074, lon: -0.1278, city: "Londres",
         bit_rate: 128, 
@@ -1677,6 +2039,7 @@
         category: "Música", 
         genre: "Clássica", 
         country: "Reino Unido", 
+        region: "Reino Unido",
         flag: "🇬🇧", 
         lat: 51.5074, lon: -0.1278, city: "Londres",
         bit_rate: 128, 
@@ -1684,252 +2047,25 @@
         color: "from-amber-700 to-slate-900",
         desc: "Música Clássica para todos" 
       },
-
-      // --- ESTADOS UNIDOS: APPLE MUSIC LIVE, KEXP, NPR, SOMA FM ---
       { 
-        id: "m_301", 
-        name: "Apple Music 1 (Hits Live)", 
-        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
-        category: "Música", 
-        genre: "Pop & Exclusive Hits", 
-        country: "Estados Unidos", 
-        flag: "🇺🇸", 
-        lat: 40.7128, lon: -74.0060, city: "Nova Iorque",
-        bit_rate: 256, 
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Apple_Music_logo.svg/320px-Apple_Music_logo.svg.png",
-        color: "from-rose-500 via-red-500 to-pink-600",
-        desc: "Apple Global Radio 24/7" 
-      },
-      { 
-        id: "m_302", 
-        name: "KEXP 90.3 FM Seattle", 
-        stream_url: "https://kexp-mp3-128.streamguys1.com/kexp128.mp3", 
-        category: "Rock", 
-        genre: "Indie & Alternative", 
-        country: "Estados Unidos", 
-        flag: "🇺🇸", 
-        lat: 47.6062, lon: -122.3321, city: "Seattle",
-        bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s32537g.png",
-        color: "from-orange-500 to-red-700",
-        desc: "Where the music matters" 
-      },
-      { 
-        id: "m_303", 
-        name: "NPR News Radio", 
-        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        id: "m_uk_208", 
+        name: "BBC Radio Scotland", 
+        stream_url: "https://stream.live.vc.bbcmedia.co.uk/bbc_radio_scotland_fm", 
         category: "Notícias", 
-        genre: "Notícias & Investigação", 
-        country: "Estados Unidos", 
-        flag: "🇺🇸", 
-        lat: 38.9072, lon: -77.0369, city: "Washington",
-        bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s21588g.png",
-        color: "from-blue-600 to-red-600",
-        desc: "National Public Radio USA" 
-      },
-      { 
-        id: "m_304", 
-        name: "SomaFM Groove Salad", 
-        stream_url: "https://ice1.somafm.com/groovesalad-128-mp3", 
-        category: "Relax", 
-        genre: "Downtempo & Chillout", 
-        country: "Estados Unidos", 
-        flag: "🇺🇸", 
-        lat: 37.7749, lon: -122.4194, city: "São Francisco",
-        bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s1815g.png",
-        color: "from-emerald-600 to-cyan-700",
-        desc: "San Francisco Chillout Station" 
-      },
-
-      // --- PORTUGAL ---
-      { 
-        id: "m_1", 
-        name: "Rádio Comercial", 
-        stream_url: "https://stream-icy.bauermedia.pt/comercial.mp3", 
-        category: "Música", 
-        genre: "Pop & Top 40", 
-        country: "Portugal", 
-        flag: "🇵🇹", 
-        lat: 38.7223, lon: -9.1393, city: "Lisboa",
-        bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6706g.png",
-        color: "from-amber-500 to-red-600",
-        desc: "A Melhor Música de Sempre" 
-      },
-      { 
-        id: "m_2", 
-        name: "RFM", 
-        stream_url: "https://23603.live.streamtheworld.com/RFMAAC.aac", 
-        category: "Música", 
-        genre: "Pop & Top Hits", 
-        country: "Portugal", 
-        flag: "🇵🇹", 
-        lat: 38.7223, lon: -9.1393, city: "Lisboa",
-        bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6708g.png",
-        color: "from-blue-500 to-cyan-400",
-        desc: "Só Grandes Músicas" 
-      },
-      { 
-        id: "m_3", 
-        name: "M80 Portugal", 
-        stream_url: "https://stream-icy.bauermedia.pt/m80.mp3", 
-        category: "Rock", 
-        genre: "Rock & 80s / 90s", 
-        country: "Portugal", 
-        flag: "🇵🇹", 
-        lat: 38.7223, lon: -9.1393, city: "Lisboa",
-        bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s151475g.png",
-        color: "from-purple-600 to-pink-500",
-        desc: "Se a sua vida tem uma música, passa na M80" 
-      },
-      { 
-        id: "m_4", 
-        name: "TSF Rádio Notícias", 
-        stream_url: "https://directo.tsf.pt/tsfdirecto.mp3", 
-        category: "Notícias", 
-        genre: "Notícias & Debate", 
-        country: "Portugal", 
-        flag: "🇵🇹", 
-        lat: 38.7223, lon: -9.1393, city: "Lisboa",
-        bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6704g.png",
-        color: "from-red-600 to-slate-900",
-        desc: "Informação e Notícias em Direto 24h" 
-      },
-      { 
-        id: "m_9", 
-        name: "Cidade FM", 
-        stream_url: "https://stream-icy.bauermedia.pt/cidade.mp3", 
-        category: "Música", 
-        genre: "Pop & Dance", 
-        country: "Portugal", 
-        flag: "🇵🇹", 
-        lat: 38.7223, lon: -9.1393, city: "Lisboa",
-        bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6709g.png",
-        color: "from-red-500 to-pink-600",
-        desc: "A Tua Rádio de Sucessos" 
-      },
-      { 
-        id: "m_8", 
-        name: "Smooth FM", 
-        stream_url: "https://stream-icy.bauermedia.pt/smooth.mp3", 
-        category: "Relax", 
-        genre: "Jazz & Soul", 
-        country: "Portugal", 
-        flag: "🇵🇹", 
-        lat: 38.7223, lon: -9.1393, city: "Lisboa",
-        bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s151475g.png",
-        color: "from-amber-600 to-amber-900",
-        desc: "Jazz, Soul & Blues Suave" 
-      },
-      { 
-        id: "m_10", 
-        name: "Rádio Renascença", 
-        stream_url: "https://22593.live.streamtheworld.com/RADIO_RENASCENCAAAC.aac", 
-        category: "Notícias", 
-        genre: "Informação & Variedades", 
-        country: "Portugal", 
-        flag: "🇵🇹", 
-        lat: 38.7223, lon: -9.1393, city: "Lisboa",
-        bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6703g.png",
-        color: "from-blue-600 to-sky-500",
-        desc: "A par com o mundo" 
-      },
-      { 
-        id: "m_7", 
-        name: "Mega Hits", 
-        stream_url: "https://25603.live.streamtheworld.com/MEGA_HITS_SC", 
-        category: "Música", 
-        genre: "Pop & Teen Hits", 
-        country: "Portugal", 
-        flag: "🇵🇹", 
-        lat: 38.7223, lon: -9.1393, city: "Lisboa",
-        bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6709g.png",
-        color: "from-pink-500 to-purple-600",
-        desc: "Mega Hits Radio" 
-      },
-      { 
-        id: "m_5", 
-        name: "Antena 1 (RTP)", 
-        stream_url: "https://streaming-live.rtp.pt/liveradio/antena180a/playlist.m3u8", 
-        category: "Notícias", 
-        genre: "Geral & Informação", 
-        country: "Portugal", 
-        flag: "🇵🇹", 
-        lat: 38.7223, lon: -9.1393, city: "Lisboa",
-        bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6702g.png",
+        genre: "Scottish News & Culture", 
+        country: "Reino Unido", 
+        region: "Reino Unido",
+        flag: "🇬🇧", 
+        lat: 55.9533, lon: -3.1883, city: "Edimburgo",
+        bit_rate: 192, 
+        image: "https://cdn-radiotime-logos.tunein.com/s24945g.png",
         color: "from-blue-700 to-indigo-900",
-        desc: "A Rádio Pública de Portugal" 
-      },
-      { 
-        id: "m_6", 
-        name: "Antena 3 (RTP)", 
-        stream_url: "https://streaming-live.rtp.pt/liveradio/antena380a/playlist.m3u8", 
-        category: "Música", 
-        genre: "Indie & Música Nacional", 
-        country: "Portugal", 
-        flag: "🇵🇹", 
-        lat: 41.1579, lon: -8.6291, city: "Porto",
-        bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6705g.png",
-        color: "from-emerald-500 to-teal-700",
-        desc: "Música Portuguesa e Alternativa" 
+        desc: "Scottish News, Sport and Music • Edinburgh" 
       },
 
-      // --- BRASIL: JOVEM PAN, ANTENA 1 BRASIL, BOSSA NOVA ---
-      { 
-        id: "m_11", 
-        name: "Jovem Pan FM", 
-        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
-        category: "Música", 
-        genre: "Pop & Notícias", 
-        country: "Brasil", 
-        flag: "🇧🇷", 
-        lat: -23.5505, lon: -46.6333, city: "São Paulo",
-        bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s10499g.png",
-        color: "from-emerald-500 to-yellow-500",
-        desc: "A número 1 do Brasil" 
-      },
-      { 
-        id: "m_12", 
-        name: "Antena 1 Brasil", 
-        stream_url: "https://antenaone.crossradio.com.br/stream/1/", 
-        category: "Música", 
-        genre: "Pop Internacional", 
-        country: "Brasil", 
-        flag: "🇧🇷", 
-        lat: -23.5505, lon: -46.6333, city: "São Paulo",
-        bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s10496g.png",
-        color: "from-blue-600 to-indigo-800",
-        desc: "Música Internacional de Qualidade" 
-      },
-      { 
-        id: "m_13", 
-        name: "Bossa Nova Brazil", 
-        stream_url: "https://stream.zeno.fm/k22222180v8uv", 
-        category: "Relax", 
-        genre: "Bossa Nova & MPB", 
-        country: "Brasil", 
-        flag: "🇧🇷", 
-        lat: -22.9068, lon: -43.1729, city: "Rio de Janeiro",
-        bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s189033g.png",
-        color: "from-teal-500 to-emerald-600",
-        desc: "Os clássicos da Bossa Nova" 
-      },
-
-      // --- FRANÇA & JAPÃO ---
+      // ==========================================
+      // --- FRANÇA ---
+      // ==========================================
       { 
         id: "m_24", 
         name: "Jazz Radio Paris", 
@@ -1937,12 +2073,13 @@
         category: "Relax", 
         genre: "Jazz & Soul", 
         country: "França", 
+        region: "Europa",
         flag: "🇫🇷", 
         lat: 48.8566, lon: 2.3522, city: "Paris",
         bit_rate: 192, 
         image: "https://cdn-radiotime-logos.tunein.com/s13369g.png",
         color: "from-blue-600 to-amber-700",
-        desc: "La radio de tous les Jazz" 
+        desc: "La radio de tous les Jazz • Paris" 
       },
       { 
         id: "m_25", 
@@ -1951,13 +2088,593 @@
         category: "Relax", 
         genre: "Lo-Fi Beats", 
         country: "França", 
+        region: "Europa",
         flag: "🇫🇷", 
         lat: 48.8566, lon: 2.3522, city: "Paris",
         bit_rate: 128, 
         image: "https://cdn-radiotime-logos.tunein.com/s308552g.png",
         color: "from-indigo-600 to-rose-500",
-        desc: "Relax / Study beats live" 
+        desc: "Relax / Study beats live • Paris" 
       },
+      { 
+        id: "m_fr_26", 
+        name: "FIP Radio Paris", 
+        stream_url: "https://stream.radiofrance.fr/fip/fip.m3u8?id=radiofrance", 
+        category: "Relax", 
+        genre: "Eclectic & World Music", 
+        country: "França", 
+        region: "Europa",
+        flag: "🇫🇷", 
+        lat: 48.8566, lon: 2.3522, city: "Paris",
+        bit_rate: 192, 
+        image: "https://cdn-radiotime-logos.tunein.com/s15228g.png",
+        color: "from-rose-600 to-purple-800",
+        desc: "La radio musicale la plus éclectique au monde" 
+      },
+      { 
+        id: "m_fr_27", 
+        name: "NRJ France", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Hit Music Only", 
+        country: "França", 
+        region: "Europa",
+        flag: "🇫🇷", 
+        lat: 48.8566, lon: 2.3522, city: "Paris",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s15230g.png",
+        color: "from-red-600 to-slate-900",
+        desc: "Hit Music Only • Paris" 
+      },
+      { 
+        id: "m_fr_28", 
+        name: "Radio FG Electro", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Eletrónica", 
+        genre: "Deep House & Club Dance", 
+        country: "França", 
+        region: "Europa",
+        flag: "🇫🇷", 
+        lat: 43.2965, lon: 5.3698, city: "Marselha",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s15234g.png",
+        color: "from-cyan-500 to-indigo-600",
+        desc: "Feel Good Music from the French Riviera" 
+      },
+
+      // ==========================================
+      // --- ALEMANHA ---
+      // ==========================================
+      { 
+        id: "m_de_1", 
+        name: "Sunshine Live Techno", 
+        stream_url: "https://stream.sunshine-live.de/live/mp3-192", 
+        category: "Eletrónica", 
+        genre: "Techno, Trance & EDM", 
+        country: "Alemanha", 
+        region: "Europa",
+        flag: "🇩🇪", 
+        lat: 52.5200, lon: 13.4050, city: "Berlim",
+        bit_rate: 192, 
+        image: "https://cdn-radiotime-logos.tunein.com/s24998g.png",
+        color: "from-yellow-500 to-cyan-500",
+        desc: "Electronic Music Radio • Berlin" 
+      },
+      { 
+        id: "m_de_2", 
+        name: "Antenne Bayern", 
+        stream_url: "https://stream.antenne.de/antenne", 
+        category: "Música", 
+        genre: "Pop & Top 40", 
+        country: "Alemanha", 
+        region: "Europa",
+        flag: "🇩🇪", 
+        lat: 48.1351, lon: 11.5820, city: "Munique",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25000g.png",
+        color: "from-blue-600 to-indigo-900",
+        desc: "Bayerns bester Musikmix • München" 
+      },
+      { 
+        id: "m_de_3", 
+        name: "1LIVE WDR", 
+        stream_url: "https://wdr-1live-live.icecastssl.wdr.de/wdr/1live/live/mp3/128/stream.mp3", 
+        category: "Música", 
+        genre: "Pop, Indie & Comedy", 
+        country: "Alemanha", 
+        region: "Europa",
+        flag: "🇩🇪", 
+        lat: 50.9375, lon: 6.9603, city: "Colónia",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25002g.png",
+        color: "from-red-600 to-amber-600",
+        desc: "Der beste junge Sender in Deutschland" 
+      },
+      { 
+        id: "m_de_4", 
+        name: "Radio Hamburg", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Mega-Hits & Pop", 
+        country: "Alemanha", 
+        region: "Europa",
+        flag: "🇩🇪", 
+        lat: 53.5511, lon: 9.9937, city: "Hamburgo",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25004g.png",
+        color: "from-yellow-600 to-slate-900",
+        desc: "Mehr Vielfalt mit den besten Hits" 
+      },
+
+      // ==========================================
+      // --- ITÁLIA ---
+      // ==========================================
+      { 
+        id: "m_it_1", 
+        name: "RTL 102.5", 
+        stream_url: "https://streamingv2.shoutcast.com/rtl-1025", 
+        category: "Música", 
+        genre: "Very Normal People Pop", 
+        country: "Itália", 
+        region: "Europa",
+        flag: "🇮🇹", 
+        lat: 45.4642, lon: 9.1900, city: "Milão",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25010g.png",
+        color: "from-red-600 to-blue-800",
+        desc: "La prima radio in Italia • Milano" 
+      },
+      { 
+        id: "m_it_2", 
+        name: "Radio Monte Carlo Italia", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Relax", 
+        genre: "Lounge, Soul & Pop Chic", 
+        country: "Itália", 
+        region: "Europa",
+        flag: "🇮🇹", 
+        lat: 45.4642, lon: 9.1900, city: "Milão",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25012g.png",
+        color: "from-amber-600 to-purple-800",
+        desc: "Musica di Gran Classe per intenditori" 
+      },
+      { 
+        id: "m_it_3", 
+        name: "Radio Deejay Roma", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Pop, Dance & Talk Show", 
+        country: "Itália", 
+        region: "Europa",
+        flag: "🇮🇹", 
+        lat: 41.9028, lon: 12.4964, city: "Roma",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25014g.png",
+        color: "from-cyan-500 to-indigo-700",
+        desc: "One Nation One Station • Roma" 
+      },
+      { 
+        id: "m_it_4", 
+        name: "Radio Kiss Kiss Napoli", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Top Italian Hits & Pop", 
+        country: "Itália", 
+        region: "Europa",
+        flag: "🇮🇹", 
+        lat: 40.8518, lon: 14.2681, city: "Nápoles",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25016g.png",
+        color: "from-pink-600 to-rose-700",
+        desc: "Play Everywhere • Napoli" 
+      },
+
+      // ==========================================
+      // --- RESTANTE EUROPA (Holanda, Suécia, Noruega, Irlanda, Grécia, Suíça) ---
+      // ==========================================
+      { 
+        id: "m_nl_1", 
+        name: "3FM Serious Radio", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Rock", 
+        genre: "Alternative & Indie Pop", 
+        country: "Holanda", 
+        region: "Europa",
+        flag: "🇳🇱", 
+        lat: 52.3676, lon: 4.9041, city: "Amesterdão",
+        bit_rate: 192, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25020g.png",
+        color: "from-orange-500 to-slate-900",
+        desc: "Laat je horen • Amsterdam" 
+      },
+      { 
+        id: "m_nl_2", 
+        name: "SLAM! Dance", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Eletrónica", 
+        genre: "EDM, Club & Dance", 
+        country: "Holanda", 
+        region: "Europa",
+        flag: "🇳🇱", 
+        lat: 51.9244, lon: 4.4777, city: "Roterdão",
+        bit_rate: 192, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25022g.png",
+        color: "from-cyan-400 to-blue-700",
+        desc: "Play Music, Play Life • Rotterdam" 
+      },
+      { 
+        id: "m_se_1", 
+        name: "Sveriges Radio P3", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Nordic Pop & Hits", 
+        country: "Suécia", 
+        region: "Europa",
+        flag: "🇸🇪", 
+        lat: 59.3293, lon: 18.0686, city: "Estocolmo",
+        bit_rate: 192, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25024g.png",
+        color: "from-yellow-400 to-blue-600",
+        desc: "Ny musik och aktuellt • Stockholm" 
+      },
+      { 
+        id: "m_no_1", 
+        name: "NRK P1 Oslo", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Notícias", 
+        genre: "Norwegian News & Folk", 
+        country: "Noruega", 
+        region: "Europa",
+        flag: "🇳🇴", 
+        lat: 59.9139, lon: 10.7522, city: "Oslo",
+        bit_rate: 192, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25026g.png",
+        color: "from-blue-700 to-slate-900",
+        desc: "Hele Norges radiokanal • Oslo" 
+      },
+      { 
+        id: "m_ie_1", 
+        name: "RTÉ 2FM Dublin", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Irish Hits & Pop", 
+        country: "Irlanda", 
+        region: "Europa",
+        flag: "🇮🇪", 
+        lat: 53.3498, lon: -6.2603, city: "Dublin",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25028g.png",
+        color: "from-emerald-600 to-amber-500",
+        desc: "Ireland's National Hit Station • Dublin" 
+      },
+      { 
+        id: "m_gr_1", 
+        name: "En Lefko 87.7", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Relax", 
+        genre: "Lounge & Indie Chill", 
+        country: "Grécia", 
+        region: "Europa",
+        flag: "🇬🇷", 
+        lat: 37.9838, lon: 23.7275, city: "Atenas",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25030g.png",
+        color: "from-cyan-600 to-blue-800",
+        desc: "Athens Coolest Radio Station • Athens" 
+      },
+      { 
+        id: "m_ch_1", 
+        name: "Radio Swiss Jazz", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Relax", 
+        genre: "Classic Jazz & Swing", 
+        country: "Suíça", 
+        region: "Europa",
+        flag: "🇨🇭", 
+        lat: 46.9480, lon: 7.4474, city: "Berna",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25032g.png",
+        color: "from-red-600 to-slate-900",
+        desc: "Pure Swiss Jazz 24 Hours • Bern" 
+      },
+
+      // ==========================================
+      // --- ESTADOS UNIDOS & CANADÁ ---
+      // ==========================================
+      { 
+        id: "m_301", 
+        name: "Apple Music 1 (Hits Live)", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Pop & Exclusive Hits", 
+        country: "Estados Unidos", 
+        region: "Estados Unidos",
+        flag: "🇺🇸", 
+        lat: 40.7128, lon: -74.0060, city: "Nova Iorque",
+        bit_rate: 256, 
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Apple_Music_logo.svg/320px-Apple_Music_logo.svg.png",
+        color: "from-rose-500 via-red-500 to-pink-600",
+        desc: "Apple Global Radio 24/7 • NYC" 
+      },
+      { 
+        id: "m_302", 
+        name: "KEXP 90.3 FM Seattle", 
+        stream_url: "https://kexp-mp3-128.streamguys1.com/kexp128.mp3", 
+        category: "Rock", 
+        genre: "Indie & Alternative", 
+        country: "Estados Unidos", 
+        region: "Estados Unidos",
+        flag: "🇺🇸", 
+        lat: 47.6062, lon: -122.3321, city: "Seattle",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s32537g.png",
+        color: "from-orange-500 to-red-700",
+        desc: "Where the music matters • Seattle" 
+      },
+      { 
+        id: "m_303", 
+        name: "NPR News Radio", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Notícias", 
+        genre: "Notícias & Investigação", 
+        country: "Estados Unidos", 
+        region: "Estados Unidos",
+        flag: "🇺🇸", 
+        lat: 38.9072, lon: -77.0369, city: "Washington",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s21588g.png",
+        color: "from-blue-600 to-red-600",
+        desc: "National Public Radio USA • Washington DC" 
+      },
+      { 
+        id: "m_304", 
+        name: "SomaFM Groove Salad", 
+        stream_url: "https://ice1.somafm.com/groovesalad-128-mp3", 
+        category: "Relax", 
+        genre: "Downtempo & Chillout", 
+        country: "Estados Unidos", 
+        region: "Estados Unidos",
+        flag: "🇺🇸", 
+        lat: 37.7749, lon: -122.4194, city: "São Francisco",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s1815g.png",
+        color: "from-emerald-600 to-cyan-700",
+        desc: "San Francisco Chillout Station" 
+      },
+      { 
+        id: "m_us_305", 
+        name: "Power 106 FM Los Angeles", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Hip-Hop & R&B", 
+        country: "Estados Unidos", 
+        region: "Estados Unidos",
+        flag: "🇺🇸", 
+        lat: 34.0522, lon: -118.2437, city: "Los Angeles",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25040g.png",
+        color: "from-amber-500 to-red-600",
+        desc: "LA's #1 for Hip Hop • California" 
+      },
+      { 
+        id: "m_us_306", 
+        name: "WWOZ New Orleans Jazz", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Relax", 
+        genre: "Authentic New Orleans Jazz", 
+        country: "Estados Unidos", 
+        region: "Estados Unidos",
+        flag: "🇺🇸", 
+        lat: 29.9511, lon: -90.0715, city: "Nova Orleães",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25042g.png",
+        color: "from-yellow-600 to-purple-900",
+        desc: "Guardians of the New Orleans Groove" 
+      },
+      { 
+        id: "m_us_307", 
+        name: "Hot 97 New York", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Hip-Hop & Urban Culture", 
+        country: "Estados Unidos", 
+        region: "Estados Unidos",
+        flag: "🇺🇸", 
+        lat: 40.7128, lon: -74.0060, city: "Nova Iorque",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25044g.png",
+        color: "from-red-600 to-slate-900",
+        desc: "Where Hip Hop Lives • NYC" 
+      },
+      { 
+        id: "m_ca_308", 
+        name: "CBC Radio One Toronto", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Notícias", 
+        genre: "Canadian News & Talk", 
+        country: "Canadá", 
+        region: "Estados Unidos",
+        flag: "🇨🇦", 
+        lat: 43.6532, lon: -79.3832, city: "Toronto",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25046g.png",
+        color: "from-red-700 to-rose-900",
+        desc: "Canada's National Public Radio • Toronto" 
+      },
+      { 
+        id: "m_ca_309", 
+        name: "CHOM 97.7 Classic Rock", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Rock", 
+        genre: "Classic Rock & Metal", 
+        country: "Canadá", 
+        region: "Estados Unidos",
+        flag: "🇨🇦", 
+        lat: 45.5017, lon: -73.5673, city: "Montreal",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25048g.png",
+        color: "from-slate-800 to-red-900",
+        desc: "The Spirit of Rock • Montreal" 
+      },
+
+      // ==========================================
+      // --- BRASIL & AMÉRICA LATINA ---
+      // ==========================================
+      { 
+        id: "m_11", 
+        name: "Jovem Pan FM", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Pop & Notícias Brasil", 
+        country: "Brasil", 
+        region: "Brasil",
+        flag: "🇧🇷", 
+        lat: -23.5505, lon: -46.6333, city: "São Paulo",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s10499g.png",
+        color: "from-emerald-500 to-yellow-500",
+        desc: "A número 1 do Brasil • São Paulo" 
+      },
+      { 
+        id: "m_12", 
+        name: "Antena 1 Brasil", 
+        stream_url: "https://antenaone.crossradio.com.br/stream/1/", 
+        category: "Música", 
+        genre: "Pop Internacional & Flashback", 
+        country: "Brasil", 
+        region: "Brasil",
+        flag: "🇧🇷", 
+        lat: -23.5505, lon: -46.6333, city: "São Paulo",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s10496g.png",
+        color: "from-blue-600 to-indigo-800",
+        desc: "Música Internacional de Qualidade • SP" 
+      },
+      { 
+        id: "m_13", 
+        name: "Bossa Nova Brazil", 
+        stream_url: "https://stream.zeno.fm/k22222180v8uv", 
+        category: "Relax", 
+        genre: "Bossa Nova & MPB", 
+        country: "Brasil", 
+        region: "Brasil",
+        flag: "🇧🇷", 
+        lat: -22.9068, lon: -43.1729, city: "Rio de Janeiro",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s189033g.png",
+        color: "from-teal-500 to-emerald-600",
+        desc: "Os clássicos da Bossa Nova • Rio de Janeiro" 
+      },
+      { 
+        id: "m_br_14", 
+        name: "Rádio Alpha FM", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Adult Contemporary & Soft Hits", 
+        country: "Brasil", 
+        region: "Brasil",
+        flag: "🇧🇷", 
+        lat: -23.5505, lon: -46.6333, city: "São Paulo",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s10498g.png",
+        color: "from-cyan-600 to-blue-900",
+        desc: "Sempre com você • São Paulo" 
+      },
+      { 
+        id: "m_br_15", 
+        name: "Rádio Itatiaia", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Notícias", 
+        genre: "Notícias & Futebol Brasileiro", 
+        country: "Brasil", 
+        region: "Brasil",
+        flag: "🇧🇷", 
+        lat: -19.9167, lon: -43.9345, city: "Belo Horizonte",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s10500g.png",
+        color: "from-red-600 to-yellow-600",
+        desc: "A rádio de Minas Gerais • Belo Horizonte" 
+      },
+      { 
+        id: "m_mx_1", 
+        name: "LOS 40 México", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Pop Latino & Top México", 
+        country: "México", 
+        region: "América Latina",
+        flag: "🇲🇽", 
+        lat: 19.4326, lon: -99.1332, city: "Cidade do México",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25050g.png",
+        color: "from-emerald-600 to-red-600",
+        desc: "Music Inspires Life • CDMX" 
+      },
+      { 
+        id: "m_ar_1", 
+        name: "Radio Mitre Buenos Aires", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Notícias", 
+        genre: "Noticias & Debate Argentina", 
+        country: "Argentina", 
+        region: "América Latina",
+        flag: "🇦🇷", 
+        lat: -34.6037, lon: -58.3816, city: "Buenos Aires",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25052g.png",
+        color: "from-sky-500 to-blue-800",
+        desc: "El aire de las noticias • Buenos Aires" 
+      },
+      { 
+        id: "m_ar_2", 
+        name: "Radio Disney Argentina", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Pop Juvenil & Sucessos", 
+        country: "Argentina", 
+        region: "América Latina",
+        flag: "🇦🇷", 
+        lat: -34.6037, lon: -58.3816, city: "Buenos Aires",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25054g.png",
+        color: "from-purple-600 to-pink-500",
+        desc: "Escucha lo que quieres sentir" 
+      },
+      { 
+        id: "m_co_1", 
+        name: "Caracol Radio Bogotá", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Notícias", 
+        genre: "Noticias & Deportes Colombia", 
+        country: "Colômbia", 
+        region: "América Latina",
+        flag: "🇨🇴", 
+        lat: 4.7110, lon: -74.0721, city: "Bogotá",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25056g.png",
+        color: "from-yellow-500 to-red-600",
+        desc: "Más compañía en Colombia • Bogotá" 
+      },
+      { 
+        id: "m_cl_1", 
+        name: "Radio Cooperativa Chile", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Notícias", 
+        genre: "Información & Debate", 
+        country: "Chile", 
+        region: "América Latina",
+        flag: "🇨🇱", 
+        lat: -33.4489, lon: -70.6693, city: "Santiago",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25058g.png",
+        color: "from-blue-600 to-red-700",
+        desc: "La voz de Chile • Santiago" 
+      },
+
+      // ==========================================
+      // --- ÁSIA & MÉDIO ORIENTE ---
+      // ==========================================
       { 
         id: "m_26", 
         name: "Tokyo Anime Radio", 
@@ -1965,12 +2682,231 @@
         category: "Música", 
         genre: "J-Pop & Anime OST", 
         country: "Japão", 
+        region: "Ásia",
         flag: "🇯🇵", 
         lat: 35.6762, lon: 139.6503, city: "Tóquio",
         bit_rate: 128, 
         image: "https://cdn-radiotime-logos.tunein.com/s276274g.png",
         color: "from-pink-500 to-rose-600",
         desc: "Direct J-Pop stream from Tokyo" 
+      },
+      { 
+        id: "m_jp_2", 
+        name: "J-Pop Sakura 17 Osaka", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "J-Pop Hits & Idol Music", 
+        country: "Japão", 
+        region: "Ásia",
+        flag: "🇯🇵", 
+        lat: 34.6937, lon: 135.5023, city: "Osaka",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25060g.png",
+        color: "from-rose-400 to-pink-600",
+        desc: "Sweet Japanese Melodies • Osaka" 
+      },
+      { 
+        id: "m_kr_1", 
+        name: "Big B Radio K-Pop", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "K-Pop & Korean Idol Hits", 
+        country: "Coreia do Sul", 
+        region: "Ásia",
+        flag: "🇰🇷", 
+        lat: 37.5665, lon: 126.9780, city: "Seul",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25062g.png",
+        color: "from-fuchsia-600 to-purple-800",
+        desc: "The hottest K-Pop charts 24/7 • Seoul" 
+      },
+      { 
+        id: "m_in_1", 
+        name: "Radio Mirchi Top 20", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Bollywood Hits & Desi Pop", 
+        country: "Índia", 
+        region: "Ásia",
+        flag: "🇮🇳", 
+        lat: 19.0760, lon: 72.8777, city: "Mumbai",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25064g.png",
+        color: "from-amber-500 to-orange-600",
+        desc: "It's Hot! Top Bollywood in Mumbai" 
+      },
+      { 
+        id: "m_ae_1", 
+        name: "Dubai 92 FM", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Classic Hits & Gulf Pop", 
+        country: "Emirados Árabes", 
+        region: "Ásia",
+        flag: "🇦🇪", 
+        lat: 25.2048, lon: 55.2708, city: "Dubai",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25066g.png",
+        color: "from-amber-600 to-yellow-500",
+        desc: "Dubai's Longest Running English Radio" 
+      },
+      { 
+        id: "m_th_1", 
+        name: "Bangkok Radio Dance", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Eletrónica", 
+        genre: "Tropical House & Club", 
+        country: "Tailândia", 
+        region: "Ásia",
+        flag: "🇹🇭", 
+        lat: 13.7563, lon: 100.5018, city: "Banguecoque",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25068g.png",
+        color: "from-teal-500 to-cyan-600",
+        desc: "Vibrant beats from Southeast Asia" 
+      },
+
+      // ==========================================
+      // --- ÁFRICA ---
+      // ==========================================
+      { 
+        id: "m_za_1", 
+        name: "Metro FM South Africa", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Amapiano, R&B & Urban", 
+        country: "África do Sul", 
+        region: "África",
+        flag: "🇿🇦", 
+        lat: -26.2041, lon: 28.0473, city: "Joanesburgo",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25070g.png",
+        color: "from-emerald-600 to-yellow-600",
+        desc: "It's Where You're At • Johannesburg" 
+      },
+      { 
+        id: "m_za_2", 
+        name: "CapeTalk 567", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Notícias", 
+        genre: "South African News & Talk", 
+        country: "África do Sul", 
+        region: "África",
+        flag: "🇿🇦", 
+        lat: -33.9249, lon: 18.4241, city: "Cidade do Cabo",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25072g.png",
+        color: "from-blue-700 to-teal-800",
+        desc: "Join the conversation • Cape Town" 
+      },
+      { 
+        id: "m_ao_1", 
+        name: "Rádio Nacional de Angola (RNA)", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Notícias", 
+        genre: "Kizomba, Semba & Informação", 
+        country: "Angola", 
+        region: "África",
+        flag: "🇦🇴", 
+        lat: -8.8390, lon: 13.2894, city: "Luanda",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25074g.png",
+        color: "from-red-600 to-yellow-500",
+        desc: "A voz de Angola para o mundo • Luanda" 
+      },
+      { 
+        id: "m_ao_2", 
+        name: "LAC Luanda Antena Comercial", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Música Angolana & Pop", 
+        country: "Angola", 
+        region: "África",
+        flag: "🇦🇴", 
+        lat: -8.8390, lon: 13.2894, city: "Luanda",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25076g.png",
+        color: "from-amber-600 to-slate-900",
+        desc: "A primeira estação privada de Angola" 
+      },
+      { 
+        id: "m_cv_1", 
+        name: "Rádio de Cabo Verde (RCV)", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Morna, Coladeira & Notícias", 
+        country: "Cabo Verde", 
+        region: "África",
+        flag: "🇨🇻", 
+        lat: 14.9330, lon: -23.5133, city: "Praia",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25078g.png",
+        color: "from-blue-600 to-yellow-500",
+        desc: "Sons e alma das ilhas crioulas • Praia" 
+      },
+      { 
+        id: "m_mz_1", 
+        name: "Rádio Moçambique (RM)", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Notícias", 
+        genre: "Marrabenta & Notícias de Maputo", 
+        country: "Moçambique", 
+        region: "África",
+        flag: "🇲🇿", 
+        lat: -25.9692, lon: 32.5732, city: "Maputo",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25080g.png",
+        color: "from-emerald-700 to-red-600",
+        desc: "Emissora Nacional de Moçambique • Maputo" 
+      },
+
+      // ==========================================
+      // --- OCEANIA ---
+      // ==========================================
+      { 
+        id: "m_au_1", 
+        name: "Triple J ABC Australia", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Rock", 
+        genre: "Aussie Indie & Alternative", 
+        country: "Austrália", 
+        region: "Oceania",
+        flag: "🇦🇺", 
+        lat: -33.8688, lon: 151.2093, city: "Sydney",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25082g.png",
+        color: "from-red-600 to-amber-500",
+        desc: "We love Australian music • Sydney" 
+      },
+      { 
+        id: "m_au_2", 
+        name: "FOX FM 101.9 Melbourne", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Hit Music & Fun", 
+        country: "Austrália", 
+        region: "Oceania",
+        flag: "🇦🇺", 
+        lat: -37.8136, lon: 144.9631, city: "Melbourne",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25084g.png",
+        color: "from-blue-600 to-indigo-800",
+        desc: "Melbourne's #1 Hit Station" 
+      },
+      { 
+        id: "m_nz_1", 
+        name: "ZM Online Hits Auckland", 
+        stream_url: "https://stream.zeno.fm/f3wvbbqmdg8uv", 
+        category: "Música", 
+        genre: "Top 40 & New Zealand Pop", 
+        country: "Nova Zelândia", 
+        region: "Oceania",
+        flag: "🇳🇿", 
+        lat: -36.8485, lon: 174.7633, city: "Auckland",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s25086g.png",
+        color: "from-cyan-500 to-blue-600",
+        desc: "All the Hits across NZ • Auckland" 
       }
     ];
 
@@ -3537,13 +4473,15 @@
     }
 
     // World Interactive Radio Map (Leaflet)
+    let currentMapRegion = 'all';
+
     function initWorldMap() {
       if (!leafletMap) {
         leafletMap = L.map('world-map', {
-          center: [30, 0],
+          center: [20, 0],
           zoom: 2,
           minZoom: 2,
-          maxZoom: 10
+          maxZoom: 12
         });
 
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
@@ -3561,37 +4499,193 @@
       mapMarkers = [];
 
       const all = getAllStations();
-      all.forEach(st => {
-        if (st.lat && st.lon) {
-          const customIcon = L.divIcon({
-            className: 'custom-radio-pin',
-            html: `<div class="w-8 h-8 rounded-full bg-cyan-500/30 border-2 border-cyan-400 flex items-center justify-center text-white text-sm shadow-lg shadow-cyan-500/50 hover:scale-125 transition cursor-pointer">📻</div>`,
-            iconSize: [32, 32],
-            iconAnchor: [16, 16]
-          });
+      const mappableStations = all.filter(s => s.lat != null && s.lon != null);
 
-          const marker = L.marker([st.lat, st.lon], { icon: customIcon }).addTo(leafletMap);
-          marker.bindPopup(`
-            <div class="p-1 space-y-2 text-slate-100">
-              <div class="flex items-center gap-2">
-                <span class="text-xl">${st.flag || '🌐'}</span>
-                <div>
-                  <h4 class="font-extrabold text-sm text-cyan-400">${st.name}</h4>
-                  <p class="text-[11px] text-slate-400">${st.city || st.country} • ${st.genre}</p>
-                </div>
+      mappableStations.forEach(st => {
+        const flagIcon = st.flag || '📍';
+        const customIcon = L.divIcon({
+          className: 'custom-radio-pin',
+          html: `<div class="w-9 h-9 rounded-2xl bg-slate-900/90 border-2 border-cyan-400 flex items-center justify-center text-base shadow-xl shadow-cyan-500/40 hover:scale-125 hover:border-amber-400 transition cursor-pointer" title="${st.name} (${st.city || st.country})">${flagIcon}</div>`,
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
+          popupAnchor: [0, -18]
+        });
+
+        const marker = L.marker([st.lat, st.lon], { icon: customIcon }).addTo(leafletMap);
+        marker.stationId = String(st.id);
+        marker.stationData = st;
+
+        marker.bindPopup(`
+          <div class="p-2 space-y-2.5 text-slate-100 min-w-[200px]">
+            <div class="flex items-center gap-2.5 border-b border-slate-700/80 pb-2">
+              <span class="text-2xl flex-shrink-0">${st.flag || '🌐'}</span>
+              <div class="min-w-0">
+                <h4 class="font-black text-sm text-cyan-400 leading-tight truncate">${st.name}</h4>
+                <p class="text-[11px] text-slate-300 font-semibold">${st.city ? st.city + ', ' : ''}${st.country || 'Mundo'}</p>
+                <p class="text-[10px] text-slate-400 truncate">${st.genre || st.category}</p>
               </div>
-              <button onclick="selectStation('${st.id}', true)" class="w-full py-1.5 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition">
-                ▶️ Ouvir em Direto
-              </button>
             </div>
-          `);
-          mapMarkers.push(marker);
-        }
+            <div class="flex items-center justify-between text-[10px] text-slate-400">
+              <span>🏷️ ${st.category || 'Música'}</span>
+              <span class="font-mono text-cyan-400 font-bold">${st.bit_rate || 128} kbps</span>
+            </div>
+            <button onclick="selectStation('${st.id}', true)" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-xs shadow-lg transition active:scale-95 flex items-center justify-center gap-1.5">
+              <span>▶️</span> <span>Ouvir em Direto</span>
+            </button>
+          </div>
+        `);
+        mapMarkers.push(marker);
       });
 
+      const totalCountEl = document.getElementById('map-total-count');
+      if (totalCountEl) totalCountEl.textContent = mappableStations.length;
+
+      filterMapByRegion(currentMapRegion);
+
       setTimeout(() => {
-        leafletMap.invalidateSize();
-      }, 200);
+        if (leafletMap) leafletMap.invalidateSize();
+      }, 250);
+    }
+
+    function filterMapByRegion(region) {
+      currentMapRegion = region;
+
+      // Update filter buttons styling
+      document.querySelectorAll('.map-reg-btn').forEach(b => {
+        b.className = 'map-reg-btn px-3.5 py-2 rounded-2xl font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex-shrink-0 transition';
+      });
+      const activeBtn = document.getElementById(`map-reg-${region}`);
+      if (activeBtn) {
+        activeBtn.className = 'map-reg-btn px-3.5 py-2 rounded-2xl font-bold bg-cyan-500 text-slate-950 flex-shrink-0 shadow-lg shadow-cyan-500/20 transition';
+      }
+
+      // Region Viewports
+      const regionCoords = {
+        'all': { center: [20, 0], zoom: 2 },
+        'Portugal': { center: [39.5, -8.0], zoom: 7 },
+        'Espanha': { center: [40.4, -3.7], zoom: 6 },
+        'Europa': { center: [49.0, 10.0], zoom: 4 },
+        'Reino Unido': { center: [54.0, -2.5], zoom: 6 },
+        'Brasil': { center: [-15.0, -51.0], zoom: 4 },
+        'Estados Unidos': { center: [38.5, -96.5], zoom: 4 },
+        'América Latina': { center: [-12.0, -65.0], zoom: 3 },
+        'Ásia': { center: [28.0, 95.0], zoom: 3 },
+        'África': { center: [2.0, 20.0], zoom: 3 },
+        'Oceania': { center: [-28.0, 140.0], zoom: 4 }
+      };
+
+      if (leafletMap && regionCoords[region]) {
+        const view = regionCoords[region];
+        leafletMap.flyTo(view.center, view.zoom, { duration: 1.2 });
+      }
+
+      populateMapPicker(region);
+    }
+
+    function getMappableStationsForRegion(region) {
+      const all = getAllStations().filter(s => s.lat != null && s.lon != null);
+
+      if (region === 'all') return all;
+      if (region === 'Portugal') return all.filter(s => s.country === 'Portugal');
+      if (region === 'Espanha') return all.filter(s => s.country === 'Espanha');
+      if (region === 'Reino Unido') return all.filter(s => s.country === 'Reino Unido');
+      if (region === 'Brasil') return all.filter(s => s.country === 'Brasil');
+      if (region === 'Estados Unidos') return all.filter(s => ['Estados Unidos', 'Canadá'].includes(s.country));
+      if (region === 'Europa') return all.filter(s => ['Portugal', 'Espanha', 'Reino Unido', 'França', 'Alemanha', 'Itália', 'Holanda', 'Suécia', 'Noruega', 'Irlanda', 'Grécia', 'Suíça'].includes(s.country));
+      if (region === 'América Latina') return all.filter(s => ['Brasil', 'México', 'Argentina', 'Colômbia', 'Chile'].includes(s.country));
+      if (region === 'Ásia') return all.filter(s => ['Japão', 'Coreia do Sul', 'Índia', 'Emirados Árabes', 'Tailândia'].includes(s.country));
+      if (region === 'África') return all.filter(s => ['África do Sul', 'Angola', 'Cabo Verde', 'Moçambique'].includes(s.country));
+      if (region === 'Oceania') return all.filter(s => ['Austrália', 'Nova Zelândia'].includes(s.country));
+
+      return all.filter(s => s.country === region || s.region === region);
+    }
+
+    function populateMapPicker(region) {
+      const container = document.getElementById('map-stations-picker');
+      const countEl = document.getElementById('map-visible-count');
+      if (!container) return;
+
+      const stations = getMappableStationsForRegion(region);
+
+      if (countEl) {
+        countEl.textContent = `${stations.length} rádios neste quadrante`;
+      }
+
+      if (stations.length === 0) {
+        container.innerHTML = `<div class="col-span-full py-6 text-center text-xs text-slate-400">Nenhuma rádio com coordenadas nesta região.</div>`;
+        return;
+      }
+
+      container.innerHTML = stations.map(s => {
+        const isCurrent = String(s.id) === String(currentStationId);
+        const safeName = (s.name || 'Rádio').replace(/"/g, '&quot;');
+        const safeCity = (s.city || s.country || 'Global').replace(/"/g, '&quot;');
+        const safeGenre = (s.genre || s.category || 'Música').replace(/"/g, '&quot;');
+
+        return `
+          <div class="p-3 rounded-2xl bg-slate-950/80 border ${isCurrent ? 'border-cyan-400 shadow-md shadow-cyan-500/20' : 'border-slate-800 hover:border-slate-700'} flex flex-col justify-between gap-2.5 transition">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-2xl flex-shrink-0">${s.flag || '📻'}</span>
+                <div class="min-w-0">
+                  <h4 class="text-xs font-black text-white truncate ${isCurrent ? 'text-cyan-400' : ''}">${safeName}</h4>
+                  <p class="text-[10px] text-cyan-400/90 font-semibold truncate">📍 ${safeCity}</p>
+                </div>
+              </div>
+              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300 flex-shrink-0 border border-slate-700">
+                ${s.bit_rate || 128}k
+              </span>
+            </div>
+
+            <p class="text-[10px] text-slate-400 truncate">${safeGenre}</p>
+
+            <button onclick="flyToStationOnMap('${s.id}')" class="w-full py-1.5 px-3 rounded-xl bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 font-bold text-[11px] transition active:scale-95 flex items-center justify-center gap-1.5">
+              <span>✈️</span> <span>Sintonizar & Voar</span>
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function flyToStationOnMap(stationId) {
+      const all = getAllStations();
+      const station = all.find(s => String(s.id) === String(stationId));
+      if (!station) return;
+
+      // Start audio playback
+      selectStation(stationId, true);
+
+      if (station.lat != null && station.lon != null && leafletMap) {
+        leafletMap.flyTo([station.lat, station.lon], 9, {
+          duration: 1.4,
+          easeLinearity: 0.25
+        });
+
+        // Open popup
+        setTimeout(() => {
+          const marker = mapMarkers.find(m => String(m.stationId) === String(stationId));
+          if (marker) {
+            marker.openPopup();
+          }
+        }, 1450);
+
+        showToast(`A voar no mapa para ${station.city || station.country}: ${station.name}!`, station.flag || '✈️', 'success');
+
+        // Scroll to map if user is further down
+        const mapEl = document.getElementById('world-map');
+        if (mapEl && window.innerWidth < 768) {
+          mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } else {
+        showToast(`A tocar ${station.name}`, '📻', 'info');
+      }
+    }
+
+    function zoomMapToFit() {
+      if (leafletMap) {
+        leafletMap.flyTo([20, 0], 2, { duration: 1.2 });
+      }
+      filterMapByRegion('all');
     }
 
     function selectCategory(cat) {
