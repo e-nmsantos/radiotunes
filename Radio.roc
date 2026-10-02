@@ -21,6 +21,26 @@ AdvancedFilter : {
 	only_in_library : Bool,
 }
 
+CustomPlaylist : {
+	id : U64,
+	name : Str,
+	icon : Str,
+	station_ids : List(U64),
+}
+
+ScheduledRecording : {
+	station_id : U64,
+	start_time : Str,
+	duration_mins : U32,
+	is_active : Bool,
+}
+
+TrackHistoryItem : {
+	title : Str,
+	artist : Str,
+	station_id : U64,
+}
+
 EqualizerPreset : {
 	name : Str,
 	bass : I32,
@@ -144,6 +164,40 @@ apply_advanced_filter = |stations, filter| {
 								and matches_lib
 		},
 	)
+}
+
+## Cria uma playlist personalizada
+create_playlist : U64, Str, Str -> CustomPlaylist
+create_playlist = |id, name, icon| {
+	id,
+	name,
+	icon,
+	station_ids: [],
+}
+
+## Adiciona uma estação a uma playlist
+add_to_playlist : CustomPlaylist, U64 -> CustomPlaylist
+add_to_playlist = |playlist, station_id| {
+	if List.contains(playlist.station_ids, station_id) {
+		playlist
+	} else {
+		{ ..playlist, station_ids: List.append(playlist.station_ids, station_id) }
+	}
+}
+
+## Remove uma estação de uma playlist
+remove_from_playlist : CustomPlaylist, U64 -> CustomPlaylist
+remove_from_playlist = |playlist, station_id| {
+	{ ..playlist, station_ids: List.keep_if(playlist.station_ids, |id| id != station_id) }
+}
+
+## Cria um agendamento de gravação (DVR)
+create_scheduled_recording : U64, Str, U32 -> ScheduledRecording
+create_scheduled_recording = |station_id, start_time, duration_mins| {
+	station_id,
+	start_time,
+	duration_mins,
+	is_active: Bool.True,
 }
 
 ## Filtra estações por género musical ou categoria
@@ -450,4 +504,24 @@ expect {
 
 	filtered = apply_advanced_filter(stations, filter)
 	List.len(filtered) == 1
+}
+
+# Teste 11: Criação e gestão de Playlists Personalizadas
+expect {
+	p1 = create_playlist(1, "Foco no Trabalho", "💼")
+	p2 = add_to_playlist(p1, 101)
+	p3 = add_to_playlist(p2, 201)
+	p4 = remove_from_playlist(p3, 101)
+
+	List.len(p3.station_ids) == 2
+		and List.len(p4.station_ids) == 1
+			and List.contains(p4.station_ids, 201)
+}
+
+# Teste 12: Gravação Agendada (DVR)
+expect {
+	rec = create_scheduled_recording(101, "08:00", 30)
+	rec.station_id == 101
+		and rec.duration_mins == 30
+			and rec.is_active == Bool.True
 }

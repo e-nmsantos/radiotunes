@@ -1,9 +1,10 @@
-# Binaries & Large Tools
+# Binários e ficheiros temporários
 roc_bin/
 *.exe
-*.dll
-
-# OS files
+*.obj
+*.lib
+*.pdb
+*.swp
+*~
 .DS_Store
 Thumbs.db
-*.tmp

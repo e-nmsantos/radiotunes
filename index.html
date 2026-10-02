@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Roc TuneIn - Rádio Mundial Hi-Fi, Mapa, DSP & Soundscapes</title>
+  <title>Roc TuneIn - Rádio Mundial Hi-Fi, DSP 3D, PiP & DVR</title>
   
   <!-- PWA Meta Tags -->
   <link rel="manifest" href="manifest.json">
@@ -187,6 +187,9 @@
         <button onclick="setView('library')" id="nav-library" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:bg-slate-800 hover:text-white transition">
           <span>📌</span> <span data-i18n="myLibrary">Minha Biblioteca</span> (<span id="lib-count">0</span>)
         </button>
+        <button onclick="setView('playlists')" id="nav-playlists" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:bg-slate-800 hover:text-white transition">
+          <span>📂</span> <span data-i18n="myPlaylists">Playlists Pessoais</span>
+        </button>
         <button onclick="setView('recents')" id="nav-recents" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:bg-slate-800 hover:text-white transition">
           <span>🕒</span> <span data-i18n="recentlyPlayed">Ouvidas Recentemente</span>
         </button>
@@ -230,8 +233,23 @@
 
       <!-- Quick Audio & Utility Tools in Sidebar -->
       <div class="space-y-1.5 pt-2 border-t border-slate-800">
-        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 px-3 mb-1" data-i18n="tools">Ferramentas & Áudio</div>
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 px-3 mb-1" data-i18n="tools">Ferramentas Pro</div>
         
+        <button onclick="togglePictureInPicture()" class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 bg-slate-800/60 hover:bg-cyan-500/20 hover:text-cyan-400 transition">
+          <span class="flex items-center gap-2"><span>🖼️</span> <span data-i18n="pipPlayer">Mini-Player Flutuante (PiP)</span></span>
+          <span class="text-[10px] bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded">PiP</span>
+        </button>
+
+        <button onclick="openTrackHistoryModal()" class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 bg-slate-800/60 hover:bg-purple-500/20 hover:text-purple-400 transition">
+          <span class="flex items-center gap-2"><span>🎵</span> <span data-i18n="trackHistory">Histórico & Letras</span></span>
+          <span id="side-history-badge" class="text-[10px] text-purple-400 font-mono">0</span>
+        </button>
+
+        <button onclick="openDVRModal()" class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 bg-slate-800/60 hover:bg-red-500/20 hover:text-red-400 transition">
+          <span class="flex items-center gap-2"><span>🎙️</span> <span data-i18n="radioDVR">Gravação Agendada (DVR)</span></span>
+          <span id="side-dvr-badge" class="text-[10px] text-slate-400 font-mono">Off</span>
+        </button>
+
         <button onclick="openSoundscapesModal()" class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 bg-slate-800/60 hover:bg-emerald-500/20 hover:text-emerald-400 transition">
           <span class="flex items-center gap-2"><span>🌧️</span> <span data-i18n="soundscapes">Sons Ambiente</span></span>
           <span id="side-soundscapes-badge" class="text-[10px] text-slate-400 font-mono">Off</span>
@@ -248,8 +266,8 @@
         </button>
 
         <button onclick="openEqualizerModal()" class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 bg-slate-800/60 hover:bg-slate-800 hover:text-cyan-400 transition">
-          <span class="flex items-center gap-2"><span>🎚️</span> <span data-i18n="equalizer">Equalizador (EQ)</span></span>
-          <span id="side-eq-badge" class="text-[10px] text-cyan-400 font-mono">Flat</span>
+          <span class="flex items-center gap-2"><span>🎚️</span> <span data-i18n="equalizer">Equalizador Pro & 3D</span></span>
+          <span id="side-eq-badge" class="text-[10px] text-cyan-400 font-mono">10-Band</span>
         </button>
 
         <button onclick="openSleepModal()" class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 bg-slate-800/60 hover:bg-slate-800 hover:text-amber-400 transition">
@@ -265,7 +283,7 @@
 
     </div>
 
-    <!-- Add Custom Stream & Theme Switcher -->
+    <!-- Theme Switcher & Custom Stream -->
     <div class="pt-4 border-t border-slate-800 space-y-2">
       <div class="flex items-center justify-between px-1">
         <span class="text-[11px] text-slate-500 font-bold uppercase" data-i18n="theme">Tema:</span>
@@ -300,6 +318,20 @@
         <button onclick="snoozeAlarm()" class="px-3 py-1.5 rounded-xl bg-slate-950 text-amber-400 font-black text-xs hover:bg-slate-900 transition" data-i18n="snooze">Adiar 5 min</button>
         <button onclick="dismissAlarm()" class="px-3 py-1.5 rounded-xl bg-slate-950 text-white font-black text-xs hover:bg-slate-900 transition" data-i18n="turnOff">Desligar</button>
       </div>
+    </div>
+
+    <!-- Active DVR Recording Banner -->
+    <div id="dvr-active-banner" class="hidden p-4 rounded-2xl bg-red-600/20 border border-red-500/40 text-red-200 font-bold flex items-center justify-between shadow-2xl">
+      <div class="flex items-center gap-3">
+        <div class="w-3 h-3 rounded-full bg-red-500 recording-pulse"></div>
+        <div>
+          <h4 class="text-sm font-black text-white">GRAVAÇÃO AGENDADA DVR EM CURSO...</h4>
+          <p class="text-xs text-red-300" id="dvr-status-msg">A gravar emissão da estação atual.</p>
+        </div>
+      </div>
+      <button onclick="stopRecording()" class="px-3 py-1.5 rounded-xl bg-red-500 hover:bg-red-400 text-slate-950 font-black text-xs transition">
+        Parar & Guardar Ficheiro 📥
+      </button>
     </div>
 
     <!-- Super Search & Advanced Filters Header -->
@@ -420,6 +452,25 @@
       </div>
     </div>
 
+    <!-- Playlists Manager Section (When View is 'playlists') -->
+    <div id="playlists-view-container" class="hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-black text-white flex items-center gap-2">
+            <span>📂</span> <span data-i18n="myPlaylists">Minhas Playlists Pessoais</span>
+          </h2>
+          <p class="text-xs text-slate-400">Cria pastas de rádios personalizadas para trabalho, treino, viagens ou estudo.</p>
+        </div>
+        <button onclick="openCreatePlaylistModal()" class="px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs shadow-md transition flex items-center gap-1.5">
+          <span>➕</span> Nova Playlist
+        </button>
+      </div>
+
+      <div id="playlists-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Playlists dynamically injected -->
+      </div>
+    </div>
+
     <!-- Country Selector Carousel (Pills) -->
     <div id="country-filter-section" class="space-y-2">
       <div class="flex items-center justify-between">
@@ -513,7 +564,10 @@
             <h4 id="player-station-name" class="text-sm font-extrabold text-white truncate">LOS 40 España</h4>
             <span id="player-live-badge" class="hidden px-2 py-0.5 rounded-full text-[9px] font-black bg-red-500 text-white animate-pulse">LIVE</span>
           </div>
-          <p id="player-station-sub" class="text-xs text-slate-400 truncate mt-0.5">Espanha • Pop & Top 40 Hits</p>
+          <!-- Live Now Playing Track Info -->
+          <div class="flex items-center gap-1.5 truncate">
+            <p id="player-now-playing" class="text-xs text-cyan-400 font-medium truncate">Pop & Top 40 Hits</p>
+          </div>
         </div>
       </div>
 
@@ -521,8 +575,11 @@
       <div class="flex items-center gap-1.5 flex-shrink-0">
         <button id="player-fav-btn" onclick="toggleCurrentFav()" class="p-1.5 text-xl text-slate-500 hover:text-amber-400 transition" title="Marcar Favorito">☆</button>
         <button id="player-lib-btn" onclick="toggleCurrentLib()" class="p-1.5 text-sm text-slate-500 hover:text-cyan-400 transition" title="Incluir na Minha Biblioteca">📌</button>
-        <button onclick="searchCurrentOnSpotify()" class="p-1.5 text-slate-400 hover:text-green-400 transition text-sm" title="Procurar no Spotify">
-          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.503 17.308c-.216.353-.674.464-1.027.248-2.812-1.718-6.352-2.107-10.521-1.155-.403.092-.806-.16-.898-.563-.092-.403.16-.806.563-.898 4.567-1.042 8.502-.596 11.636 1.341.353.216.464.674.247 1.027zm1.469-3.266c-.272.443-.852.583-1.295.311-3.219-1.978-8.125-2.55-11.933-1.393-.497.151-1.028-.134-1.179-.631-.151-.497.134-1.028.631-1.179 4.354-1.321 9.775-.681 13.466 1.587.443.272.583.852.31 1.295zm.126-3.41c-3.861-2.293-10.231-2.505-13.914-1.387-.593.18-1.223-.157-1.403-.75-.18-.593.157-1.223.75-1.403 4.238-1.287 11.278-1.04 15.688 1.579.533.316.708 1.008.392 1.541-.316.533-1.008.708-1.513.42z"/></svg>
+        <button onclick="togglePictureInPicture()" class="p-1.5 text-slate-400 hover:text-cyan-400 transition text-sm" title="Mini-Player Flutuante (Picture-in-Picture)">
+          🖼️
+        </button>
+        <button onclick="openTrackHistoryModal()" class="p-1.5 text-slate-400 hover:text-purple-400 transition text-sm" title="Ver Histórico & Letra">
+          📜
         </button>
         <button onclick="shareCurrentStation()" class="p-1.5 text-slate-400 hover:text-cyan-400 transition text-sm" title="Copiar Link da Estação">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
@@ -581,7 +638,7 @@
       </button>
 
       <!-- EQ Modal Trigger -->
-      <button onclick="openEqualizerModal()" class="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition" title="Equalizador DSP">
+      <button onclick="openEqualizerModal()" class="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition" title="Equalizador Pro & DSP 3D">
         🎚️
       </button>
 
@@ -604,7 +661,236 @@
 
   </footer>
 
-  <!-- Modal 1: Soundscapes Ambient Mixer (Web Audio Pure Synthesis) -->
+  <!-- Hidden Video for Picture-in-Picture Canvas Stream -->
+  <video id="pip-video" class="hidden" autoplay muted></video>
+  <canvas id="pip-canvas" width="480" height="270" class="hidden"></canvas>
+
+  <!-- Modal 1: Track History & Lyrics Drawer -->
+  <div id="history-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-5">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">🎵 Histórico de Músicas & Letras</h3>
+        <button onclick="closeTrackHistoryModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+
+      <!-- Live Now Playing Card -->
+      <div class="p-4 rounded-2xl bg-gradient-to-r from-cyan-500/15 via-blue-500/10 to-purple-500/15 border border-cyan-500/30 flex items-center justify-between">
+        <div class="min-w-0 flex-1">
+          <span class="text-[10px] font-black uppercase tracking-wider text-cyan-400 block mb-0.5">A Tocar Agora em Direto:</span>
+          <h4 id="history-now-title" class="text-sm font-black text-white truncate">LOS 40 España - Direct Stream</h4>
+          <p id="history-now-station" class="text-xs text-slate-400 truncate mt-0.5">Pop & Top Hits</p>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <button onclick="searchCurrentOnSpotify()" class="p-2 rounded-xl bg-green-500/20 text-green-400 hover:bg-green-500/30 text-xs font-bold transition flex items-center gap-1">
+            <span>Spotify</span>
+          </button>
+          <button onclick="searchLyricsOnGoogle()" class="p-2 rounded-xl bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 text-xs font-bold transition flex items-center gap-1">
+            <span>📜 Ver Letra</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Played Tracks List -->
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Músicas & Rádios Ouvidas Nesta Sessão:</h4>
+        <div id="history-tracks-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center pt-2 border-t border-slate-800">
+        <button onclick="clearTrackHistory()" class="text-xs text-slate-400 hover:text-red-400">Limpar Histórico</button>
+        <button onclick="closeTrackHistoryModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-white text-xs font-bold hover:bg-slate-700">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Radio DVR / Scheduled Recording -->
+  <div id="dvr-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">🎙️ Gravação Agendada de Rádio (DVR)</h3>
+        <button onclick="closeDVRModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-400">Agenda a gravação automática de um programa ou emissão. A app gravará e descarregará o ficheiro `.webm` automaticamente.</p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs font-semibold text-slate-400 block mb-1">Hora de Início da Gravação</label>
+          <input type="time" id="dvr-start-time" value="08:00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-red-400" />
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-slate-400 block mb-1">Duração da Gravação</label>
+          <select id="dvr-duration" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-red-400">
+            <option value="15">15 Minutos</option>
+            <option value="30" selected>30 Minutos</option>
+            <option value="60">1 Hora (60 Minutos)</option>
+            <option value="120">2 Horas (120 Minutos)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-slate-400 block mb-1">Estação de Rádio</label>
+          <select id="dvr-station-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-red-400">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-950 border border-slate-800">
+          <span class="text-xs font-semibold text-slate-300">Ativar Agendamento DVR</span>
+          <input type="checkbox" id="dvr-toggle" class="w-5 h-5 accent-red-500 cursor-pointer" />
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeDVRModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition">Cancelar</button>
+        <button onclick="saveDVRSettings()" class="flex-1 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-black shadow-lg transition">Guardar Agendamento</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Custom Playlists Creator -->
+  <div id="playlist-create-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">📂 Criar Nova Playlist</h3>
+        <button onclick="closeCreatePlaylistModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+
+      <form id="playlist-form" class="space-y-3">
+        <div>
+          <label class="text-xs font-semibold text-slate-400 block mb-1">Nome da Playlist</label>
+          <input type="text" id="pl-name" required placeholder="Ex: Foco no Trabalho, Treino Gym..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400" />
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-slate-400 block mb-1">Ícone</label>
+          <select id="pl-icon" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400">
+            <option value="💼">💼 Trabalho & Foco</option>
+            <option value="🏃‍♂️">🏃‍♂️ Treino & Gym</option>
+            <option value="🌙">🌙 Relax Noturno</option>
+            <option value="🚗">🚗 Viagem & Estrada</option>
+            <option value="🎉">🎉 Festa & Dança</option>
+            <option value="☕">☕ Café & Leitura</option>
+          </select>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeCreatePlaylistModal()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-800 text-slate-400 text-xs font-bold">Cancelar</button>
+          <button type="submit" class="flex-1 px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black shadow-lg">Criar Playlist</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 4: Equalizador Pro 10-Band & 3D Spatial Audio -->
+  <div id="eq-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-5">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">🎚️ Equalizador Gráfico Pro & Áudio 3D</h3>
+        <button onclick="closeEqualizerModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+
+      <!-- 3D Spatial Audio & Reverb Toggles -->
+      <div class="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
+        <div>
+          <div class="flex justify-between text-xs font-bold text-slate-300 mb-1">
+            <span>🎧 Áudio Espacial 3D</span>
+            <span id="spatial-val" class="text-cyan-400 font-mono">0%</span>
+          </div>
+          <input type="range" id="spatial-slider" min="-100" max="100" value="0" oninput="updateSpatialAudio(this.value)" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs font-bold text-slate-300 mb-1">
+            <span>🏛️ Concert Hall Reverb</span>
+            <span id="reverb-val" class="text-purple-400 font-mono">Off</span>
+          </div>
+          <input type="range" id="reverb-slider" min="0" max="100" value="0" oninput="updateReverb(this.value)" class="w-full accent-purple-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+        </div>
+      </div>
+      
+      <!-- Presets Pills -->
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Presets de Áudio</label>
+        <div class="flex flex-wrap gap-1.5">
+          <button onclick="applyEQPreset('flat')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-cyan-500 text-slate-950 font-bold text-xs transition">Flat</button>
+          <button onclick="applyEQPreset('bass')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Bass Boost</button>
+          <button onclick="applyEQPreset('rock')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Rock</button>
+          <button onclick="applyEQPreset('pop')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Pop</button>
+          <button onclick="applyEQPreset('vocal')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Voz / Notícias</button>
+          <button onclick="applyEQPreset('jazz')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Jazz</button>
+          <button onclick="applyEQPreset('lofi')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Lo-Fi</button>
+        </div>
+      </div>
+
+      <!-- 10-Band Sliders -->
+      <div class="space-y-2 pt-1">
+        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">10 Bandas de Frequência Hi-Fi (32Hz - 16kHz)</label>
+        <div class="grid grid-cols-5 sm:grid-cols-10 gap-2 text-center">
+          <div class="space-y-1">
+            <span class="text-[10px] text-slate-400">32Hz</span>
+            <input type="range" min="-12" max="12" value="0" id="eq-b-32" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <span id="eq-v-32" class="text-[10px] font-mono text-cyan-400 block">0</span>
+          </div>
+          <div class="space-y-1">
+            <span class="text-[10px] text-slate-400">64Hz</span>
+            <input type="range" min="-12" max="12" value="0" id="eq-b-64" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <span id="eq-v-64" class="text-[10px] font-mono text-cyan-400 block">0</span>
+          </div>
+          <div class="space-y-1">
+            <span class="text-[10px] text-slate-400">125Hz</span>
+            <input type="range" min="-12" max="12" value="0" id="eq-b-125" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <span id="eq-v-125" class="text-[10px] font-mono text-cyan-400 block">0</span>
+          </div>
+          <div class="space-y-1">
+            <span class="text-[10px] text-slate-400">250Hz</span>
+            <input type="range" min="-12" max="12" value="0" id="eq-b-250" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <span id="eq-v-250" class="text-[10px] font-mono text-cyan-400 block">0</span>
+          </div>
+          <div class="space-y-1">
+            <span class="text-[10px] text-slate-400">500Hz</span>
+            <input type="range" min="-12" max="12" value="0" id="eq-b-500" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <span id="eq-v-500" class="text-[10px] font-mono text-cyan-400 block">0</span>
+          </div>
+          <div class="space-y-1">
+            <span class="text-[10px] text-slate-400">1kHz</span>
+            <input type="range" min="-12" max="12" value="0" id="eq-b-1k" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <span id="eq-v-1k" class="text-[10px] font-mono text-cyan-400 block">0</span>
+          </div>
+          <div class="space-y-1">
+            <span class="text-[10px] text-slate-400">2kHz</span>
+            <input type="range" min="-12" max="12" value="0" id="eq-b-2k" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <span id="eq-v-2k" class="text-[10px] font-mono text-cyan-400 block">0</span>
+          </div>
+          <div class="space-y-1">
+            <span class="text-[10px] text-slate-400">4kHz</span>
+            <input type="range" min="-12" max="12" value="0" id="eq-b-4k" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <span id="eq-v-4k" class="text-[10px] font-mono text-cyan-400 block">0</span>
+          </div>
+          <div class="space-y-1">
+            <span class="text-[10px] text-slate-400">8kHz</span>
+            <input type="range" min="-12" max="12" value="0" id="eq-b-8k" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <span id="eq-v-8k" class="text-[10px] font-mono text-cyan-400 block">0</span>
+          </div>
+          <div class="space-y-1">
+            <span class="text-[10px] text-slate-400">16kHz</span>
+            <input type="range" min="-12" max="12" value="0" id="eq-b-16k" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <span id="eq-v-16k" class="text-[10px] font-mono text-cyan-400 block">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button onclick="resetEQ()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition">Restaurar</button>
+        <button onclick="closeEqualizerModal()" class="flex-1 px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-extrabold shadow-lg transition">Concluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 5: Soundscapes Ambient Mixer -->
   <div id="soundscapes-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -675,63 +961,7 @@
     </div>
   </div>
 
-  <!-- Modal 2: Equalizador (EQ) -->
-  <div id="eq-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">🎚️ Equalizador de Som DSP</h3>
-        <button onclick="closeEqualizerModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
-      </div>
-      
-      <!-- Presets Pills -->
-      <div class="space-y-1.5">
-        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Presets de Áudio</label>
-        <div class="flex flex-wrap gap-1.5">
-          <button onclick="applyEQPreset('flat')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-cyan-500 text-slate-950 font-bold text-xs transition">Flat</button>
-          <button onclick="applyEQPreset('bass')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Bass Boost</button>
-          <button onclick="applyEQPreset('rock')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Rock</button>
-          <button onclick="applyEQPreset('pop')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Pop</button>
-          <button onclick="applyEQPreset('vocal')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Voz / Notícias</button>
-          <button onclick="applyEQPreset('jazz')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Jazz</button>
-          <button onclick="applyEQPreset('lofi')" class="eq-preset-btn px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-medium text-xs transition">Lo-Fi</button>
-        </div>
-      </div>
-
-      <!-- Sliders -->
-      <div class="space-y-4 pt-2">
-        <div>
-          <div class="flex justify-between text-xs font-semibold mb-1">
-            <span class="text-slate-300">Graves (Bass • 150Hz)</span>
-            <span id="eq-bass-val" class="text-cyan-400 font-mono">0 dB</span>
-          </div>
-          <input type="range" id="eq-bass" min="-12" max="12" value="0" step="1" oninput="updateEQManual()" class="w-full accent-cyan-400 cursor-pointer h-2 bg-slate-950 rounded-lg" />
-        </div>
-
-        <div>
-          <div class="flex justify-between text-xs font-semibold mb-1">
-            <span class="text-slate-300">Médios (Mid • 1kHz)</span>
-            <span id="eq-mid-val" class="text-cyan-400 font-mono">0 dB</span>
-          </div>
-          <input type="range" id="eq-mid" min="-12" max="12" value="0" step="1" oninput="updateEQManual()" class="w-full accent-cyan-400 cursor-pointer h-2 bg-slate-950 rounded-lg" />
-        </div>
-
-        <div>
-          <div class="flex justify-between text-xs font-semibold mb-1">
-            <span class="text-slate-300">Agudos (Treble • 3.5kHz)</span>
-            <span id="eq-treble-val" class="text-cyan-400 font-mono">0 dB</span>
-          </div>
-          <input type="range" id="eq-treble" min="-12" max="12" value="0" step="1" oninput="updateEQManual()" class="w-full accent-cyan-400 cursor-pointer h-2 bg-slate-950 rounded-lg" />
-        </div>
-      </div>
-
-      <div class="flex gap-3 pt-2">
-        <button onclick="resetEQ()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition">Restaurar</button>
-        <button onclick="closeEqualizerModal()" class="flex-1 px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-extrabold shadow-lg transition">Concluir</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal 3: Sleep Timer -->
+  <!-- Modal 6: Sleep Timer -->
   <div id="sleep-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -756,7 +986,7 @@
     </div>
   </div>
 
-  <!-- Modal 4: Radio Alarm Clock -->
+  <!-- Modal 7: Radio Alarm Clock -->
   <div id="alarm-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -792,7 +1022,7 @@
     </div>
   </div>
 
-  <!-- Modal 5: TV / Fullscreen Ambient Mode with 3D Circular & Bars Visualizer -->
+  <!-- Modal 8: TV / Fullscreen Ambient Mode -->
   <div id="tv-ambient-modal" class="fixed inset-0 bg-slate-950 z-50 hidden flex flex-col justify-between p-6 md:p-12">
     
     <!-- Top Bar -->
@@ -802,7 +1032,7 @@
         <span class="text-xs uppercase tracking-widest font-black text-cyan-400 font-mono">ROC TUNEIN • AMBIENT HI-FI</span>
       </div>
 
-      <!-- Visualizer Mode Picker (Bars vs Halo Circular) -->
+      <!-- Visualizer Mode Picker -->
       <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-2xl p-1 text-xs">
         <button onclick="setVisualizerStyle('bars')" id="viz-bars-btn" class="px-3 py-1.5 rounded-xl bg-cyan-500 text-slate-950 font-bold">Barras</button>
         <button onclick="setVisualizerStyle('halo')" id="viz-halo-btn" class="px-3 py-1.5 rounded-xl text-slate-400 hover:text-white font-medium">Halo 3D</button>
@@ -814,7 +1044,7 @@
       </div>
     </div>
 
-    <!-- Center: Large Artwork & Visualizer Canvas -->
+    <!-- Center Artwork & Canvas -->
     <div class="flex flex-col items-center justify-center text-center space-y-6 max-w-2xl mx-auto w-full relative">
       <div id="tv-cover-wrap" class="w-48 h-48 md:w-64 md:h-64 rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-700 flex items-center justify-center shadow-2xl playing-glow relative z-10">
         <img id="tv-cover-img" src="" class="w-full h-full object-cover hidden" alt="Capa" />
@@ -828,7 +1058,6 @@
         <p id="tv-station-sub" class="text-sm md:text-base text-slate-400 mt-1">Espanha • Pop & Top 40 Hits</p>
       </div>
 
-      <!-- TV Visualizer Canvas -->
       <div class="w-full max-w-lg h-24 flex items-center justify-center">
         <canvas id="tv-visualizer" class="w-full h-full"></canvas>
       </div>
@@ -852,7 +1081,7 @@
 
   </div>
 
-  <!-- Modal 6: Backup, Export & M3U -->
+  <!-- Modal 9: Backup & M3U Export -->
   <div id="backup-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -860,7 +1089,7 @@
         <button onclick="closeBackupModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
 
-      <p class="text-xs text-slate-400">Exporta a tua coleção de rádios favoritas ou transfere para outro dispositivo.</p>
+      <p class="text-xs text-slate-400">Exporta a tua coleção de rádios, playlists e gravações ou transfere para outro dispositivo.</p>
 
       <div class="space-y-2.5">
         <button onclick="exportJSONBackup()" class="w-full py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-between transition">
@@ -885,7 +1114,7 @@
     </div>
   </div>
 
-  <!-- Modal 7: Add Custom Station -->
+  <!-- Modal 10: Add Custom Station -->
   <div id="add-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -1394,6 +1623,7 @@
         worldMap: "Mapa Mundial Interativo",
         myFavorites: "Meus Favoritos",
         myLibrary: "Minha Biblioteca",
+        myPlaylists: "Playlists Pessoais",
         recentlyPlayed: "Ouvidas Recentemente",
         top50World: "Top 50 Mundial",
         categories: "Categorias",
@@ -1404,11 +1634,14 @@
         catSports: "Desporto & Futebol",
         catElectro: "Eletrónica & Dance",
         catRelax: "Lo-Fi, Jazz & Relax",
-        tools: "Ferramentas & Áudio",
+        tools: "Ferramentas Pro",
+        pipPlayer: "Mini-Player Flutuante (PiP)",
+        trackHistory: "Histórico & Letras",
+        radioDVR: "Gravação Agendada (DVR)",
         soundscapes: "Sons Ambiente",
         tvMode: "Modo TV / Ecrã Gigante",
         alarmClock: "Despertador",
-        equalizer: "Equalizador (EQ)",
+        equalizer: "Equalizador Pro & 3D",
         theme: "Tema:",
         addCustomStream: "Adicionar Stream Próprio",
         search: "Pesquisar",
@@ -1454,6 +1687,7 @@
         worldMap: "Interactive World Map",
         myFavorites: "My Favorites",
         myLibrary: "My Library",
+        myPlaylists: "Custom Playlists",
         recentlyPlayed: "Recently Played",
         top50World: "Top 50 World",
         categories: "Categories",
@@ -1464,11 +1698,14 @@
         catSports: "Sports & Football",
         catElectro: "Electronic & Dance",
         catRelax: "Lo-Fi, Jazz & Relax",
-        tools: "Tools & Audio",
+        tools: "Pro Tools",
+        pipPlayer: "Floating Mini-Player (PiP)",
+        trackHistory: "Track History & Lyrics",
+        radioDVR: "Scheduled Radio DVR",
         soundscapes: "Ambient Soundscapes",
         tvMode: "TV / Ambient Mode",
         alarmClock: "Alarm Clock",
-        equalizer: "Equalizer (EQ)",
+        equalizer: "Pro EQ & 3D Spatial",
         theme: "Theme:",
         addCustomStream: "Add Custom Stream",
         search: "Search",
@@ -1514,6 +1751,7 @@
         worldMap: "Mapa Mundial Interactivo",
         myFavorites: "Mis Favoritos",
         myLibrary: "Mi Biblioteca",
+        myPlaylists: "Listas Personalizadas",
         recentlyPlayed: "Escuchadas Recientemente",
         top50World: "Top 50 Mundial",
         categories: "Categorías",
@@ -1524,11 +1762,14 @@
         catSports: "Deportes & Fútbol",
         catElectro: "Electrónica & Dance",
         catRelax: "Lo-Fi, Jazz & Relax",
-        tools: "Herramientas & Audio",
+        tools: "Herramientas Pro",
+        pipPlayer: "Mini-Reproductor Flotante (PiP)",
+        trackHistory: "Historial & Letras",
+        radioDVR: "Grabación Programada (DVR)",
         soundscapes: "Sonidos Ambiente",
         tvMode: "Modo TV / Pantalla Grande",
         alarmClock: "Despertador",
-        equalizer: "Ecualizador (EQ)",
+        equalizer: "Ecualizador Pro & Audio 3D",
         theme: "Tema:",
         addCustomStream: "Añadir Stream Propio",
         search: "Buscar",
@@ -1574,6 +1815,7 @@
         worldMap: "Carte Mondiale Interactive",
         myFavorites: "Mes Favoris",
         myLibrary: "Ma Bibliothèque",
+        myPlaylists: "Playlists Personnelles",
         recentlyPlayed: "Écoutées Récemment",
         top50World: "Top 50 Mondial",
         categories: "Catégories",
@@ -1584,11 +1826,14 @@
         catSports: "Sports & Football",
         catElectro: "Électronique & Dance",
         catRelax: "Lo-Fi, Jazz & Détente",
-        tools: "Outils & Audio",
+        tools: "Outils Pro",
+        pipPlayer: "Mini-Lecteur Flottant (PiP)",
+        trackHistory: "Historique & Paroles",
+        radioDVR: "Enregistrement Programmé",
         soundscapes: "Sons d'Ambiance",
         tvMode: "Mode TV / Grand Écran",
         alarmClock: "Réveil Radio",
-        equalizer: "Égaliseur (EQ)",
+        equalizer: "Égaliseur Pro & 3D",
         theme: "Thème :",
         addCustomStream: "Ajouter un Flux",
         search: "Rechercher",
@@ -1647,17 +1892,24 @@
     // State Variables
     let userFavorites = JSON.parse(localStorage.getItem('roc_user_favorites') || '["m_101", "m_201", "m_301", "m_1", "m_2"]');
     let userLibrary = JSON.parse(localStorage.getItem('roc_user_library') || '["m_101", "m_102", "m_103", "m_104", "m_105", "m_106", "m_201", "m_202", "m_301", "m_1", "m_2", "m_3", "m_4", "m_5", "m_6", "m_11", "m_13", "m_24", "m_25"]');
+    let userPlaylists = JSON.parse(localStorage.getItem('roc_user_playlists') || '[{"id":"pl_1","name":"Foco no Trabalho","icon":"💼","stationIds":["m_101","m_304","m_25"]},{"id":"pl_2","name":"Treino & Energia","icon":"🏃‍♂️","stationIds":["m_103","m_106","m_7"]}]');
     let userCustomStations = JSON.parse(localStorage.getItem('roc_user_custom_stations') || '[]');
     let recentIds = JSON.parse(localStorage.getItem('roc_user_recents') || '["m_101", "m_201", "m_301", "m_1", "m_2"]');
+    let trackHistory = JSON.parse(localStorage.getItem('roc_user_track_history') || '[]');
     let currentTheme = localStorage.getItem('roc_user_theme') || 'cyan';
     
-    let eqSettings = JSON.parse(localStorage.getItem('roc_user_eq') || '{"name":"flat","bass":0,"mid":0,"treble":0}');
+    let eq10Bands = JSON.parse(localStorage.getItem('roc_user_eq10') || '{"32":0,"64":0,"125":0,"250":0,"500":0,"1k":0,"2k":0,"4k":0,"8k":0,"16k":0}');
+    let spatialValue = parseInt(localStorage.getItem('roc_user_spatial') || '0', 10);
+    let reverbValue = parseInt(localStorage.getItem('roc_user_reverb') || '0', 10);
+
     let alarmSettings = JSON.parse(localStorage.getItem('roc_user_alarm') || '{"enabled":false,"time":"07:30","stationId":"m_101"}');
+    let dvrSettings = JSON.parse(localStorage.getItem('roc_user_dvr') || '{"enabled":false,"time":"08:00","duration":30,"stationId":"m_101"}');
     
     let sleepSecondsLeft = 0;
     let sleepInterval = null;
     let alarmCheckInterval = null;
-    let visualizerStyle = 'bars'; // 'bars' or 'halo'
+    let dvrCheckInterval = null;
+    let visualizerStyle = 'bars';
 
     let apiSearchResults = [];
     let currentStationId = "m_101";
@@ -1667,6 +1919,7 @@
     let currentView = 'home';
     let selectedCategory = 'Todas';
     let selectedCountry = 'Todos';
+    let selectedPlaylistId = null;
     let searchQuery = '';
     let hlsInstance = null;
     let searchTimer = null;
@@ -1688,12 +1941,14 @@
     let audioCtx = null;
     let sourceNode = null;
     let analyserNode = null;
-    let bassFilter = null;
-    let midFilter = null;
-    let trebleFilter = null;
+    let filters10 = {};
+    let pannerNode = null;
+    let convolverNode = null;
+    let reverbGain = null;
+    let dryGain = null;
     let isAudioContextReady = false;
 
-    // Soundscapes Nodes (Synthesizers)
+    // Soundscapes Nodes
     const soundscapeNodes = {
       rain: { gain: null, node: null, vol: 0 },
       ocean: { gain: null, node: null, vol: 0 },
@@ -1737,33 +1992,75 @@
         analyserNode = audioCtx.createAnalyser();
         analyserNode.fftSize = 128;
 
-        bassFilter = audioCtx.createBiquadFilter();
-        bassFilter.type = 'lowshelf';
-        bassFilter.frequency.value = 150;
-        bassFilter.gain.value = eqSettings.bass;
-
-        midFilter = audioCtx.createBiquadFilter();
-        midFilter.type = 'peaking';
-        midFilter.frequency.value = 1000;
-        midFilter.Q.value = 1.0;
-        midFilter.gain.value = eqSettings.mid;
-
-        trebleFilter = audioCtx.createBiquadFilter();
-        trebleFilter.type = 'highshelf';
-        trebleFilter.frequency.value = 3500;
-        trebleFilter.gain.value = eqSettings.treble;
-
+        // 10-Band Graphic Equalizer Filter Chain
+        const freqs = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+        const keys = ["32", "64", "125", "250", "500", "1k", "2k", "4k", "8k", "16k"];
+        
+        let lastNode = null;
         sourceNode = audioCtx.createMediaElementSource(audio);
-        sourceNode.connect(bassFilter);
-        bassFilter.connect(midFilter);
-        midFilter.connect(trebleFilter);
-        trebleFilter.connect(analyserNode);
+
+        freqs.forEach((f, idx) => {
+          const filter = audioCtx.createBiquadFilter();
+          filter.type = idx === 0 ? 'lowshelf' : (idx === freqs.length - 1 ? 'highshelf' : 'peaking');
+          filter.frequency.value = f;
+          filter.Q.value = 1.4;
+          filter.gain.value = eq10Bands[keys[idx]] || 0;
+          filters10[keys[idx]] = filter;
+
+          if (idx === 0) {
+            sourceNode.connect(filter);
+          } else {
+            lastNode.connect(filter);
+          }
+          lastNode = filter;
+        });
+
+        // Stereo Panner (Spatial Audio)
+        if (audioCtx.createStereoPanner) {
+          pannerNode = audioCtx.createStereoPanner();
+          pannerNode.pan.value = spatialValue / 100;
+          lastNode.connect(pannerNode);
+          lastNode = pannerNode;
+        }
+
+        // Reverb Convolver
+        convolverNode = audioCtx.createConvolver();
+        createSyntheticImpulseResponse();
+        
+        reverbGain = audioCtx.createGain();
+        dryGain = audioCtx.createGain();
+        reverbGain.gain.value = reverbValue / 100;
+        dryGain.gain.value = 1.0;
+
+        lastNode.connect(dryGain);
+        lastNode.connect(convolverNode);
+        convolverNode.connect(reverbGain);
+
+        dryGain.connect(analyserNode);
+        reverbGain.connect(analyserNode);
         analyserNode.connect(audioCtx.destination);
 
         isAudioContextReady = true;
       } catch (err) {
         console.warn("Web Audio API inicializada em modo fallback:", err);
       }
+    }
+
+    function createSyntheticImpulseResponse() {
+      if (!audioCtx || !convolverNode) return;
+      const rate = audioCtx.sampleRate;
+      const length = rate * 2.0;
+      const decay = 2.0;
+      const impulse = audioCtx.createBuffer(2, length, rate);
+      const left = impulse.getChannelData(0);
+      const right = impulse.getChannelData(1);
+
+      for (let i = 0; i < length; i++) {
+        const n = i;
+        left[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+        right[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+      }
+      convolverNode.buffer = impulse;
     }
 
     // Soundscapes Synthesizer Engine
@@ -1858,10 +2155,15 @@
     function saveState() {
       localStorage.setItem('roc_user_favorites', JSON.stringify(userFavorites));
       localStorage.setItem('roc_user_library', JSON.stringify(userLibrary));
+      localStorage.setItem('roc_user_playlists', JSON.stringify(userPlaylists));
       localStorage.setItem('roc_user_custom_stations', JSON.stringify(userCustomStations));
       localStorage.setItem('roc_user_recents', JSON.stringify(recentIds));
-      localStorage.setItem('roc_user_eq', JSON.stringify(eqSettings));
+      localStorage.setItem('roc_user_track_history', JSON.stringify(trackHistory));
+      localStorage.setItem('roc_user_eq10', JSON.stringify(eq10Bands));
+      localStorage.setItem('roc_user_spatial', String(spatialValue));
+      localStorage.setItem('roc_user_reverb', String(reverbValue));
       localStorage.setItem('roc_user_alarm', JSON.stringify(alarmSettings));
+      localStorage.setItem('roc_user_dvr', JSON.stringify(dvrSettings));
       localStorage.setItem('roc_user_theme', currentTheme);
       updateCounts();
       render();
@@ -1878,8 +2180,10 @@
       document.getElementById('count-sports').textContent = all.filter(s => s.category === 'Desporto').length;
       document.getElementById('count-electro').textContent = all.filter(s => s.category === 'Eletrónica').length;
       document.getElementById('count-relax').textContent = all.filter(s => s.category === 'Relax').length;
+      document.getElementById('side-history-badge').textContent = trackHistory.length;
       
       document.getElementById('side-alarm-badge').textContent = alarmSettings.enabled ? alarmSettings.time : 'Off';
+      document.getElementById('side-dvr-badge').textContent = dvrSettings.enabled ? dvrSettings.time : 'Off';
     }
 
     function getCurrentStation() {
@@ -1894,6 +2198,7 @@
       const s = getCurrentStation();
       document.getElementById('player-station-name').textContent = s.name;
       document.getElementById('player-station-sub').textContent = `${s.country || 'Global'} • ${s.genre || s.category}`;
+      document.getElementById('player-now-playing').textContent = `${s.genre || s.category} • Em Direto`;
       document.getElementById('player-bitrate').textContent = `${s.bit_rate || 128} kbps`;
       document.getElementById('player-country').textContent = s.country || 'Global';
       document.getElementById('player-fav-btn').textContent = userFavorites.includes(String(s.id)) ? '⭐' : '☆';
@@ -1901,6 +2206,9 @@
 
       document.getElementById('tv-station-name').textContent = s.name;
       document.getElementById('tv-station-sub').textContent = `${s.country || 'Global'} • ${s.genre || s.category}`;
+
+      // Add to session track history
+      addTrackToHistory(s.name, `${s.country || 'Global'} • ${s.genre}`);
 
       updateMediaSession(s);
       document.getElementById('stream-error-banner').classList.add('hidden');
@@ -1959,6 +2267,20 @@
       }
 
       saveState();
+      updatePiPCanvas();
+    }
+
+    function addTrackToHistory(title, artist) {
+      const item = {
+        title,
+        artist,
+        time: new Date().toLocaleTimeString(),
+        id: Date.now()
+      };
+      trackHistory = [item, ...trackHistory.filter(t => t.title !== title)].slice(0, 25);
+      document.getElementById('history-now-title').textContent = title;
+      document.getElementById('history-now-station').textContent = artist;
+      updateCounts();
     }
 
     function updateMediaSession(station) {
@@ -2058,6 +2380,7 @@
         cover.classList.remove('scale-105', 'ring-2', 'ring-cyan-400');
       }
       renderRocPreview();
+      updatePiPCanvas();
     }
 
     function playNext() {
@@ -2125,6 +2448,52 @@
       toggleLibraryInclusion(currentStationId);
     }
 
+    // Picture-in-Picture Mini-Player Engine
+    async function togglePictureInPicture() {
+      const video = document.getElementById('pip-video');
+      const canvas = document.getElementById('pip-canvas');
+      
+      try {
+        if (document.pictureInPictureElement) {
+          await document.exitPictureInPicture();
+        } else {
+          updatePiPCanvas();
+          const stream = canvas.captureStream(30);
+          video.srcObject = stream;
+          await video.play();
+          await video.requestPictureInPicture();
+        }
+      } catch (err) {
+        alert('Picture-in-Picture não suportado ou bloqueado no teu navegador.');
+      }
+    }
+
+    function updatePiPCanvas() {
+      const canvas = document.getElementById('pip-canvas');
+      const ctx = canvas.getContext('2d');
+      const s = getCurrentStation();
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#06b6d4';
+      ctx.font = 'bold 22px system-ui, sans-serif';
+      ctx.fillText(s.name.slice(0, 24), 30, 80);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '16px system-ui, sans-serif';
+      ctx.fillText(`${s.country || 'Global'} • ${s.genre || s.category}`, 30, 115);
+
+      ctx.fillStyle = isPlaying ? '#22c55e' : '#ef4444';
+      ctx.beginPath();
+      ctx.arc(40, 160, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 16px system-ui, sans-serif';
+      ctx.fillText(isPlaying ? 'A TOCAR EM DIRETO' : 'PAUSA', 60, 166);
+    }
+
     function setView(view) {
       currentView = view;
       document.querySelectorAll('.nav-btn').forEach(b => {
@@ -2136,18 +2505,23 @@
       }
 
       const mapContainer = document.getElementById('map-view-container');
+      const playlistsContainer = document.getElementById('playlists-view-container');
       const gridSection = document.getElementById('stations-grid-section');
       const countrySection = document.getElementById('country-filter-section');
+
+      mapContainer.classList.add('hidden');
+      playlistsContainer.classList.add('hidden');
+      gridSection.classList.remove('hidden');
+      countrySection.classList.remove('hidden');
 
       if (view === 'map') {
         mapContainer.classList.remove('hidden');
         gridSection.classList.add('hidden');
         countrySection.classList.add('hidden');
         initWorldMap();
-      } else {
-        mapContainer.classList.add('hidden');
-        gridSection.classList.remove('hidden');
-        countrySection.classList.remove('hidden');
+      } else if (view === 'playlists') {
+        playlistsContainer.classList.remove('hidden');
+        renderPlaylistsView();
       }
       
       const titleEl = document.getElementById('section-title');
@@ -2159,6 +2533,65 @@
       else titleEl.innerHTML = `<span>🔥</span> ${dict.popularStations}`;
       
       render();
+    }
+
+    // Playlists Feature Engine
+    function renderPlaylistsView() {
+      const grid = document.getElementById('playlists-grid');
+      const all = getAllStations();
+
+      grid.innerHTML = userPlaylists.map(pl => {
+        const count = pl.stationIds.length;
+        return `
+          <div class="p-5 rounded-3xl bg-slate-900 border border-slate-800 hover:border-cyan-500/40 transition space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-3xl">${pl.icon || '📂'}</span>
+              <button onclick="deletePlaylist('${pl.id}')" class="text-slate-500 hover:text-red-400 text-xs">🗑️</button>
+            </div>
+            <div>
+              <h3 class="text-base font-black text-white">${pl.name}</h3>
+              <p class="text-xs text-slate-400">${count} estações adicionadas</p>
+            </div>
+            <div class="flex gap-2 pt-2">
+              <button onclick="playPlaylistFirstStation('${pl.id}')" class="flex-1 py-2 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition">
+                ▶️ Tocar Playlist
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openCreatePlaylistModal() { document.getElementById('playlist-create-modal').classList.remove('hidden'); }
+    function closeCreatePlaylistModal() { document.getElementById('playlist-create-modal').classList.add('hidden'); }
+
+    document.getElementById('playlist-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('pl-name').value.trim();
+      const icon = document.getElementById('pl-icon').value;
+      const newPl = {
+        id: `pl_${Date.now()}`,
+        name,
+        icon,
+        stationIds: [currentStationId]
+      };
+      userPlaylists.push(newPl);
+      saveState();
+      closeCreatePlaylistModal();
+      renderPlaylistsView();
+    });
+
+    function deletePlaylist(id) {
+      userPlaylists = userPlaylists.filter(p => p.id !== id);
+      saveState();
+      renderPlaylistsView();
+    }
+
+    function playPlaylistFirstStation(id) {
+      const pl = userPlaylists.find(p => p.id === id);
+      if (pl && pl.stationIds.length > 0) {
+        selectStation(pl.stationIds[0], true);
+      }
     }
 
     // World Interactive Radio Map (Leaflet)
@@ -2457,14 +2890,6 @@ current_playback = {
     },
 }
 
-equalizer_state : EqualizerPreset
-equalizer_state = {
-    name: "${eqSettings.name}",
-    bass: ${eqSettings.bass},
-    mid: ${eqSettings.mid},
-    treble: ${eqSettings.treble},
-}
-
 active_stations : StationList
 active_stations = [
 ` + getFilteredStations().slice(0, 5).map(s => `    { id: "${s.id}", name: "${(s.name || '').replace(/"/g, '')}", country: "${s.country || 'Global'}", genre: "${(s.genre || '').replace(/"/g, '')}", favorite: Bool.${userFavorites.includes(String(s.id)) ? 'True' : 'False'}, in_library: Bool.${userLibrary.includes(String(s.id)) ? 'True' : 'False'} }`).join(',\n') +
@@ -2705,62 +3130,89 @@ active_stations = [
       }
     });
 
-    // Equalizer (EQ) System
-    const EQ_PRESETS = {
-      flat: { name: 'Flat', bass: 0, mid: 0, treble: 0 },
-      bass: { name: 'Bass Boost', bass: 7, mid: 0, treble: 2 },
-      rock: { name: 'Rock', bass: 5, mid: -1, treble: 4 },
-      pop: { name: 'Pop', bass: 2, mid: 3, treble: 1 },
-      vocal: { name: 'Voz / Notícias', bass: -4, mid: 6, treble: 2 },
-      jazz: { name: 'Jazz', bass: 3, mid: 2, treble: 3 },
-      lofi: { name: 'Lo-Fi', bass: 4, mid: -2, treble: -3 },
-    };
-
+    // 10-Band EQ & 3D Spatial Audio Engine
     function openEqualizerModal() {
       document.getElementById('eq-modal').classList.remove('hidden');
-      syncEQSliders();
+      sync10BandSliders();
     }
     function closeEqualizerModal() {
       document.getElementById('eq-modal').classList.add('hidden');
     }
 
-    function syncEQSliders() {
-      document.getElementById('eq-bass').value = eqSettings.bass;
-      document.getElementById('eq-mid').value = eqSettings.mid;
-      document.getElementById('eq-treble').value = eqSettings.treble;
-      document.getElementById('eq-bass-val').textContent = `${eqSettings.bass > 0 ? '+' : ''}${eqSettings.bass} dB`;
-      document.getElementById('eq-mid-val').textContent = `${eqSettings.mid > 0 ? '+' : ''}${eqSettings.mid} dB`;
-      document.getElementById('eq-treble-val').textContent = `${eqSettings.treble > 0 ? '+' : ''}${eqSettings.treble} dB`;
-      document.getElementById('side-eq-badge').textContent = eqSettings.name || 'Flat';
+    function sync10BandSliders() {
+      const keys = ["32", "64", "125", "250", "500", "1k", "2k", "4k", "8k", "16k"];
+      keys.forEach(k => {
+        const val = eq10Bands[k] || 0;
+        const el = document.getElementById(`eq-b-${k}`);
+        const txt = document.getElementById(`eq-v-${k}`);
+        if (el) el.value = val;
+        if (txt) txt.textContent = `${val > 0 ? '+' : ''}${val}`;
+      });
+      document.getElementById('spatial-slider').value = spatialValue;
+      document.getElementById('spatial-val').textContent = `${spatialValue}%`;
+      document.getElementById('reverb-slider').value = reverbValue;
+      document.getElementById('reverb-val').textContent = reverbValue > 0 ? `${reverbValue}%` : 'Off';
     }
 
-    function applyEQPreset(presetKey) {
-      const preset = EQ_PRESETS[presetKey] || EQ_PRESETS.flat;
-      eqSettings = { ...preset, name: preset.name };
-      applyEQToAudioNodes();
-      syncEQSliders();
+    function update10BandEQ() {
+      initAudioContext();
+      const keys = ["32", "64", "125", "250", "500", "1k", "2k", "4k", "8k", "16k"];
+      keys.forEach(k => {
+        const val = parseInt(document.getElementById(`eq-b-${k}`).value, 10);
+        eq10Bands[k] = val;
+        document.getElementById(`eq-v-${k}`).textContent = `${val > 0 ? '+' : ''}${val}`;
+        if (filters10[k]) {
+          filters10[k].gain.value = val;
+        }
+      });
       saveState();
     }
 
-    function updateEQManual() {
-      eqSettings.bass = parseInt(document.getElementById('eq-bass').value, 10);
-      eqSettings.mid = parseInt(document.getElementById('eq-mid').value, 10);
-      eqSettings.treble = parseInt(document.getElementById('eq-treble').value, 10);
-      eqSettings.name = 'Personalizado';
-      applyEQToAudioNodes();
-      syncEQSliders();
+    function updateSpatialAudio(val) {
+      initAudioContext();
+      spatialValue = parseInt(val, 10);
+      document.getElementById('spatial-val').textContent = `${spatialValue}%`;
+      if (pannerNode) {
+        pannerNode.pan.value = spatialValue / 100;
+      }
+      saveState();
+    }
+
+    function updateReverb(val) {
+      initAudioContext();
+      reverbValue = parseInt(val, 10);
+      document.getElementById('reverb-val').textContent = reverbValue > 0 ? `${reverbValue}%` : 'Off';
+      if (reverbGain) {
+        reverbGain.gain.value = reverbValue / 100;
+      }
+      saveState();
+    }
+
+    function applyEQPreset(presetKey) {
+      initAudioContext();
+      const presets = {
+        flat: { "32":0, "64":0, "125":0, "250":0, "500":0, "1k":0, "2k":0, "4k":0, "8k":0, "16k":0 },
+        bass: { "32":8, "64":7, "125":5, "250":2, "500":0, "1k":0, "2k":1, "4k":2, "8k":3, "16k":2 },
+        rock: { "32":5, "64":4, "125":2, "250":-1, "500":-2, "1k":0, "2k":2, "4k":4, "8k":5, "16k":4 },
+        pop:  { "32":2, "64":3, "125":4, "250":2, "500":0, "1k":2, "2k":3, "4k":2, "8k":1, "16k":0 },
+        vocal:{ "32":-4, "64":-3, "125":-1, "250":2, "500":5, "1k":6, "2k":4, "4k":2, "8k":0, "16k":-2 },
+        jazz: { "32":3, "64":3, "125":2, "250":2, "500":1, "1k":1, "2k":2, "4k":3, "8k":3, "16k":2 },
+        lofi: { "32":4, "64":3, "125":2, "250":0, "500":-2, "1k":-3, "2k":-2, "4k":-3, "8k":-5, "16k":-8 }
+      };
+
+      eq10Bands = presets[presetKey] || presets.flat;
+      const keys = ["32", "64", "125", "250", "500", "1k", "2k", "4k", "8k", "16k"];
+      keys.forEach(k => {
+        if (filters10[k]) filters10[k].gain.value = eq10Bands[k];
+      });
+      sync10BandSliders();
       saveState();
     }
 
     function resetEQ() {
       applyEQPreset('flat');
-    }
-
-    function applyEQToAudioNodes() {
-      if (!isAudioContextReady) return;
-      if (bassFilter) bassFilter.gain.value = eqSettings.bass;
-      if (midFilter) midFilter.gain.value = eqSettings.mid;
-      if (trebleFilter) trebleFilter.gain.value = eqSettings.treble;
+      updateSpatialAudio(0);
+      updateReverb(0);
     }
 
     // Sleep Timer System
@@ -2863,6 +3315,95 @@ active_stations = [
 
     function dismissAlarm() {
       document.getElementById('alarm-ringing-banner').classList.add('hidden');
+    }
+
+    // Radio DVR / Scheduled Recording Engine
+    function openDVRModal() {
+      const select = document.getElementById('dvr-station-select');
+      const all = getAllStations();
+      select.innerHTML = all.map(s => `<option value="${s.id}" ${s.id === dvrSettings.stationId ? 'selected' : ''}>${s.name} (${s.country || 'Global'})</option>`).join('');
+      document.getElementById('dvr-start-time').value = dvrSettings.time || '08:00';
+      document.getElementById('dvr-duration').value = dvrSettings.duration || 30;
+      document.getElementById('dvr-toggle').checked = !!dvrSettings.enabled;
+      document.getElementById('dvr-modal').classList.remove('hidden');
+    }
+    function closeDVRModal() { document.getElementById('dvr-modal').classList.add('hidden'); }
+
+    function saveDVRSettings() {
+      dvrSettings.time = document.getElementById('dvr-start-time').value;
+      dvrSettings.duration = parseInt(document.getElementById('dvr-duration').value, 10);
+      dvrSettings.stationId = document.getElementById('dvr-station-select').value;
+      dvrSettings.enabled = document.getElementById('dvr-toggle').checked;
+      saveState();
+      closeDVRModal();
+      initDVRChecker();
+    }
+
+    function initDVRChecker() {
+      clearInterval(dvrCheckInterval);
+      dvrCheckInterval = setInterval(() => {
+        if (!dvrSettings.enabled) return;
+        const now = new Date();
+        const curTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        if (curTime === dvrSettings.time && now.getSeconds() === 0 && !isRecording) {
+          triggerScheduledRecording();
+        }
+      }, 1000);
+    }
+    initDVRChecker();
+
+    function triggerScheduledRecording() {
+      selectStation(dvrSettings.stationId, true);
+      startRecording();
+      document.getElementById('dvr-active-banner').classList.remove('hidden');
+      document.getElementById('dvr-status-msg').textContent = `A gravar ${dvrSettings.duration} minutos automaticamente.`;
+
+      setTimeout(() => {
+        stopRecording();
+        document.getElementById('dvr-active-banner').classList.add('hidden');
+      }, dvrSettings.duration * 60 * 1000);
+    }
+
+    // Track History & Lyrics Modal
+    function openTrackHistoryModal() {
+      document.getElementById('history-modal').classList.remove('hidden');
+      renderTrackHistoryList();
+    }
+    function closeTrackHistoryModal() { document.getElementById('history-modal').classList.add('hidden'); }
+
+    function renderTrackHistoryList() {
+      const container = document.getElementById('history-tracks-list');
+      if (trackHistory.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 py-4 text-center">Nenhuma música no histórico ainda.</p>`;
+        return;
+      }
+      container.innerHTML = trackHistory.map(item => `
+        <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
+          <div class="min-w-0 flex-1 pr-2">
+            <h5 class="font-bold text-white truncate">${item.title}</h5>
+            <p class="text-[10px] text-slate-400">${item.artist} • ${item.time}</p>
+          </div>
+          <div class="flex items-center gap-1.5 flex-shrink-0">
+            <button onclick="window.open('https://open.spotify.com/search/${encodeURIComponent(item.title)}', '_blank')" class="px-2 py-1 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-[10px] font-bold">
+              Spotify
+            </button>
+            <button onclick="window.open('https://www.youtube.com/results?search_query=${encodeURIComponent(item.title)}', '_blank')" class="px-2 py-1 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[10px] font-bold">
+              YouTube
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function clearTrackHistory() {
+      trackHistory = [];
+      saveState();
+      renderTrackHistoryList();
+    }
+
+    function searchLyricsOnGoogle() {
+      const curr = getCurrentStation();
+      window.open(`https://www.google.com/search?q=${encodeURIComponent(curr.name + ' lyrics letra')}`, '_blank');
     }
 
     // Soundscapes Modal
@@ -2977,17 +3518,22 @@ active_stations = [
       const backupData = {
         favorites: userFavorites,
         library: userLibrary,
+        playlists: userPlaylists,
         customStations: userCustomStations,
         recents: recentIds,
-        eq: eqSettings,
+        trackHistory: trackHistory,
+        eq10: eq10Bands,
+        spatial: spatialValue,
+        reverb: reverbValue,
         alarm: alarmSettings,
+        dvr: dvrSettings,
         exportedAt: new Date().toISOString()
       };
       const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `RadioTunes_Backup_${Date.now()}.json`;
+      a.download = `RadioTunes_Full_Backup_${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -3001,10 +3547,15 @@ active_stations = [
           const data = JSON.parse(evt.target.result);
           if (data.favorites) userFavorites = data.favorites;
           if (data.library) userLibrary = data.library;
+          if (data.playlists) userPlaylists = data.playlists;
           if (data.customStations) userCustomStations = data.customStations;
           if (data.recents) recentIds = data.recents;
-          if (data.eq) eqSettings = data.eq;
+          if (data.trackHistory) trackHistory = data.trackHistory;
+          if (data.eq10) eq10Bands = data.eq10;
+          if (data.spatial !== undefined) spatialValue = data.spatial;
+          if (data.reverb !== undefined) reverbValue = data.reverb;
           if (data.alarm) alarmSettings = data.alarm;
+          if (data.dvr) dvrSettings = data.dvr;
           saveState();
           closeBackupModal();
           alert('Backup restaurado com sucesso!');
@@ -3082,6 +3633,7 @@ active_stations = [
       if (e.code === 'ArrowRight') { e.preventDefault(); playNext(); }
       if (e.code === 'ArrowLeft') { e.preventDefault(); playPrev(); }
       if (e.code === 'KeyM') { toggleMute(); }
+      if (e.code === 'KeyP') { togglePictureInPicture(); }
       if (e.code === 'KeyF') { openTVMode(); }
       if (e.code === 'Escape') { closeTVMode(); }
       if (e.code === 'ArrowUp') {
@@ -3096,7 +3648,7 @@ active_stations = [
       }
     });
 
-    // Audio Visualizers (Mini Bar + TV HD Spectrum with 3D Circular Halo support)
+    // Audio Visualizers
     const miniCanvas = document.getElementById('mini-visualizer');
     const miniCtx = miniCanvas.getContext('2d');
     const tvCanvas = document.getElementById('tv-visualizer');
@@ -3139,7 +3691,6 @@ active_stations = [
       const bars = 24;
       const w = miniCanvas.width / bars;
 
-      // Draw Mini Visualizer
       for (let i = 0; i < bars; i++) {
         let h = 2;
         if (isPlaying) {
@@ -3155,7 +3706,6 @@ active_stations = [
         miniCtx.fillRect(i * w + 1, miniCanvas.height - h, w - 2, h);
       }
 
-      // Draw TV Visualizer (Bars or 3D Halo)
       if (visualizerStyle === 'bars') {
         const tvW = tvCanvas.width / bars;
         for (let i = 0; i < bars; i++) {
@@ -3173,7 +3723,6 @@ active_stations = [
           tvCtx.fillRect(i * tvW + 2, tvCanvas.height - tvH, tvW - 4, tvH);
         }
       } else {
-        // Halo 3D Circular Waveform
         const centerX = tvCanvas.width / 2;
         const centerY = tvCanvas.height / 2;
         const radius = Math.min(centerX, centerY) * 0.6;
@@ -3217,7 +3766,7 @@ active_stations = [
     // Initial load
     changeLanguage(currentLang);
     updateCounts();
-    syncEQSliders();
+    sync10BandSliders();
     selectStation(currentStationId, false);
   </script>
 </body>
