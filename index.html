@@ -4961,10 +4961,34 @@
         countEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> A sintonizar rádios locais nesta área...`;
       }
 
-      const north = bounds.getNorth();
-      const south = bounds.getSouth();
-      const east = bounds.getEast();
-      const west = bounds.getWest();
+      const center = bounds.getCenter();
+      const lat = center.lat;
+      const lon = center.lng;
+
+      // Identify nearest major city or query OSM Nominatim reverse geocode
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.address) {
+            const city = data.address.city || data.address.town || data.address.state || data.address.country;
+            if (city) {
+              const areaTitle = document.getElementById('map-area-title');
+              if (areaTitle) areaTitle.textContent = `📍 ${city}, ${data.address.country || ''}`;
+              await fetchCityAndStateRadios(city, lat, lon, data.address.country_code);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Reverse geocode error:', err);
+      } finally {
+        isFetchingGeoRadios = false;
+      }
+    }
+
+    async function fetchCityAndStateRadios(cityName, centerLat, centerLon, countryCode) {
+      if (!cityName) return;
+      const cleanCity = cityName.trim();
 
       const servers = [
         'https://de1.api.radio-browser.info',
@@ -4972,26 +4996,113 @@
         'https://all.api.radio-browser.info'
       ];
 
+      const countEl = document.getElementById('map-visible-count');
+      if (countEl) {
+        countEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span> A carregar todas as rádios de ${cleanCity}...`;
+      }
+
       try {
-        let rawData = [];
-        const limit = zoom >= 8 ? 100 : 50;
-        const url = `${servers[0]}/json/stations/search?has_geo_info=true&limit=${limit}&order=clickcount&reverse=true`;
+        const srv = servers[0];
+        const [byState, byName, byTag] = await Promise.all([
+          fetch(`${srv}/json/stations/search?state=${encodeURIComponent(cleanCity)}&limit=100&order=clickcount&reverse=true`).then(r => r.ok ? r.json() : []).catch(() => []),
+          fetch(`${srv}/json/stations/search?name=${encodeURIComponent(cleanCity)}&limit=100&order=clickcount&reverse=true`).then(r => r.ok ? r.json() : []).catch(() => []),
+          fetch(`${srv}/json/stations/search?tag=${encodeURIComponent(cleanCity)}&limit=100&order=clickcount&reverse=true`).then(r => r.ok ? r.json() : []).catch(() => [])
+        ]);
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4500);
-        const res = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeoutId);
+        const combined = [...byState, ...byName, ...byTag];
+        const uniqueSet = new Set();
+        const deduplicated = [];
 
-        if (res.ok) {
-          const list = await res.json();
-          if (Array.isArray(list)) {
-            processAndAddGeoStations(list);
+        combined.forEach(item => {
+          if (item && item.stationuuid && !uniqueSet.has(item.stationuuid)) {
+            uniqueSet.add(item.stationuuid);
+            deduplicated.push(item);
           }
+        });
+
+        if (deduplicated.length > 0) {
+          processAndAddGeoStationsWithCenter(deduplicated, centerLat, centerLon, cleanCity);
+          showToast(`${deduplicated.length} rádios descobertas em ${cleanCity}!`, '📻', 'success');
         }
       } catch (err) {
-        console.warn('Geo discovery background fetch error:', err);
-      } finally {
-        isFetchingGeoRadios = false;
+        console.warn('Error fetching city radios:', err);
+      }
+    }
+
+    function processAndAddGeoStationsWithCenter(list, centerLat, centerLon, cityName) {
+      const newStations = [];
+      const newMarkers = [];
+      const seenIds = new Set(mapDiscoveredStations.map(s => String(s.id)));
+
+      list.forEach((item, idx) => {
+        let lat = parseFloat(item.geo_lat);
+        let lon = parseFloat(item.geo_long);
+
+        // If coordinates missing or zero, distribute around city center in natural scatter radius
+        if (isNaN(lat) || isNaN(lon) || (lat === 0 && lon === 0) || (centerLat && Math.abs(lat - centerLat) < 0.0001 && Math.abs(lon - centerLon) < 0.0001)) {
+          if (centerLat != null && centerLon != null) {
+            const idStr = item.stationuuid || item.name || String(idx);
+            let hash = 0;
+            for (let i = 0; i < idStr.length; i++) hash = ((hash << 5) - hash) + idStr.charCodeAt(i);
+            const angle = (Math.abs(hash * (idx + 1)) % 360) * (Math.PI / 180);
+            const radius = 0.012 + ((Math.abs(hash * 37) % 100) / 100) * 0.065; // ~1.2km to 7.5km
+            lat = centerLat + (radius * Math.cos(angle));
+            lon = centerLon + (radius * Math.sin(angle));
+          }
+        }
+
+        if (!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
+          const sid = `geo_${item.stationuuid || item.changeuuid || (Date.now() + '_' + idx)}`;
+          if (!seenIds.has(sid)) {
+            seenIds.add(sid);
+            const cat = getCategoryFromTags(item.tags || item.name || "");
+            const flag = getFlagEmoji(item.countrycode || "");
+            const safeCountry = item.country || (item.countrycode ? item.countrycode.toUpperCase() : "Global");
+
+            const newSt = {
+              id: sid,
+              name: (item.name || 'Rádio Local').trim(),
+              stream_url: item.url_resolved || item.url,
+              category: cat,
+              tags: item.tags || "",
+              genre: item.tags ? item.tags.split(',').slice(0, 2).map(t => t.trim()).join(' / ') : cat,
+              country: safeCountry,
+              city: item.state || cityName || safeCountry,
+              flag: flag,
+              lat: lat,
+              lon: lon,
+              bit_rate: item.bitrate || 128,
+              favorite: false,
+              inLibrary: false,
+              image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
+              color: getRandomGradient(item.stationuuid || String(idx)),
+              desc: item.state ? `${item.state}, ${safeCountry}` : safeCountry
+            };
+
+            newStations.push(newSt);
+            mapDiscoveredStations.push(newSt);
+
+            const marker = createMarkerObject(newSt);
+            if (marker) {
+              mapMarkers.push(marker);
+              newMarkers.push(marker);
+            }
+          }
+        }
+      });
+
+      if (mapClusterGroup && newMarkers.length > 0) {
+        mapClusterGroup.addLayers(newMarkers);
+      }
+
+      const totalMappable = getAllMappableStations();
+      const totalCountEl = document.getElementById('map-total-count');
+      if (totalCountEl) {
+        totalCountEl.textContent = totalMappable.length.toLocaleString('pt-PT');
+      }
+
+      if (leafletMap) {
+        populateMapPickerForBounds(leafletMap.getBounds(), leafletMap.getZoom());
       }
     }
 
@@ -5123,46 +5234,50 @@
       showToast(`A pesquisar "${q}" no mapa mundial...`, '🔍', 'info');
 
       const knownPlaces = {
-        'lisboa': [38.7223, -9.1393, 11, '🇵🇹 Lisboa, Portugal'],
-        'porto': [41.1579, -8.6291, 11, '🇵🇹 Porto, Portugal'],
-        'madrid': [40.4168, -3.7038, 11, '🇪🇸 Madrid, Espanha'],
-        'barcelona': [41.3851, 2.1734, 11, '🇪🇸 Barcelona, Espanha'],
-        'paris': [48.8566, 2.3522, 11, '🇫🇷 Paris, França'],
-        'londres': [51.5074, -0.1278, 11, '🇬🇧 Londres, Reino Unido'],
-        'london': [51.5074, -0.1278, 11, '🇬🇧 London, UK'],
-        'roma': [41.9028, 12.4964, 11, '🇮🇹 Roma, Itália'],
-        'rome': [41.9028, 12.4964, 11, '🇮🇹 Roma, Itália'],
-        'berlim': [52.5200, 13.4050, 11, '🇩🇪 Berlim, Alemanha'],
-        'berlin': [52.5200, 13.4050, 11, '🇩🇪 Berlim, Alemanha'],
-        'são paulo': [-23.5505, -46.6333, 11, '🇧🇷 São Paulo, Brasil'],
-        'sao paulo': [-23.5505, -46.6333, 11, '🇧🇷 São Paulo, Brasil'],
-        'rio de janeiro': [-22.9068, -43.1729, 11, '🇧🇷 Rio de Janeiro, Brasil'],
-        'rio': [-22.9068, -43.1729, 11, '🇧🇷 Rio de Janeiro, Brasil'],
-        'buenos aires': [-34.6037, -58.3816, 11, '🇦🇷 Buenos Aires, Argentina'],
-        'bogotá': [4.7110, -74.0721, 11, '🇨🇴 Bogotá, Colômbia'],
-        'bogota': [4.7110, -74.0721, 11, '🇨🇴 Bogotá, Colômbia'],
-        'santiago': [-33.4489, -70.6693, 11, '🇨🇱 Santiago, Chile'],
-        'lima': [-12.0464, -77.0428, 11, '🇵🇪 Lima, Peru'],
-        'cidade do méxico': [19.4326, -99.1332, 11, '🇲🇽 Cidade do México, México'],
-        'mexico': [19.4326, -99.1332, 7, '🇲🇽 México'],
-        'nova iorque': [40.7128, -74.0060, 11, '🇺🇸 Nova Iorque, EUA'],
-        'new york': [40.7128, -74.0060, 11, '🇺🇸 New York, USA'],
-        'los angeles': [34.0522, -118.2437, 11, '🇺🇸 Los Angeles, EUA'],
-        'miami': [25.7617, -80.1918, 11, '🇺🇸 Miami, EUA'],
-        'toquio': [35.6762, 139.6503, 11, '🇯🇵 Tóquio, Japão'],
-        'tokyo': [35.6762, 139.6503, 11, '🇯🇵 Tokyo, Japan'],
-        'luanda': [-8.8390, 13.2894, 11, '🇦🇴 Luanda, Angola'],
-        'maputo': [-25.9692, 32.5732, 11, '🇲🇿 Maputo, Moçambique'],
-        'praia': [14.9330, -23.5133, 11, '🇨🇻 Praia, Cabo Verde'],
-        'sydney': [-33.8688, 151.2093, 11, '🇦🇺 Sydney, Austrália'],
-        'brasil': [-14.2350, -51.9253, 5, '🇧🇷 Brasil'],
-        'portugal': [39.3999, -8.2245, 7, '🇵🇹 Portugal'],
-        'espanha': [40.4637, -3.7492, 6, '🇪🇸 Espanha'],
-        'spain': [40.4637, -3.7492, 6, '🇪🇸 Espanha'],
-        'angola': [-11.2027, 17.8739, 6, '🇦🇴 Angola'],
-        'argentina': [-38.4161, -63.6167, 5, '🇦🇷 Argentina'],
-        'colombia': [4.5709, -74.2973, 6, '🇨🇴 Colômbia'],
-        'chile': [-35.6751, -71.5430, 5, '🇨🇱 Chile'],
+        'lisboa': [38.7223, -9.1393, 11, '🇵🇹 Lisboa, Portugal', 'Lisboa'],
+        'porto': [41.1579, -8.6291, 11, '🇵🇹 Porto, Portugal', 'Porto'],
+        'madrid': [40.4168, -3.7038, 11, '🇪🇸 Madrid, Espanha', 'Madrid'],
+        'barcelona': [41.3851, 2.1734, 11, '🇪🇸 Barcelona, Espanha', 'Barcelona'],
+        'paris': [48.8566, 2.3522, 11, '🇫🇷 Paris, França', 'Paris'],
+        'londres': [51.5074, -0.1278, 11, '🇬🇧 Londres, Reino Unido', 'London'],
+        'london': [51.5074, -0.1278, 11, '🇬🇧 London, UK', 'London'],
+        'roma': [41.9028, 12.4964, 11, '🇮🇹 Roma, Itália', 'Roma'],
+        'rome': [41.9028, 12.4964, 11, '🇮🇹 Roma, Itália', 'Rome'],
+        'berlim': [52.5200, 13.4050, 11, '🇩🇪 Berlim, Alemanha', 'Berlin'],
+        'berlin': [52.5200, 13.4050, 11, '🇩🇪 Berlim, Alemanha', 'Berlin'],
+        'são paulo': [-23.5505, -46.6333, 11, '🇧🇷 São Paulo, Brasil', 'São Paulo'],
+        'sao paulo': [-23.5505, -46.6333, 11, '🇧🇷 São Paulo, Brasil', 'São Paulo'],
+        'rio de janeiro': [-22.9068, -43.1729, 11, '🇧🇷 Rio de Janeiro, Brasil', 'Rio de Janeiro'],
+        'rio': [-22.9068, -43.1729, 11, '🇧🇷 Rio de Janeiro, Brasil', 'Rio de Janeiro'],
+        'belo horizonte': [-19.9167, -43.9345, 11, '🇧🇷 Belo Horizonte, Brasil', 'Minas Gerais'],
+        'brasilia': [-15.7975, -47.8919, 11, '🇧🇷 Brasília, Brasil', 'Distrito Federal'],
+        'salvador': [-12.9777, -38.5016, 11, '🇧🇷 Salvador, Brasil', 'Bahia'],
+        'porto alegre': [-30.0346, -51.2177, 11, '🇧🇷 Porto Alegre, Brasil', 'Rio Grande do Sul'],
+        'buenos aires': [-34.6037, -58.3816, 11, '🇦🇷 Buenos Aires, Argentina', 'Buenos Aires'],
+        'bogotá': [4.7110, -74.0721, 11, '🇨🇴 Bogotá, Colômbia', 'Bogotá'],
+        'bogota': [4.7110, -74.0721, 11, '🇨🇴 Bogotá, Colômbia', 'Bogotá'],
+        'santiago': [-33.4489, -70.6693, 11, '🇨🇱 Santiago, Chile', 'Santiago'],
+        'lima': [-12.0464, -77.0428, 11, '🇵🇪 Lima, Peru', 'Lima'],
+        'cidade do méxico': [19.4326, -99.1332, 11, '🇲🇽 Cidade do México, México', 'Mexico City'],
+        'mexico': [19.4326, -99.1332, 7, '🇲🇽 México', 'Mexico'],
+        'nova iorque': [40.7128, -74.0060, 11, '🇺🇸 Nova Iorque, EUA', 'New York'],
+        'new york': [40.7128, -74.0060, 11, '🇺🇸 New York, USA', 'New York'],
+        'los angeles': [34.0522, -118.2437, 11, '🇺🇸 Los Angeles, EUA', 'Los Angeles'],
+        'miami': [25.7617, -80.1918, 11, '🇺🇸 Miami, EUA', 'Miami'],
+        'toquio': [35.6762, 139.6503, 11, '🇯🇵 Tóquio, Japão', 'Tokyo'],
+        'tokyo': [35.6762, 139.6503, 11, '🇯🇵 Tokyo, Japan', 'Tokyo'],
+        'luanda': [-8.8390, 13.2894, 11, '🇦🇴 Luanda, Angola', 'Luanda'],
+        'maputo': [-25.9692, 32.5732, 11, '🇲🇿 Maputo, Moçambique', 'Maputo'],
+        'praia': [14.9330, -23.5133, 11, '🇨🇻 Praia, Cabo Verde', 'Praia'],
+        'sydney': [-33.8688, 151.2093, 11, '🇦🇺 Sydney, Austrália', 'Sydney'],
+        'brasil': [-14.2350, -51.9253, 5, '🇧🇷 Brasil', 'Brazil'],
+        'portugal': [39.3999, -8.2245, 7, '🇵🇹 Portugal', 'Portugal'],
+        'espanha': [40.4637, -3.7492, 6, '🇪🇸 Espanha', 'Spain'],
+        'spain': [40.4637, -3.7492, 6, '🇪🇸 Espanha', 'Spain'],
+        'angola': [-11.2027, 17.8739, 6, '🇦🇴 Angola', 'Angola'],
+        'argentina': [-38.4161, -63.6167, 5, '🇦🇷 Argentina', 'Argentina'],
+        'colombia': [4.5709, -74.2973, 6, '🇨🇴 Colômbia', 'Colombia'],
+        'chile': [-35.6751, -71.5430, 5, '🇨🇱 Chile', 'Chile'],
       };
 
       const key = q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -5174,6 +5289,7 @@
             const areaTitle = document.getElementById('map-area-title');
             if (areaTitle) areaTitle.textContent = v[3];
             showToast(`A voar para ${v[3]}!`, '✈️', 'success');
+            fetchCityAndStateRadios(v[4] || k, v[0], v[1]);
           }
           return;
         }
@@ -5189,10 +5305,12 @@
             const lat = parseFloat(item.lat);
             const lon = parseFloat(item.lon);
             if (!isNaN(lat) && !isNaN(lon) && leafletMap) {
-              leafletMap.flyTo([lat, lon], 9, { duration: 1.5 });
+              leafletMap.flyTo([lat, lon], 10, { duration: 1.5 });
               const areaTitle = document.getElementById('map-area-title');
+              const cityName = item.display_name.split(',')[0];
               if (areaTitle) areaTitle.textContent = item.display_name.split(',').slice(0, 2).join(',');
-              showToast(`A voar para ${item.display_name.split(',')[0]}!`, '✈️', 'success');
+              showToast(`A voar para ${cityName}!`, '✈️', 'success');
+              fetchCityAndStateRadios(cityName, lat, lon);
               return;
             }
           }
