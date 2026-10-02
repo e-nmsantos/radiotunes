@@ -1473,8 +1473,8 @@
   </div>
 
   <!-- Modal 15: Confirm Delete Station Modal -->
-  <div id="delete-confirm-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[9999] hidden items-center justify-center p-4" style="display: none;">
-    <div class="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+  <div id="delete-confirm-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <h3 class="text-base font-black text-red-400 flex items-center gap-2">🗑️ Eliminar Rádio</h3>
         <button onclick="closeDeleteStationModal()" class="text-slate-400 hover:text-white text-xl p-1">&times;</button>
@@ -2851,7 +2851,6 @@
       }
       const modal = document.getElementById('delete-confirm-modal');
       if (modal) {
-        modal.style.display = 'flex';
         modal.classList.remove('hidden');
       }
     }
@@ -2859,7 +2858,6 @@
     function closeDeleteStationModal() {
       const modal = document.getElementById('delete-confirm-modal');
       if (modal) {
-        modal.style.display = 'none';
         modal.classList.add('hidden');
       }
       stationToDeleteId = null;
