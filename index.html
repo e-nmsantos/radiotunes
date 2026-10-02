@@ -1161,7 +1161,7 @@
     </div>
   </div>
 
-  <audio id="audio-player" preload="none" crossorigin="anonymous"></audio>
+  <audio id="audio-player" preload="none"></audio>
 
   <script>
     // Master Curated Catalog
@@ -1455,7 +1455,7 @@
       { 
         id: "m_4", 
         name: "TSF Notícias", 
-        stream_url: "http://centova.radios.pt:9470/stream", 
+        stream_url: "https://tsfdireto.tsf.pt/tsfdireto.mp3", 
         category: "Notícias", 
         genre: "Notícias & Debate", 
         country: "Portugal", 
@@ -1497,7 +1497,7 @@
       { 
         id: "m_7", 
         name: "Mega Hits", 
-        stream_url: "https://stream-icy.bauermedia.pt/cidade.mp3", 
+        stream_url: "https://stream-icy.bauermedia.pt/megahits.mp3", 
         category: "Música", 
         genre: "Pop & Teen Hits", 
         country: "Portugal", 
@@ -1507,6 +1507,20 @@
         image: "https://cdn-radiotime-logos.tunein.com/s6709g.png",
         color: "from-pink-500 to-purple-600",
         desc: "Mega Hits Radio" 
+      },
+      { 
+        id: "m_9", 
+        name: "Cidade FM", 
+        stream_url: "https://stream-icy.bauermedia.pt/cidade.mp3", 
+        category: "Música", 
+        genre: "Pop & Dance", 
+        country: "Portugal", 
+        flag: "🇵🇹", 
+        lat: 38.7223, lon: -9.1393, city: "Lisboa",
+        bit_rate: 128, 
+        image: "https://cdn-radiotime-logos.tunein.com/s6709g.png",
+        color: "from-red-500 to-pink-600",
+        desc: "A Tua Rádio de Sucessos" 
       },
       { 
         id: "m_8", 
@@ -1992,12 +2006,9 @@
         analyserNode = audioCtx.createAnalyser();
         analyserNode.fftSize = 128;
 
-        // 10-Band Graphic Equalizer Filter Chain
+        // 10-Band Graphic Equalizer Filter Nodes
         const freqs = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
         const keys = ["32", "64", "125", "250", "500", "1k", "2k", "4k", "8k", "16k"];
-        
-        let lastNode = null;
-        sourceNode = audioCtx.createMediaElementSource(audio);
 
         freqs.forEach((f, idx) => {
           const filter = audioCtx.createBiquadFilter();
@@ -2006,21 +2017,12 @@
           filter.Q.value = 1.4;
           filter.gain.value = eq10Bands[keys[idx]] || 0;
           filters10[keys[idx]] = filter;
-
-          if (idx === 0) {
-            sourceNode.connect(filter);
-          } else {
-            lastNode.connect(filter);
-          }
-          lastNode = filter;
         });
 
         // Stereo Panner (Spatial Audio)
         if (audioCtx.createStereoPanner) {
           pannerNode = audioCtx.createStereoPanner();
           pannerNode.pan.value = spatialValue / 100;
-          lastNode.connect(pannerNode);
-          lastNode = pannerNode;
         }
 
         // Reverb Convolver
@@ -2031,14 +2033,6 @@
         dryGain = audioCtx.createGain();
         reverbGain.gain.value = reverbValue / 100;
         dryGain.gain.value = 1.0;
-
-        lastNode.connect(dryGain);
-        lastNode.connect(convolverNode);
-        convolverNode.connect(reverbGain);
-
-        dryGain.connect(analyserNode);
-        reverbGain.connect(analyserNode);
-        analyserNode.connect(audioCtx.destination);
 
         isAudioContextReady = true;
       } catch (err) {
