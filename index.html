@@ -2769,6 +2769,8 @@
     }
 
     // Explicit Card Action Handlers
+    let lastDeletedStation = null;
+
     function handleCardDeleteClick(stationId, event) {
       if (event) {
         try {
@@ -2776,7 +2778,7 @@
           if (event.preventDefault) event.preventDefault();
         } catch(e) {}
       }
-      openDeleteStationModal(stationId, event);
+      deleteStationDirect(stationId);
     }
 
     function handleCardCategoryClick(stationId, event) {
@@ -2809,76 +2811,34 @@
       toggleFavorite(stationId, event);
     }
 
-    // Delete / Hide Station Engine
-    function openDeleteStationModal(stationId, event) {
-      if (event) {
-        try {
-          if (event.stopPropagation) event.stopPropagation();
-          if (event.preventDefault) event.preventDefault();
-        } catch(e) {}
-      }
-      if (!stationId) stationId = currentStationId;
-      stationToDeleteId = String(stationId);
-
-      // Close sub-drawers/sheets if open
-      closeStationCategoryModal();
-      closeMobileSheetPlayer();
-
-      const all = getAllStations();
-      const station = all.find(s => String(s.id) === stationToDeleteId) || 
-                      userCustomStations.find(s => String(s.id) === stationToDeleteId) ||
-                      MASTER_CATALOG.find(s => String(s.id) === stationToDeleteId) ||
-                      apiSearchResults.find(s => String(s.id) === stationToDeleteId) ||
-                      getCurrentStation();
-
-      const infoEl = document.getElementById('delete-station-info');
-      if (infoEl && station) {
-        const flag = station.flag || '📻';
-        const name = station.name || 'Estação';
-        const country = station.country || 'Global';
-        const category = station.category || 'Música';
-        const imgTag = station.image 
-          ? `<img src="${station.image}" class="w-12 h-12 rounded-xl object-cover border border-slate-700 flex-shrink-0 shadow" onerror="this.outerHTML='<span class=\\'text-3xl flex-shrink-0\\'>${flag}</span>'" />`
-          : `<span class="text-3xl flex-shrink-0">${flag}</span>`;
-
-        infoEl.innerHTML = `
-          ${imgTag}
-          <div class="min-w-0 flex-1">
-            <h4 class="text-sm font-extrabold text-white truncate">${name}</h4>
-            <p class="text-xs text-slate-400">${country} • <span class="text-cyan-400 font-semibold">${category}</span></p>
-          </div>
-        `;
-      }
-      const modal = document.getElementById('delete-confirm-modal');
-      if (modal) {
-        modal.classList.remove('hidden');
-      }
-    }
-
-    function closeDeleteStationModal() {
-      const modal = document.getElementById('delete-confirm-modal');
-      if (modal) {
-        modal.classList.add('hidden');
-      }
-      stationToDeleteId = null;
-    }
-
+    // Delete / Hide Station Engine (Instant with Undo Toast)
     function deleteStationDirect(stationId) {
-      stationToDeleteId = String(stationId);
-      confirmDeleteStation();
-    }
-
-    function confirmDeleteStation() {
-      if (!stationToDeleteId) return;
-      const strId = String(stationToDeleteId);
+      const strId = String(stationId || currentStationId);
       const all = getAllStations();
-      const station = all.find(s => String(s.id) === strId) ||
+      const station = all.find(s => String(s.id) === strId) || 
                       userCustomStations.find(s => String(s.id) === strId) ||
                       MASTER_CATALOG.find(s => String(s.id) === strId) ||
                       apiSearchResults.find(s => String(s.id) === strId);
+      
       const stName = station ? station.name : 'Rádio';
+      const wasFav = userFavorites.map(String).includes(strId);
+      const wasLib = userLibrary.map(String).includes(strId);
+      const wasRec = recentIds.map(String).includes(strId);
+      const savedCats = stationCategoryOverrides[strId];
+      const customObj = userCustomStations.find(s => String(s.id) === strId);
 
-      // 1. If it is a custom station, remove permanently from userCustomStations
+      // Save for Undo
+      lastDeletedStation = {
+        id: strId,
+        name: stName,
+        wasFav,
+        wasLib,
+        wasRec,
+        savedCats,
+        customObj: customObj ? JSON.parse(JSON.stringify(customObj)) : null
+      };
+
+      // 1. Remove permanently from custom stations if it was custom
       userCustomStations = userCustomStations.filter(s => String(s.id) !== strId);
 
       // 2. Remove from favorites, library, recents, playlists
@@ -2891,10 +2851,10 @@
         }
       });
 
-      // 3. Remove from active search results
+      // 3. Remove from search results
       apiSearchResults = apiSearchResults.filter(s => String(s.id) !== strId);
 
-      // 4. Mark as deleted/hidden from catalog
+      // 4. Mark as deleted/hidden
       if (!deletedStationIds.map(String).includes(strId)) {
         deletedStationIds.push(strId);
       }
@@ -2904,12 +2864,18 @@
       delete stationCategoryOverrides[strId];
       localStorage.setItem('roc_user_station_cats', JSON.stringify(stationCategoryOverrides));
 
+      // 6. Close modals if any
       closeDeleteStationModal();
+      closeStationCategoryModal();
+      closeMobileSheetPlayer();
+
+      // 7. Save state and re-render grid immediately
       saveState();
 
-      showToast(`Rádio "${stName}" eliminada da tua lista com sucesso!`, '🗑️', 'info');
+      // 8. Show interactive Toast with Undo button!
+      showDeleteUndoToast(stName, strId);
 
-      // 6. If currently playing this deleted station, switch to next available station
+      // 9. If deleted station was currently playing, switch to next
       if (String(currentStationId) === strId) {
         const remaining = getAllStations();
         if (remaining.length > 0) {
@@ -2918,6 +2884,84 @@
           stopAudio();
         }
       }
+    }
+
+    function showDeleteUndoToast(stationName, stationId) {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      toast.className = 'toast-slide p-4 rounded-2xl border border-red-500/40 bg-slate-900/98 shadow-2xl backdrop-blur-lg flex items-center justify-between gap-3 text-xs pointer-events-auto transition-all text-white z-[99999]';
+      toast.innerHTML = `
+        <div class="flex items-center gap-2.5 min-w-0 flex-1">
+          <span class="text-xl flex-shrink-0">🗑️</span>
+          <span class="font-bold truncate text-slate-200">Rádio <span class="text-white font-extrabold">"${stationName}"</span> eliminada!</span>
+        </div>
+        <button onclick="undoLastDelete(this)" class="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition active:scale-95 flex-shrink-0 shadow-md shadow-cyan-500/20">
+          ↩️ Desfazer
+        </button>
+      `;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        if (toast && toast.parentElement) {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(-10px)';
+          setTimeout(() => toast.remove(), 300);
+        }
+      }, 5000);
+    }
+
+    function undoLastDelete(btnEl) {
+      if (!lastDeletedStation) return;
+      const d = lastDeletedStation;
+
+      // 1. Remove from deletedStationIds
+      deletedStationIds = deletedStationIds.filter(id => String(id) !== String(d.id));
+      localStorage.setItem('roc_user_deleted_stations', JSON.stringify(deletedStationIds));
+
+      // 2. Restore custom station if it was custom
+      if (d.customObj && !userCustomStations.some(s => String(s.id) === String(d.id))) {
+        userCustomStations.push(d.customObj);
+      }
+
+      // 3. Restore favorites, library, recents
+      if (d.wasFav && !userFavorites.includes(d.id)) userFavorites.push(d.id);
+      if (d.wasLib && !userLibrary.includes(d.id)) userLibrary.push(d.id);
+      if (d.wasRec && !recentIds.includes(d.id)) recentIds.unshift(d.id);
+      if (d.savedCats) stationCategoryOverrides[d.id] = d.savedCats;
+
+      lastDeletedStation = null;
+      saveState();
+
+      if (btnEl && btnEl.closest('.toast-slide')) {
+        btnEl.closest('.toast-slide').remove();
+      }
+
+      showToast(`Rádio "${d.name}" restaurada com sucesso!`, '🔄', 'success');
+    }
+
+    function openDeleteStationModal(stationId, event) {
+      if (event) {
+        try {
+          if (event.stopPropagation) event.stopPropagation();
+          if (event.preventDefault) event.preventDefault();
+        } catch(e) {}
+      }
+      deleteStationDirect(stationId);
+    }
+
+    function closeDeleteStationModal() {
+      const modal = document.getElementById('delete-confirm-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+      stationToDeleteId = null;
+    }
+
+    function confirmDeleteStation() {
+      if (!stationToDeleteId) return;
+      deleteStationDirect(stationToDeleteId);
     }
 
     function restoreAllDeletedStations() {
