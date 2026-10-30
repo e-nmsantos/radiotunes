@@ -154,7 +154,10 @@
     // Auto-detectado no arranque. Quando ativo: streams http:// e sem CORS
     // são tunelados com CORS *, o DSP funciona em todas as estações e os
     // metadados ICY alimentam o "Now Playing" real.
-    const AUDIO_PROXY_BASE = localStorage.getItem('roc_user_proxy_base') || 'http://localhost:8787';
+    // Base dinâmica: no PC usa localhost; num telemóvel (via mobile.bat)
+    // usa o IP do PC que está a servir a app — zero configuração.
+    const AUDIO_PROXY_BASE = localStorage.getItem('roc_user_proxy_base') ||
+      (location.hostname ? `http://${location.hostname}:8787` : 'http://localhost:8787');
     let proxyAvailable = false;
     (async function detectAudioProxy() {
       try {

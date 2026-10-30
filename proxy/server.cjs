@@ -355,7 +355,9 @@ const server = http.createServer((req, res) => {
   res.end('Roc Waves proxy: usar /ping, /stream?url=..., /icy?url=..., /extract?url=...');
 });
 
-server.listen(PORT, () => {
+// 0.0.0.0: permite testar a app num telemóvel na mesma rede Wi-Fi
+// (a app deteta o proxy via http://<ip-do-pc>:8787 automaticamente).
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`🎧 Roc Waves proxy ativo em http://localhost:${PORT}`);
   console.log('   Endpoints: /ping | /stream?url= | /icy?url= | /extract?url=<site>');
 });
