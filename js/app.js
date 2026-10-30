@@ -1014,7 +1014,16 @@
         // aberto continuaria a descarregar para sempre em background,
         // saturando a rede e impedindo a reprodução real das rádios.
         if (res.body) { try { await res.body.cancel(); } catch (e) {} }
-        if (res.ok) return { healthy: true };
+        if (res.ok) {
+          // 200 não basta: a BBC (e outros) "desligam" streams com um
+          // redirect para a homepage (200 text/html). Exigir áudio real.
+          const ct = (res.headers.get('content-type') || '').toLowerCase();
+          const hasIcy = !!res.headers.get('icy-name') || !!res.headers.get('icy-br');
+          const audioish = ct.startsWith('audio/') || ct.includes('mpegurl') ||
+            ct.includes('ogg') || ct.includes('octet-stream') || ct === '' || hasIcy;
+          if (audioish) return { healthy: true };
+          return { healthy: false, reason: 'redireciona para página web' };
+        }
         if (res.status >= 400) return { healthy: false, reason: 'HTTP ' + res.status };
         return { healthy: true };
       } catch (e) { /* sem CORS ou falha de rede — testar no-cors */ }

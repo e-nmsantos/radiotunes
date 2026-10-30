@@ -25,7 +25,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const APP_PATH = path.join(ROOT, 'js', 'app.js');
+const APP_PATH = path.join(ROOT, 'js', 'catalog.js'); // MASTER_CATALOG vive aqui desde a modularização
 const REPORT_DIR = path.join(__dirname, 'reports');
 const FIX = process.argv.includes('--fix');
 const JSON_ONLY = process.argv.includes('--json');
@@ -39,7 +39,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function parseCatalog() {
   const src = fs.readFileSync(APP_PATH, 'utf-8');
   const m = /const MASTER_CATALOG = \[(.*?)\n    \];/s.exec(src);
-  if (!m) throw new Error('MASTER_CATALOG não encontrado em js/app.js');
+  if (!m) throw new Error('MASTER_CATALOG não encontrado em js/catalog.js');
   const parts = src.slice(m.index, m.index + m[0].length).split(/(id:\s*"(?:m_[\w]+)")/);
   const stations = [];
   for (let i = 1; i < parts.length; i += 2) {
@@ -76,11 +76,18 @@ async function probeStream(url) {
     const acao = res.headers.get('access-control-allow-origin');
     const cors = acao === '*' || (acao || '').includes('e-nmsantos.github.io');
     if (res.status === 200 || res.status === 206) {
+      // 200 não basta: streams "desligados" que redirecionam para a
+      // homepage (ex.: BBC) respondem 200 text/html — exigir áudio real.
+      const ct = (res.headers.get('content-type') || '').toLowerCase();
+      const hasIcy = !!res.headers.get('icy-name') || !!res.headers.get('icy-br');
+      const audioish = ct.startsWith('audio/') || ct.includes('mpegurl') ||
+        ct.includes('ogg') || ct.includes('octet-stream') || ct === '' || hasIcy;
       const reader = res.body && res.body.getReader ? res.body.getReader() : null;
       if (reader) {
         await Promise.race([reader.read(), sleep(2000)]);
         try { await reader.cancel(); } catch (e) {}
       }
+      if (!audioish) return { status: res.status, ok: false, cors, html: true };
       return { status: res.status, ok: true, cors };
     }
     return { status: res.status, ok: false, cors };
@@ -158,13 +165,13 @@ async function suggestReplacement(st) {
     const logo = st.image ? await probeLogo(st.image) : { ok: true, skipped: true };
     const row = {
       id: st.id, name: st.name, country: st.country,
-      stream_status: stream.ok ? 'OK' : (stream.status >= 400 ? `MORTO(${stream.status})` : 'INACESSÍVEL'),
+      stream_status: stream.ok ? 'OK' : (stream.html ? 'MORTO(página web)' : (stream.status >= 400 ? `MORTO(${stream.status})` : 'INACESSÍVEL')),
       cors_dsp: stream.cors,
       logo_status: logo.skipped ? 'SEM LOGO (monograma)' : (logo.ok ? 'OK' : `MORTO(${logo.status})`),
     };
-    // Só streams confirmadamente mortos (4xx/5xx) recebem sugestão automática:
-    // falhas de rede/TLS/geo (status 0) ficam para revisão humana.
-    if (!stream.ok && stream.status >= 400) {
+    // Só streams confirmadamente mortos (4xx/5xx ou redirect para página)
+    // recebem sugestão automática; falhas de rede ficam para revisão humana.
+    if (!stream.ok && (stream.status >= 400 || stream.html)) {
       const sug = await suggestReplacement(st);
       if (sug) {
         row.suggestion = sug.url;
@@ -216,7 +223,7 @@ async function suggestReplacement(st) {
         }
       }
       fs.writeFileSync(APP_PATH, src, 'utf-8');
-      console.log(`\n🔧 ${fixes.length} streams reparados e gravados em js/app.js`);
+      console.log(`\n🔧 ${fixes.length} streams reparados e gravados em js/catalog.js`);
     } else {
       console.log('\n🔧 --fix: nenhuma substituição segura a aplicar');
     }
