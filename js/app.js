@@ -2579,6 +2579,80 @@
       } catch (e) { img.onerror = null; }
     };
 
+    // ============ Auditor de Saúde em Background ============
+    // Arranca 8s depois da app (não bloqueia o arranque) e verifica os
+    // streams do catálogo em fundo: o browser é a sonda mais fiel (TLS
+    // real, headers reais). Resultados em cache IndexedDB 24h e badge ⚠
+    // nos cartões. Só MARCA — a reparação fica para o CI/humano.
+    const unhealthyStationIds = new Set();
+    let healthAuditRunning = false;
+
+    async function probeStreamHealth(url) {
+      // 1) Tentativa CORS: quando o servidor a permite, dá o status real.
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 5000);
+        const res = await fetch(url, {
+          headers: { 'Range': 'bytes=0-1024', 'Accept': '*/*' },
+          signal: ctrl.signal,
+          redirect: 'follow',
+        });
+        clearTimeout(t);
+        if (res.ok) {
+          if (res.body) { try { await res.body.cancel(); } catch (e) {} }
+          return { healthy: true };
+        }
+        if (res.status >= 400) return { healthy: false, reason: 'HTTP ' + res.status };
+        return { healthy: true };
+      } catch (e) { /* sem CORS ou falha de rede — testar no-cors */ }
+      // 2) Sem CORS: fetch no-cors completa mesmo com 4xx opaco, mas deteta
+      //    falhas de rede reais (DNS morto, ligação recusada, offline).
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 5000);
+        await fetch(url, { mode: 'no-cors', signal: ctrl.signal });
+        clearTimeout(t);
+        return { healthy: true, limited: true };
+      } catch (e) {
+        return { healthy: false, reason: 'inacessível' };
+      }
+    }
+
+    async function runBackgroundHealthAudit() {
+      if (healthAuditRunning) return;
+      healthAuditRunning = true;
+      try {
+        const targets = [...MASTER_CATALOG, ...userCustomStations]
+          .filter(s => s && s.id && s.stream_url && !s.stream_url.includes('.m3u8'));
+        let flagged = false;
+        for (const st of targets) {
+          const cacheKey = 'health:' + st.id;
+          const cached = await RocStorage.get(cacheKey, 24 * 60 * 60 * 1000);
+          if (cached) {
+            if (cached.healthy === false) {
+              if (!unhealthyStationIds.has(String(st.id))) flagged = true;
+              unhealthyStationIds.add(String(st.id));
+            }
+            continue;
+          }
+          const res = await probeStreamHealth(st.stream_url);
+          await RocStorage.set(cacheKey, { healthy: res.healthy, reason: res.reason || null, at: Date.now() });
+          if (res.healthy === false) {
+            console.warn(`Saúde: ${st.name} — ${res.reason}`);
+            if (!unhealthyStationIds.has(String(st.id))) flagged = true;
+            unhealthyStationIds.add(String(st.id));
+          }
+          await new Promise(r => setTimeout(r, 1200)); // cadência suave
+        }
+        if (flagged) {
+          render();
+          showToast(`${unhealthyStationIds.size} estações com stream em falha (verificado agora).`, '🩺');
+        }
+      } finally {
+        healthAuditRunning = false;
+      }
+    }
+
     function getAllStations() {
       const deletedSet = new Set(deletedStationIds.map(String));
       const mapDiscovered = typeof mapDiscoveredStations !== 'undefined' && Array.isArray(mapDiscoveredStations) ? mapDiscoveredStations : [];
@@ -4232,16 +4306,17 @@
           const safeName = (s.name || 'Rádio').replace(/"/g, '&quot;');
           const safeGenre = (s.genre || s.desc || 'Música & Rádio').replace(/"/g, '&quot;');
           const safeCountry = (s.country || 'Mundo').replace(/"/g, '&quot;');
+          const isUnhealthy = unhealthyStationIds.has(String(s.id));
 
           return `
-            <div 
-              draggable="true" 
-              ondragstart="handleDragStart(event, '${s.id}')" 
-              ondragend="handleDragEnd(event)" 
-              onclick="selectStation('${s.id}', true)" 
+            <div
+              draggable="true"
+              ondragstart="handleDragStart(event, '${s.id}')"
+              ondragend="handleDragEnd(event)"
+              onclick="selectStation('${s.id}', true)"
               class="station-card group cursor-pointer rounded-2xl p-4 border flex flex-col justify-between select-none ${isCurrent ? 'bg-cyan-500/15 border-cyan-500/60 shadow-xl shadow-cyan-500/15' : 'bg-slate-900 border-slate-800 hover:border-cyan-500/40 hover:bg-slate-800/80'}"
             >
-              
+
               <!-- Cover Header -->
               <div class="flex items-start justify-between gap-3 mb-3">
                 <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition shadow-md relative">
@@ -4251,6 +4326,7 @@
                   <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
                     ${s.flag || '🌐'} ${safeCountry}
                   </span>
+                  ${isUnhealthy ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/30" title="Stream em falha na última verificação automática">⚠</span>` : ''}
                   <button onclick="handleCardCategoryClick('${s.id}', event)" class="p-1.5 rounded-lg text-slate-400 hover:text-purple-400 hover:bg-purple-500/10 transition text-sm active:scale-90" title="Mover para Categoria">
                     🏷️
                   </button>
@@ -5197,3 +5273,6 @@ active_stations = [
     updateCounts();
     sync10BandSliders();
     selectStation(currentStationId, false);
+
+    // Auditoria de saúde em background: 8s após o arranque, sem bloquear a UI.
+    setTimeout(() => { runBackgroundHealthAudit().catch(() => {}); }, 8000);
