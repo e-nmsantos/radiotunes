@@ -1,0 +1,49 @@
+name: Saúde do Catálogo (streams + logos)
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'   # todas as segundas-feiras às 08:00 UTC
+  workflow_dispatch:      # também executável manualmente no GitHub
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Auditar catálogo
+        run: node tools/health-check.cjs || echo "DEAD_FOUND=true" >> "$GITHUB_ENV"
+
+      - name: Gravar relatório como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-report
+          path: tools/reports/
+          if-no-files-found: ignore
+
+      - name: Abrir/atualizar issue com falhas
+        if: env.DEAD_FOUND == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TITLE="🩺 Catálogo: estações com streams/logos em falha"
+          EXISTING=$(gh issue list --state open --search "in:title ${TITLE}" --json number -q '.[0].number')
+          BODY="# 🩺 Auditoria automática de $(date -u +'%Y-%m-%d %H:%M UTC')
+
+          $(cat tools/reports/summary.md)
+
+          ---
+          _Gerado pelo workflow_ **Saúde do Catálogo**. Para reparar: \`node tools/health-check.cjs --fix\` localmente, ou clicar em_ *Run workflow* _após corrigir._"
+          if [ -z "$EXISTING" ]; then
+            gh issue create --title "$TITLE" --body "$BODY"
+          else
+            gh issue comment "$EXISTING" --body "$BODY"
+          fi

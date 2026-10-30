@@ -79,6 +79,8 @@ Aplicação completa de streaming de mais de **45.000 estações de rádio mundi
 * [`js/roc-core.js`](js/roc-core.js): Porto JS fiel das regras de `Radio.roc` — usada diretamente pela UI (navegação cíclica, M3U, filtros) e testada em `test/roc-core.test.mjs` (14 testes `node --test`).
 * [`js/storage.js`](js/storage.js): Camada IndexedDB com cache TTL de 24h para a API radio-browser e persistência das estações descobertas no mapa.
 * [`js/app.js`](js/app.js): Lógica da aplicação (catálogo, mapa, DSP Web Audio, DVR, playlists, i18n, proxy de áudio) — carregada pelo `index.html`.
+* [`tools/health-check.cjs`](tools/health-check.cjs): **Agente de Saúde do Catálogo** — audita os ~88 streams + logos (classifica OK / morto / inacessível, deteta suporte de CORS para DSP) e sugere substitutos da radio-browser. Executar com `node tools/health-check.cjs` (relatório) ou `--fix` (aplica só substituições seguras: 4xx/5xx confirmados + país igual + nome compatível + stream verificado). Relatórios em `tools/reports/`.
+* [`.github/workflows/health-check.yml`](.github/workflows/health-check.yml): o agente corre **automaticamente toda a semana** no GitHub Actions e abre um *issue* com as estações em falha — detenção contínua sem servidor.
 * [`proxy/server.cjs`](proxy/server.cjs): **Proxy de Áudio zero-dependências** (Node.js): resolve CORS e mixed-content de qualquer stream e expõe metadados ICY reais (`/icy`) para o "Now Playing". Arranca com `node proxy/server.cjs` (porta 8787) ou opção 6 do `run.ps1`; a app deteta-o automaticamente.
 * [`manifest.json`](manifest.json) & [`sw.js`](sw.js): Configuração PWA e cache offline (cache-first para assets estáticos, network-first para HTML).
 * [`server.ps1`](file:///c:/Users/nunom/Downloads/Programa%C3%A7%C3%A3o%20NMS/RadioTunes%20-%20ROC/server.ps1): Servidor HTTP local em PowerShell com CORS ativado.
@@ -100,6 +102,11 @@ Aplicação completa de streaming de mais de **45.000 estações de rádio mundi
 4. *(Recomendado)* Para DSP total, Now Playing real e streams `http://`:
    ```powershell
    node proxy/server.cjs   # deixa correr; a app deteta automaticamente
+   ```
+5. Verificação de saúde dos streams + logos (agente de manutenção):
+   ```powershell
+   node tools/health-check.cjs          # relatório → tools/reports/summary.md
+   node tools/health-check.cjs --fix    # repara automaticamente os mortos confirmados
    ```
 
 ---

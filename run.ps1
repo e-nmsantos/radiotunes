@@ -22,9 +22,10 @@ function Show-Menu {
     Write-Host " 5. Abrir Consola Interativa (roc repl)"
     Write-Host " 6. Iniciar Proxy de Audio + DSP total (localhost:8787)"
     Write-Host " 7. Executar Testes JS do RocCore (node --test)"
-    Write-Host " 8. Sair"
+    Write-Host " 8. Verificacao de Saude dos Streams + Logos"
+    Write-Host " 9. Sair"
     Write-Host "=========================================" -ForegroundColor Cyan
-    $choice = Read-Host "Escolhe uma opcao (1-8)"
+    $choice = Read-Host "Escolhe uma opcao (1-9)"
     return $choice
 }
 
@@ -99,6 +100,20 @@ function Run-Action ($act) {
             & node --test "$PSScriptRoot\test\roc-core.test.mjs"
         }
         "8" {
+            Write-Host "`n--- VERIFICACAO DE SAUDE DOS STREAMS + LOGOS ---" -ForegroundColor Green
+            Write-Host "    (audita as ~88 estacoes do catalogo; demora 2-4 min)"
+            Write-Host "    Relatorio final em tools/reports/summary.md"
+            $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+            if ($nodeCmd) {
+                & node "$PSScriptRoot\tools\health-check.cjs"
+            } else {
+                Write-Host "Node.js nao encontrado. Instala em https://nodejs.org" -ForegroundColor Red
+            }
+        }
+        "health" {
+            & node "$PSScriptRoot\tools\health-check.cjs"
+        }
+        "9" {
             Write-Host "Ate a proxima!" -ForegroundColor Gray
             exit 0
         }
@@ -116,5 +131,5 @@ if ($Action -ne "") {
         Run-Action $opt
         Write-Host ""
         $continue = Read-Host "Pressiona ENTER para voltar ao menu (ou 'q' para sair)"
-    } while ($continue -ne "q" -and $opt -ne "8")
+    } while ($continue -ne "q" -and $opt -ne "9")
 }

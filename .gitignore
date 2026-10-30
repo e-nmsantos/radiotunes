@@ -8,3 +8,6 @@ roc_bin/
 *~
 .DS_Store
 Thumbs.db
+
+# Relatórios do agente de saúde (gerados por tools/health-check.cjs)
+tools/reports/
