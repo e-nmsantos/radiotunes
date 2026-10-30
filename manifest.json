@@ -1,6 +1,6 @@
 {
-  "name": "Roc TuneIn - Rádio Mundial Hi-Fi",
-  "short_name": "RocTuneIn",
+  "name": "Roc Waves - Rádio Mundial Hi-Fi",
+  "short_name": "RocWaves",
   "description": "Leitor de Rádio Global com +45.000 estações, Equalizador DSP e Mapa Mundial",
   "start_url": "./index.html",
   "display": "standalone",

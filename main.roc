@@ -8,6 +8,4 @@
 #   .\run.bat   ou   .\run.ps1
 # ==============================================================================
 
-import Radio
-
 main = "Roc Waves - Plataforma de Rádio Funcional Pronta."

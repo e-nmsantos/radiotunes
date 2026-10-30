@@ -1,16 +1,20 @@
 // Service Worker para Roc Waves / RadioTunes
-const CACHE_NAME = 'radiotunes-v15-live';
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'radiotunes-v16-live';
+const APP_SHELL = [
   './',
   './index.html',
+  './js/app.js',
   './manifest.json'
 ];
+
+// Extensões servidas cache-first (com revalidação em background)
+const STATIC_EXT = /\.(js|css|png|jpg|jpeg|svg|webp|ico|woff2?|ttf)$/i;
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(APP_SHELL);
     })
   );
 });
@@ -31,33 +35,60 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  const url = event.request.url;
+  const req = event.request;
+  if (req.method !== 'GET') return;
+
+  let url;
+  try { url = new URL(req.url); } catch (e) { return; }
 
   // Streams de áudio e APIs externas sempre diretos pela rede
   if (
-    url.includes('.mp3') ||
-    url.includes('.m3u8') ||
-    url.includes('.aac') ||
-    url.includes('stream') ||
-    url.includes('radio-browser.info') ||
-    url.includes('streamtheworld') ||
-    url.includes('bauermedia')
+    url.pathname.includes('.mp3') ||
+    url.pathname.includes('.m3u8') ||
+    url.pathname.includes('.aac') ||
+    url.href.includes('stream') ||
+    url.href.includes('radio-browser.info') ||
+    url.href.includes('streamtheworld') ||
+    url.href.includes('bauermedia')
   ) {
     return;
   }
 
-  // Network-First para HTML e ficheiros da app: garante sempre a versão mais recente!
-  event.respondWith(
-    fetch(event.request)
-      .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
-          const clone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+  // Assets estáticos (scripts, estilos, fontes, incl. CDNs): cache-first
+  if (req.destination === 'script' || req.destination === 'style' || req.destination === 'font' || STATIC_EXT.test(url.pathname)) {
+    event.respondWith(
+      caches.match(req).then((cached) => {
+        const fetchUpdate = fetch(req).then((res) => {
+          if (res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+          }
+          return res;
+        }).catch(() => cached);
+        return cached || fetchUpdate;
+      })
+    );
+    return;
+  }
+
+  // Navegação (HTML): network-first com fallback à cache e à app shell offline
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req).then((res) => {
+        if (res && res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
         }
-        return networkResponse;
-      })
-      .catch(() => {
-        return caches.match(event.request);
-      })
+        return res;
+      }).catch(() =>
+        caches.match(req).then((cached) => cached || caches.match('./index.html'))
+      )
+    );
+    return;
+  }
+
+  // Resto (ex: logos remotos): rede com fallback à cache, sem agravanar a cache
+  event.respondWith(
+    fetch(req).catch(() => caches.match(req))
   );
 });

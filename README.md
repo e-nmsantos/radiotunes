@@ -13,6 +13,7 @@ Aplicação completa de streaming de mais de **45.000 estações de rádio mundi
 * **Presets de Estúdio**: *Flat, Bass Boost, Rock, Pop, Vocal/Notícias, Jazz, Eletrónica, Sala de Concertos, Lo-Fi*.
 * **Áudio 3D Espacial (*Stereo Widener*)**: Aumenta a sensação de amplitude e palco sonoro estéreo.
 * **Reverberação DSP (*Concert Hall Reverb*)**: Simulação acústica de sala de concertos com Convolver DSP.
+* **DSP consciente de CORS**: o áudio é encaminhado pelo grafo Web Audio (EQ 3D + reverb + visualizador real) sempre que o stream suporta CORS; streams sem CORS ficam automaticamente em modo de reprodução direta, sem nunca perder som.
 
 ### 🖼️ 2. Mini-Player Nativo Flutuante (*Picture-in-Picture*)
 * Transforma o player numa janela flutuante nativa do sistema operativo via Picture-in-Picture API.
@@ -73,9 +74,10 @@ Aplicação completa de streaming de mais de **45.000 estações de rádio mundi
 
 ## 📂 Ficheiros do Projeto
 
-* [`Radio.roc`](file:///c:/Users/nunom/Downloads/Programa%C3%A7%C3%A3o%20NMS/RadioTunes%20-%20ROC/Radio.roc): Regras de negócio funcionais (estações, favoritos, filtros avançados, biblioteca, 10-Band EQ, DVR agendado, playlists, sleep timer, alarmes e M3U com 12 testes unitários).
-* [`index.html`](file:///c:/Users/nunom/Downloads/Programa%C3%A7%C3%A3o%20NMS/RadioTunes%20-%20ROC/index.html): Interface web completa, responsiva, com DSP Web Audio e PWA.
-* [`manifest.json`](file:///c:/Users/nunom/Downloads/Programa%C3%A7%C3%A3o%20NMS/RadioTunes%20-%20ROC/manifest.json) & [`sw.js`](file:///c:/Users/nunom/Downloads/Programa%C3%A7%C3%A3o%20NMS/RadioTunes%20-%20ROC/sw.js): Configuração PWA e cache offline.
+* [`Radio.roc`](Radio.roc): Regras de negócio funcionais (estações, favoritos, filtros avançados, biblioteca, 10-Band EQ, DVR agendado, playlists, sleep timer, alarmes e M3U com 14 testes unitários).
+* [`index.html`](index.html): Interface web completa, responsiva e PWA.
+* [`js/app.js`](js/app.js): Lógica da aplicação (catálogo, mapa, DSP Web Audio, DVR, playlists, i18n) — carregada pelo `index.html`.
+* [`manifest.json`](manifest.json) & [`sw.js`](sw.js): Configuração PWA e cache offline (cache-first para assets estáticos, network-first para HTML).
 * [`server.ps1`](file:///c:/Users/nunom/Downloads/Programa%C3%A7%C3%A3o%20NMS/RadioTunes%20-%20ROC/server.ps1): Servidor HTTP local em PowerShell com CORS ativado.
 * [`run.ps1`](file:///c:/Users/nunom/Downloads/Programa%C3%A7%C3%A3o%20NMS/RadioTunes%20-%20ROC/run.ps1) & [`run.bat`](file:///c:/Users/nunom/Downloads/Programa%C3%A7%C3%A3o%20NMS/RadioTunes%20-%20ROC/run.bat): Launcher com menu interativo.
 
