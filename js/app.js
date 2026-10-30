@@ -1043,6 +1043,35 @@
       }
     }
 
+    /** Janitor: procura stream substituto para uma estação morta.
+     * Só aceita candidatos da radio-browser com país igual, nome
+     * compatível e stream verificado pela própria sonda. */
+    async function findReplacementStream(st) {
+      const q = (st.name || '').replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+      if (!q || q.length < 3) return null;
+      try {
+        const list = await RocStorage.cachedFetchJson(
+          `https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(q)}&limit=15&order=clickcount&reverse=true&hidebroken=true&lastcheckok=1`
+        ).catch(() => []);
+        if (!Array.isArray(list)) return null;
+        const sameCountry = list.filter(s => (s.country || '').toLowerCase() === (st.country || '').toLowerCase());
+        const pool = sameCountry.length ? sameCountry : [];
+        for (const c of pool) {
+          const u = c.url_resolved || c.url;
+          if (!u || !u.startsWith('http')) continue;
+          // o nome do candidato tem de bater com o da estação (guarda editorial)
+          const a = (st.name || '').toLowerCase();
+          const b = (c.name || '').toLowerCase();
+          const shared = a.split(/[^a-z0-9]+/).filter(t => t.length > 3 && b.includes(t)).length;
+          if (shared === 0) continue;
+          const probe = await probeStreamHealth(u);
+          if (probe.healthy) return { url: u, bitrate: c.bitrate || null };
+          await new Promise(r => setTimeout(r, 300));
+        }
+      } catch (e) {}
+      return null;
+    }
+
     async function runBackgroundHealthAudit() {
       if (healthAuditRunning) return;
       healthAuditRunning = true;
@@ -1067,8 +1096,33 @@
           await RocStorage.set(cacheKey, { healthy: res.healthy, reason: res.reason || null, at: Date.now() });
           if (res.healthy === false) {
             console.warn(`Saúde: ${st.name} — ${res.reason}`);
-            if (!unhealthyStationIds.has(String(st.id))) flagged = true;
-            unhealthyStationIds.add(String(st.id));
+            // Janitor: morte PERMANENTE (404/410/redirect-falso/DNS)?
+            // Outages 5xx e falhas transitórias ficam só com badge.
+            const permanentlyDead =
+              res.reason === 'HTTP 404' || res.reason === 'HTTP 410' ||
+              res.reason === 'redireciona para página web' || res.reason === 'inacessível';
+            if (permanentlyDead) {
+              const repl = await findReplacementStream(st);
+              if (repl) {
+                // Reparar em memória: o stream novo já funciona nesta sessão
+                st.stream_url = repl.url;
+                if (repl.bitrate) st.bit_rate = repl.bitrate;
+                unhealthyStationIds.delete(String(st.id));
+                await RocStorage.set(cacheKey, { healthy: true, repaired: true, url: repl.url, at: Date.now() });
+                console.info(`Saúde: ${st.name} reparada automaticamente → ${repl.url}`);
+              } else {
+                // Sem stream disponível → eliminar silenciosamente
+                // (restaurável na opção "restaurar estações eliminadas")
+                deletedStationIds.push(String(st.id));
+                persist('roc_user_deleted_stations', JSON.stringify(deletedStationIds));
+                await RocStorage.set(cacheKey, { healthy: false, reason: res.reason, pruned: true, at: Date.now() });
+                console.warn(`Saúde: ${st.name} eliminada (${res.reason}) — sem stream conhecido`);
+              }
+              flagged = true;
+            } else {
+              if (!unhealthyStationIds.has(String(st.id))) flagged = true;
+              unhealthyStationIds.add(String(st.id));
+            }
           }
           await new Promise(r => setTimeout(r, 1200)); // cadência suave
         }

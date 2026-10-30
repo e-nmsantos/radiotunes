@@ -229,21 +229,6 @@
         desc: "A rádio universitária de Braga e Guimarães" 
       },
       { 
-        id: "m_pt_16", 
-        name: "Rádio Foia Algarve", 
-        stream_url: "https://stream.radiofoia.pt:8000/stream", 
-        category: "Música", 
-        genre: "Música Ligeira & Notícias do Sul", 
-        country: "Portugal", 
-        region: "Portugal",
-        flag: "🇵🇹", 
-        lat: 37.0194, lon: -7.9304, city: "Faro",
-        bit_rate: 128, 
-        image: null,
-        color: "from-cyan-600 to-teal-800",
-        desc: "A voz e música do Algarve e Monchique" 
-      },
-      { 
         id: "m_pt_17", 
         name: "Posto Emissor do Funchal", 
         stream_url: "https://centova.radio.com.pt/proxy/422?mp=/stream;", 
@@ -257,21 +242,6 @@
         image: "https://www.celsoazevedo.com/files/2026/pef-am.png",
         color: "from-amber-600 to-blue-800",
         desc: "Emissora histórica da Ilha da Madeira" 
-      },
-      { 
-        id: "m_pt_18",
-        name: "Antena 9 Açores",
-        stream_url: "http://server1.veemesoft.com.ar:8064/live",
-        category: "Música",
-        genre: "Pop & Cultura Açoriana",
-        country: "Portugal",
-        region: "Portugal",
-        flag: "🇵🇹",
-        lat: 37.7412, lon: -25.6756, city: "Ponta Delgada",
-        bit_rate: 32,
-        image: null,
-        color: "from-blue-600 to-emerald-700",
-        desc: "Direto do Arquipélago dos Açores"
       },
       {
         id: "m_pt_19",
@@ -1210,21 +1180,6 @@
         desc: "It's Hot! Top Bollywood in Mumbai" 
       },
       { 
-        id: "m_ae_1", 
-        name: "Dubai 92 FM", 
-        stream_url: "https://stream.zeno.fm/8qgww8870zruv", 
-        category: "Música", 
-        genre: "Classic Hits & Gulf Pop", 
-        country: "Emirados Árabes", 
-        region: "Ásia",
-        flag: "🇦🇪", 
-        lat: 25.2048, lon: 55.2708, city: "Dubai",
-        bit_rate: 128, 
-        image: "https://static.mytuner.mobi/media/tvos_radios/HGDyN8ySPT.jpg",
-        color: "from-amber-600 to-yellow-500",
-        desc: "Dubai's Longest Running English Radio" 
-      },
-      { 
         id: "m_th_1", 
         name: "Bangkok Radio Dance", 
         stream_url: "https://bcr.radiocult.fm/stream", 
@@ -1257,21 +1212,6 @@
         image: "https://www.metrofm.co.za/metro-fm/wp-content/uploads/2024/04/cropped-metro-fm-icon-32x32.png",
         color: "from-emerald-600 to-yellow-600",
         desc: "It's Where You're At • Johannesburg" 
-      },
-      { 
-        id: "m_za_2", 
-        name: "CapeTalk 567", 
-        stream_url: "https://edge.iono.fm/xice/capetalk_live.mp3", 
-        category: "Notícias", 
-        genre: "South African News & Talk", 
-        country: "África do Sul", 
-        region: "África",
-        flag: "🇿🇦", 
-        lat: -33.9249, lon: 18.4241, city: "Cidade do Cabo",
-        bit_rate: 128, 
-        image: null,
-        color: "from-blue-700 to-teal-800",
-        desc: "Join the conversation • Cape Town" 
       },
       { 
         id: "m_ao_1", 

@@ -28,6 +28,7 @@ const ROOT = path.join(__dirname, '..');
 const APP_PATH = path.join(ROOT, 'js', 'catalog.js'); // MASTER_CATALOG vive aqui desde a modularização
 const REPORT_DIR = path.join(__dirname, 'reports');
 const FIX = process.argv.includes('--fix');
+const PRUNE = process.argv.includes('--prune');
 const JSON_ONLY = process.argv.includes('--json');
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
@@ -92,7 +93,13 @@ async function probeStream(url) {
     }
     return { status: res.status, ok: false, cors };
   } catch (e) {
-    return { status: 0, ok: false, cors: false };
+    // Distinguir DNS morto (permanente) de falhas TLS/rede (transitórias)
+    let dnsDead = false;
+    try {
+      const { lookup } = require('dns').promises;
+      await lookup(new URL(url).hostname);
+    } catch (dnsErr) { dnsDead = true; }
+    return { status: 0, ok: false, cors: false, dnsDead };
   }
 }
 
@@ -165,7 +172,10 @@ async function suggestReplacement(st) {
     const logo = st.image ? await probeLogo(st.image) : { ok: true, skipped: true };
     const row = {
       id: st.id, name: st.name, country: st.country,
-      stream_status: stream.ok ? 'OK' : (stream.html ? 'MORTO(página web)' : (stream.status >= 400 ? `MORTO(${stream.status})` : 'INACESSÍVEL')),
+      stream_status: stream.ok ? 'OK'
+        : (stream.html ? 'MORTO(página web)'
+        : (stream.dnsDead ? 'MORTO(DNS)'
+        : (stream.status >= 400 ? `MORTO(${stream.status})` : 'INACESSÍVEL'))),
       cors_dsp: stream.cors,
       logo_status: logo.skipped ? 'SEM LOGO (monograma)' : (logo.ok ? 'OK' : `MORTO(${logo.status})`),
     };
@@ -226,6 +236,33 @@ async function suggestReplacement(st) {
       console.log(`\n🔧 ${fixes.length} streams reparados e gravados em js/catalog.js`);
     } else {
       console.log('\n🔧 --fix: nenhuma substituição segura a aplicar');
+    }
+  }
+
+  // ---------- --prune: eliminar estações irrecoveráveis ----------
+  // Critérios de morte PERMANENTE (nunca eliminamos outages transitórios):
+  // HTTP 404/410, redirect para página web, ou DNS inexistente — sempre
+  // sem substituto verificado. Falhas 5xx/TLS ficam com badge para revisão.
+  if (PRUNE) {
+    const prunable = results.filter(r =>
+      !r.suggestion &&
+      (r.stream_status === 'MORTO(404)' || r.stream_status === 'MORTO(410)' ||
+       r.stream_status === 'MORTO(página web)' || r.stream_status === 'MORTO(DNS)'));
+    if (prunable.length) {
+      let src = fs.readFileSync(APP_PATH, 'utf-8');
+      for (const st of prunable) {
+        const esc = st.id.replace(/[$()*+.?[^\]\\|]/g, '\\$&');
+        const reBlock = new RegExp('\\n\\s*\\{\\s*\\n\\s*id:\\s*"' + esc + '",[\\s\\S]*?\\n\\s*\\},?');
+        const before = src.length;
+        src = src.replace(reBlock, '');
+        if (src.length < before) {
+          console.log(`🗑️ ${st.name} (${st.id}) eliminada — ${st.stream_status}, sem substituto conhecido`);
+        }
+      }
+      fs.writeFileSync(APP_PATH, src, 'utf-8');
+      console.log(`\n🗑️ ${prunable.length} estações removidas do catálogo`);
+    } else {
+      console.log('\n🗑️ --prune: nenhuma estação irrecoverável');
     }
   }
 
