@@ -2668,8 +2668,7 @@
           await new Promise(r => setTimeout(r, 1200)); // cadência suave
         }
         if (flagged) {
-          render();
-          showToast(`${unhealthyStationIds.size} estações com stream em falha (verificado agora).`, '🩺');
+          render(); // atualiza os badges ⚠ (o agente é silencioso: sem toasts)
         }
       } finally {
         healthAuditRunning = false;
@@ -4314,11 +4313,26 @@
       return list;
     }
 
+    // Paginação da grelha: mantém o render instantâneo mesmo com milhares
+    // de estações descobertas no mapa carregadas em memória.
+    const GRID_PAGE_SIZE = 120;
+    let gridRenderLimit = GRID_PAGE_SIZE;
+    let lastGridSig = '';
+
     function render() {
       const grid = document.getElementById('stations-grid');
       const empty = document.getElementById('empty-state');
       const count = document.getElementById('results-count');
       const list = getFilteredStations();
+
+      // Paginação da grelha: com milhares de estações descobertas no mapa,
+      // renderizar tudo de uma vez congelava a UI. Renderizamos por páginas.
+      const gridSig = `${currentView}|${selectedCategory}|${selectedCountry}|${searchQuery}`;
+      if (gridSig !== lastGridSig) {
+        lastGridSig = gridSig;
+        gridRenderLimit = GRID_PAGE_SIZE;
+      }
+      const visibleList = list.slice(0, gridRenderLimit);
 
       count.textContent = `${list.length} estações disponíveis`;
 
@@ -4327,7 +4341,7 @@
         empty.classList.remove('hidden');
       } else {
         empty.classList.add('hidden');
-        grid.innerHTML = list.map(s => {
+        grid.innerHTML = visibleList.map(s => {
           const isCurrent = String(s.id) === String(currentStationId);
           const isFav = userFavorites.includes(String(s.id));
           const isInLib = userLibrary.includes(String(s.id));
@@ -4391,6 +4405,20 @@
             </div>
           `;
         }).join('');
+
+        // Botão "Ver mais": as restantes da lista só entram a pedido,
+        // mantendo o render sempre instantâneo.
+        if (list.length > visibleList.length) {
+          const moreBtn = document.createElement('button');
+          moreBtn.className = 'col-span-full py-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-cyan-500/40 hover:bg-slate-800 text-cyan-400 text-xs font-bold transition';
+          moreBtn.textContent = `⬇️ Ver mais — ${visibleList.length} de ${list.length} estações`;
+          moreBtn.onclick = () => {
+            gridRenderLimit += GRID_PAGE_SIZE;
+            render();
+            moreBtn.scrollIntoView({ block: 'center' });
+          };
+          grid.appendChild(moreBtn);
+        }
       }
 
       renderRocPreview();
