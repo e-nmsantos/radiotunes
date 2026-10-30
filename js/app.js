@@ -1742,6 +1742,95 @@
       corsBlockedStreamUrls = JSON.parse(localStorage.getItem('roc_user_cors_blocked') || '[]');
     } catch (e) { corsBlockedStreamUrls = []; }
 
+    // --- Proxy de Áudio (opcional, zero dependências: proxy/server.cjs) ---
+    // Auto-detectado no arranque. Quando ativo: streams http:// e sem CORS
+    // são tunelados com CORS *, o DSP funciona em todas as estações e os
+    // metadados ICY alimentam o "Now Playing" real.
+    const AUDIO_PROXY_BASE = localStorage.getItem('roc_user_proxy_base') || 'http://localhost:8787';
+    let proxyAvailable = false;
+    (async function detectAudioProxy() {
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 1500);
+        const res = await fetch(AUDIO_PROXY_BASE + '/ping', { signal: ctrl.signal });
+        clearTimeout(t);
+        proxyAvailable = res.ok;
+        if (proxyAvailable) console.info('Roc Waves: proxy de áudio ativo em', AUDIO_PROXY_BASE);
+      } catch (e) { proxyAvailable = false; }
+    })();
+
+    // HLS (.m3u8) não é proxyado (os segmentos usam URLs relativos).
+    function resolveStreamUrl(streamUrl) {
+      if (!proxyAvailable || !streamUrl || streamUrl.includes('.m3u8')) return streamUrl;
+      const insecure = streamUrl.startsWith('http://');
+      const blocked = corsBlockedStreamUrls.includes(streamUrl);
+      if (insecure || blocked) {
+        return AUDIO_PROXY_BASE + '/stream?url=' + encodeURIComponent(streamUrl);
+      }
+      return streamUrl;
+    }
+
+    // --- Now Playing real via metadados ICY (requer proxy ativo) ---
+    let icyPollInterval = null;
+    let icyAbortCtrl = null;
+    let lastIcyTitle = '';
+
+    function stopNowPlayingPolling() {
+      if (icyPollInterval) clearInterval(icyPollInterval);
+      icyPollInterval = null;
+      if (icyAbortCtrl) { try { icyAbortCtrl.abort(); } catch (e) {} icyAbortCtrl = null; }
+    }
+
+    function applyNowPlaying(rawTitle) {
+      const clean = String(rawTitle || '').replace(/\s+/g, ' ').trim();
+      if (!clean || clean === lastIcyTitle) return;
+      lastIcyTitle = clean;
+      const npEl = document.getElementById('player-now-playing');
+      if (npEl) npEl.textContent = clean;
+      const tvSub = document.getElementById('tv-station-sub');
+      if (tvSub) tvSub.textContent = clean;
+      // "Artista - Faixa" → histórico de faixas e Media Session
+      let artist = '', title = clean;
+      const parts = clean.split(' - ');
+      if (parts.length >= 2) { artist = parts[0].trim(); title = parts.slice(1).join(' - ').trim(); }
+      addTrackToHistory(title, artist);
+      try {
+        const s = getCurrentStation();
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title,
+            artist: artist || (s.name || ''),
+            album: 'Roc Waves Global Radio',
+            artwork: [{ src: s.image || 'https://cdn-radiotime-logos.tunein.com/s6706g.png', sizes: '512x512', type: 'image/png' }]
+          });
+        }
+      } catch (e) {}
+    }
+
+    async function pollIcyMetadata() {
+      if (!proxyAvailable || !isPlaying) return;
+      const s = getCurrentStation();
+      const originalUrl = s && s.stream_url;
+      if (!originalUrl || originalUrl.includes('.m3u8')) return;
+      try {
+        icyAbortCtrl = new AbortController();
+        const t = setTimeout(() => icyAbortCtrl.abort(), 9000);
+        const res = await fetch(AUDIO_PROXY_BASE + '/icy?url=' + encodeURIComponent(originalUrl), { signal: icyAbortCtrl.signal });
+        clearTimeout(t);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data.title) applyNowPlaying(data.title);
+      } catch (e) { /* silencioso: metadados são best-effort */ }
+    }
+
+    function startNowPlayingPolling() {
+      stopNowPlayingPolling();
+      lastIcyTitle = '';
+      if (!proxyAvailable) return;
+      pollIcyMetadata();
+      icyPollInterval = setInterval(pollIcyMetadata, 20000);
+    }
+
     // Persistência segura: nunca rebenta com QuotaExceededError
     let quotaWarned = false;
     function persist(key, value) {
@@ -2601,15 +2690,20 @@
         });
       } else {
         // Streams sem CORS não podem passar pelo grafo Web Audio (saída silenciada):
-        // tentamos CORS primeiro; se falhar, o error handler repete em modo direto.
-        const bypass = corsBlockedStreamUrls.includes(streamUrl);
-        ensureDspMode(!!streamUrl && !bypass);
+        // com proxy ativo são tunelados (CORS *, DSP sempre ligado); sem proxy,
+        // tentamos CORS primeiro e o error handler repete em modo direto.
+        const effectiveUrl = resolveStreamUrl(streamUrl);
+        const viaProxy = effectiveUrl !== streamUrl;
+        const bypass = !viaProxy && corsBlockedStreamUrls.includes(streamUrl);
+        ensureDspMode(!!effectiveUrl && !bypass);
         audio.crossOrigin = bypass ? null : 'anonymous';
-        audio.src = streamUrl || '';
+        audio.src = effectiveUrl || '';
         if (autoplay && streamUrl) {
           startAudio();
         }
       }
+
+      startNowPlayingPolling();
 
       saveState();
       updatePiPCanvas();
@@ -2735,15 +2829,20 @@
     function handleAudioError() {
       console.warn('Erro de reprodução no stream atual');
       const failedUrl = currentStationStreamUrl();
-      // Stream bloqueado por CORS: repetir em modo direto (sem DSP).
+      // Stream bloqueado por CORS: repetir via proxy (DSP mantém-se) ou em modo direto.
       if (audio.crossOrigin === 'anonymous' && failedUrl && !corsBlockedStreamUrls.includes(failedUrl)) {
         corsBlockedStreamUrls = [failedUrl, ...corsBlockedStreamUrls.filter(u => u !== failedUrl)].slice(0, 300);
         persist('roc_user_cors_blocked', JSON.stringify(corsBlockedStreamUrls));
-        showToast('Este stream não suporta DSP (CORS) — modo de áudio direto ativado.', '🎛️');
         const autoplayRetry = lastPlayIntent;
-        resetAudioEngine();
-        audio.crossOrigin = null;
-        audio.src = failedUrl;
+        if (proxyAvailable) {
+          showToast('A ligar via proxy de áudio para ativar o DSP neste stream.', '🎛️');
+          audio.src = AUDIO_PROXY_BASE + '/stream?url=' + encodeURIComponent(failedUrl);
+        } else {
+          showToast('Este stream não suporta DSP (CORS) — modo de áudio direto ativado.', '🎛️');
+          resetAudioEngine();
+          audio.crossOrigin = null;
+          audio.src = failedUrl;
+        }
         audio.load();
         if (autoplayRetry) startAudio();
         return;
@@ -2842,17 +2941,16 @@
     function playNext() {
       const list = getFilteredStations();
       if (list.length === 0) return;
-      const idx = list.findIndex(s => String(s.id) === String(currentStationId));
-      const nextIdx = (idx + 1) % list.length;
-      selectStation(list[nextIdx].id, isPlaying);
+      // Navegação cíclica garantida pela regra de negócio do Radio.roc (RocCore)
+      const nextId = RocCore.nextStationId(list, currentStationId);
+      if (nextId !== null) selectStation(nextId, isPlaying);
     }
 
     function playPrev() {
       const list = getFilteredStations();
       if (list.length === 0) return;
-      const idx = list.findIndex(s => String(s.id) === String(currentStationId));
-      const prevIdx = idx <= 0 ? list.length - 1 : idx - 1;
-      selectStation(list[prevIdx].id, isPlaying);
+      const prevId = RocCore.prevStationId(list, currentStationId);
+      if (prevId !== null) selectStation(prevId, isPlaying);
     }
 
     function toggleMute() {
@@ -3082,6 +3180,20 @@
     // World Interactive Radio Map (Leaflet & MarkerCluster) with Massive Live Geo-Discovery
     let currentMapRegion = 'all';
     let mapDiscoveredStations = [];
+    // Persistência das estações descobertas no mapa em IndexedDB
+    // (quota generosa vs ~5MB do localStorage), com gravação debounce.
+    let mapStationsSaveTimer = null;
+    function scheduleMapStationsSave() {
+      if (mapStationsSaveTimer) clearTimeout(mapStationsSaveTimer);
+      mapStationsSaveTimer = setTimeout(() => {
+        RocStorage.set('mapDiscoveredStations', mapDiscoveredStations.slice(-4000));
+      }, 2500);
+    }
+    RocStorage.get('mapDiscoveredStations').then(saved => {
+      if (Array.isArray(saved) && saved.length) {
+        saved.forEach(s => { if (s && s.id) mapDiscoveredStations.push(s); });
+      }
+    }).catch(() => {});
     let mapViewportTimer = null;
     let isFetchingGeoRadios = false;
     let mapClusterGroup = null;
@@ -3275,16 +3387,14 @@
             const url = `${srv}/json/stations/search?has_geo_info=true&limit=${batch.limit}&offset=${batch.offset}&order=clickcount&reverse=true`;
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 6500);
-            const res = await fetch(url, { signal: controller.signal });
+            // Cache IndexedDB 24h: zoom repetido não volta a bater na API
+            const list = await RocStorage.cachedFetchJson(url, RocStorage.DEFAULT_TTL_MS, { signal: controller.signal });
             clearTimeout(timeoutId);
 
-            if (res.ok) {
-              const list = await res.json();
-              if (Array.isArray(list) && list.length > 0) {
-                processAndAddGeoStations(list);
-                success = true;
-                break;
-              }
+            if (Array.isArray(list) && list.length > 0) {
+              processAndAddGeoStations(list);
+              success = true;
+              break;
             }
           } catch (err) {
             console.warn(`Server ${srv} error on batch ${i}:`, err.message);
@@ -3358,6 +3468,7 @@
       if (leafletMap) {
         populateMapPickerForBounds(leafletMap.getBounds(), leafletMap.getZoom());
       }
+      scheduleMapStationsSave();
     }
 
     function onMapViewportChanged() {
@@ -3429,10 +3540,11 @@
 
       try {
         const srv = servers[0];
+        // Cache IndexedDB (24h) evita repetir pesquisas iguais ao navegar no mapa
         const [byState, byName, byTag] = await Promise.all([
-          fetch(`${srv}/json/stations/search?state=${encodeURIComponent(cleanCity)}&limit=100&order=clickcount&reverse=true`).then(r => r.ok ? r.json() : []).catch(() => []),
-          fetch(`${srv}/json/stations/search?name=${encodeURIComponent(cleanCity)}&limit=100&order=clickcount&reverse=true`).then(r => r.ok ? r.json() : []).catch(() => []),
-          fetch(`${srv}/json/stations/search?tag=${encodeURIComponent(cleanCity)}&limit=100&order=clickcount&reverse=true`).then(r => r.ok ? r.json() : []).catch(() => [])
+          RocStorage.cachedFetchJson(`${srv}/json/stations/search?state=${encodeURIComponent(cleanCity)}&limit=100&order=clickcount&reverse=true`).catch(() => []),
+          RocStorage.cachedFetchJson(`${srv}/json/stations/search?name=${encodeURIComponent(cleanCity)}&limit=100&order=clickcount&reverse=true`).catch(() => []),
+          RocStorage.cachedFetchJson(`${srv}/json/stations/search?tag=${encodeURIComponent(cleanCity)}&limit=100&order=clickcount&reverse=true`).catch(() => [])
         ]);
 
         const combined = [...byState, ...byName, ...byTag];
@@ -3530,6 +3642,7 @@
       if (leafletMap) {
         populateMapPickerForBounds(leafletMap.getBounds(), leafletMap.getZoom());
       }
+      scheduleMapStationsSave();
     }
 
     function populateMapPickerForBounds(bounds, zoom) {
@@ -3917,9 +4030,8 @@
       if (genre) url += `&tag=${encodeURIComponent(genre)}`;
 
       try {
-        const res = await fetch(url);
-        if (res.ok) {
-          const rawData = await res.json();
+        const rawData = await RocStorage.cachedFetchJson(url);
+        {
           let filtered = Array.isArray(rawData) ? rawData : [];
 
           if (onlyHD) {
@@ -4149,15 +4261,12 @@ active_stations = [
           const timeoutId = setTimeout(() => controller.abort(), 4500);
 
           const nameUrl = `${server}/json/stations/search?name=${encodeURIComponent(trimmed)}&limit=60&order=clickcount&reverse=true`;
-          const res = await fetch(nameUrl, { signal: controller.signal });
+          const data = await RocStorage.cachedFetchJson(nameUrl, RocStorage.DEFAULT_TTL_MS, { signal: controller.signal });
           clearTimeout(timeoutId);
 
-          if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data) && data.length > 0) {
-              rawData = data;
-              break;
-            }
+          if (Array.isArray(data) && data.length > 0) {
+            rawData = data;
+            break;
           }
         } catch (err) {
           console.warn(`Tentativa em ${server} falhou:`, err);
@@ -4232,8 +4341,7 @@ active_stations = [
       statusText.textContent = "A carregar as 50 rádios mais ouvidas no mundo...";
 
       try {
-        const res = await fetch('https://de1.api.radio-browser.info/json/stations/topclick/50');
-        const data = await res.json();
+        const data = await RocStorage.cachedFetchJson('https://de1.api.radio-browser.info/json/stations/topclick/50');
         if (data && data.length > 0) {
           apiSearchResults = data.map((item, idx) => ({
             id: `top_${item.stationuuid || idx}`,
@@ -4781,11 +4889,8 @@ active_stations = [
     }
 
     function downloadM3UPlaylist() {
-      const list = getAllStations();
-      let m3u = "#EXTM3U\n";
-      list.forEach(s => {
-        m3u += `#EXTINF:-1,${s.name} (${s.country || 'Global'})\n${s.stream_url}\n`;
-      });
+      // Formato M3U gerado pela regra de negócio do Radio.roc (RocCore.exportM3U)
+      const m3u = RocCore.exportM3U(getAllStations());
       const blob = new Blob([m3u], { type: 'audio/x-mpegurl' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

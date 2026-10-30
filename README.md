@@ -13,7 +13,8 @@ Aplicação completa de streaming de mais de **45.000 estações de rádio mundi
 * **Presets de Estúdio**: *Flat, Bass Boost, Rock, Pop, Vocal/Notícias, Jazz, Eletrónica, Sala de Concertos, Lo-Fi*.
 * **Áudio 3D Espacial (*Stereo Widener*)**: Aumenta a sensação de amplitude e palco sonoro estéreo.
 * **Reverberação DSP (*Concert Hall Reverb*)**: Simulação acústica de sala de concertos com Convolver DSP.
-* **DSP consciente de CORS**: o áudio é encaminhado pelo grafo Web Audio (EQ 3D + reverb + visualizador real) sempre que o stream suporta CORS; streams sem CORS ficam automaticamente em modo de reprodução direta, sem nunca perder som.
+* **DSP consciente de CORS**: o áudio é encaminhado pelo grafo Web Audio (EQ 3D + reverb + visualizador real) sempre que o stream suporta CORS; streams sem CORS ficam automaticamente em modo de reprodução direta, sem nunca perder som. Com o **Proxy de Áudio** ligado (`node proxy/server.cjs`), o DSP funciona em *todas* as estações.
+* **Now Playing real (ICY)**: com o proxy ativo, os metadados ICY do stream alimentam o título da faixa atual, o histórico e a Media Session — incluindo rádios que enviam XML (ex.: Bauermedia), normalizados para "Artista - Faixa".
 
 ### 🖼️ 2. Mini-Player Nativo Flutuante (*Picture-in-Picture*)
 * Transforma o player numa janela flutuante nativa do sistema operativo via Picture-in-Picture API.
@@ -75,8 +76,10 @@ Aplicação completa de streaming de mais de **45.000 estações de rádio mundi
 ## 📂 Ficheiros do Projeto
 
 * [`Radio.roc`](Radio.roc): Regras de negócio funcionais (estações, favoritos, filtros avançados, biblioteca, 10-Band EQ, DVR agendado, playlists, sleep timer, alarmes e M3U com 14 testes unitários).
-* [`index.html`](index.html): Interface web completa, responsiva e PWA.
-* [`js/app.js`](js/app.js): Lógica da aplicação (catálogo, mapa, DSP Web Audio, DVR, playlists, i18n) — carregada pelo `index.html`.
+* [`js/roc-core.js`](js/roc-core.js): Porto JS fiel das regras de `Radio.roc` — usada diretamente pela UI (navegação cíclica, M3U, filtros) e testada em `test/roc-core.test.mjs` (14 testes `node --test`).
+* [`js/storage.js`](js/storage.js): Camada IndexedDB com cache TTL de 24h para a API radio-browser e persistência das estações descobertas no mapa.
+* [`js/app.js`](js/app.js): Lógica da aplicação (catálogo, mapa, DSP Web Audio, DVR, playlists, i18n, proxy de áudio) — carregada pelo `index.html`.
+* [`proxy/server.cjs`](proxy/server.cjs): **Proxy de Áudio zero-dependências** (Node.js): resolve CORS e mixed-content de qualquer stream e expõe metadados ICY reais (`/icy`) para o "Now Playing". Arranca com `node proxy/server.cjs` (porta 8787) ou opção 6 do `run.ps1`; a app deteta-o automaticamente.
 * [`manifest.json`](manifest.json) & [`sw.js`](sw.js): Configuração PWA e cache offline (cache-first para assets estáticos, network-first para HTML).
 * [`server.ps1`](file:///c:/Users/nunom/Downloads/Programa%C3%A7%C3%A3o%20NMS/RadioTunes%20-%20ROC/server.ps1): Servidor HTTP local em PowerShell com CORS ativado.
 * [`run.ps1`](file:///c:/Users/nunom/Downloads/Programa%C3%A7%C3%A3o%20NMS/RadioTunes%20-%20ROC/run.ps1) & [`run.bat`](file:///c:/Users/nunom/Downloads/Programa%C3%A7%C3%A3o%20NMS/RadioTunes%20-%20ROC/run.bat): Launcher com menu interativo.
@@ -85,10 +88,18 @@ Aplicação completa de streaming de mais de **45.000 estações de rádio mundi
 
 ## 🚀 Como Abrir e Usar
 
-1. Dá **duplo clique** em [`run.bat`](file:///c:/Users/nunom/Downloads/Programa%C3%A7%C3%A3o%20NMS/RadioTunes%20-%20ROC/run.bat) ou abre [`index.html`](file:///c:/Users/nunom/Downloads/Programa%C3%A7%C3%A3o%20NMS/RadioTunes%20-%20ROC/index.html).
+1. Dá **duplo clique** em [`run.bat`](run.bat) ou abre [`index.html`](index.html).
 2. Para correr os testes unitários em Roc:
    ```powershell
    roc test Radio.roc
+   ```
+3. Para correr os testes JS do RocCore:
+   ```powershell
+   node --test test/roc-core.test.mjs
+   ```
+4. *(Recomendado)* Para DSP total, Now Playing real e streams `http://`:
+   ```powershell
+   node proxy/server.cjs   # deixa correr; a app deteta automaticamente
    ```
 
 ---
