@@ -259,19 +259,34 @@
         desc: "Emissora histórica da Ilha da Madeira" 
       },
       { 
-        id: "m_pt_18", 
-        name: "Antena 9 Açores", 
-        stream_url: "http://server1.veemesoft.com.ar:8064/live", 
-        category: "Música", 
-        genre: "Pop & Cultura Açoriana", 
-        country: "Portugal", 
+        id: "m_pt_18",
+        name: "Antena 9 Açores",
+        stream_url: "http://server1.veemesoft.com.ar:8064/live",
+        category: "Música",
+        genre: "Pop & Cultura Açoriana",
+        country: "Portugal",
         region: "Portugal",
-        flag: "🇵🇹", 
+        flag: "🇵🇹",
         lat: 37.7412, lon: -25.6756, city: "Ponta Delgada",
-        bit_rate: 32, 
+        bit_rate: 32,
         image: null,
         color: "from-blue-600 to-emerald-700",
-        desc: "Direto do Arquipélago dos Açores" 
+        desc: "Direto do Arquipélago dos Açores"
+      },
+      {
+        id: "m_pt_19",
+        name: "Top FM",
+        stream_url: "https://topfm-radiohorizonte.radioca.st/stream",
+        category: "Música",
+        genre: "Top 40 & Hits",
+        country: "Portugal",
+        region: "Portugal",
+        flag: "🇵🇹",
+        lat: 38.6546, lon: -27.2177, city: "Angra do Heroísmo",
+        bit_rate: 128,
+        image: "https://storage.googleapis.com/gpt-engineer-file-uploads/2lu2SOJaWegC0ws2u0N3CezaVjC3/social-images/social-1780411522807-og-img-top.webp",
+        color: "from-pink-600 to-purple-700",
+        desc: "A tua música, direto de Angra do Heroísmo (Açores)"
       },
 
       // ==========================================
@@ -5104,11 +5119,22 @@ active_stations = [
     function closeAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
 
     // ---- Descoberta de rádio pelo link do site ----
-    // Se o URL colado não for um stream direto, procuramos a rádio na
-    // radio-browser: 1) URL exato; 2) nome derivado do domínio com homepage
-    // no mesmo domínio. Assim o utilizador só precisa do site da rádio.
+    // Se o URL colado não for um stream direto: com proxy ativo, extraímos o
+    // stream do próprio site (HTML + bundles JS + padrão Supabase, via
+    // /extract); em paralelo tentamos a radio-browser por domínio.
     function domainOf(u) {
       try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return null; }
+    }
+
+    // Base de nome a partir do domínio registável: app.mytopfm.pt → mytopfm
+    function baseNameFromDomain(u) {
+      const host = domainOf(u);
+      if (!host) return null;
+      const labels = host.split('.');
+      // subdomínios comuns de app/player não identificam a rádio
+      const drop = new Set(['www', 'app', 'player', 'listen', 'live', 'stream', 'streaming', 'm', 'mobile', 'web', 'radio']);
+      while (labels.length > 2 && drop.has(labels[0])) labels.shift();
+      return labels.length >= 2 ? labels[labels.length - 2] : labels[0];
     }
 
     function looksLikeStreamUrl(u) {
@@ -5122,24 +5148,46 @@ active_stations = [
     }
 
     async function discoverStationFromSite(siteUrl) {
+      // Com proxy ativo: extração direta do site (supera CORS e apps React)
+      if (proxyAvailable) {
+        try {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 25000);
+          const res = await fetch(AUDIO_PROXY_BASE + '/extract?url=' + encodeURIComponent(siteUrl), { signal: ctrl.signal });
+          clearTimeout(t);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.found && data.stream) {
+              return {
+                name: (data.title || '').split(/[|–—-]/)[0].trim() || null,
+                url_resolved: data.stream,
+                favicon: null,
+                country: null,
+                bitrate: data.bitrate || null,
+                via: 'site-extract',
+              };
+            }
+          }
+        } catch (e) {}
+      }
+
+      // radio-browser: URL exato, depois nome derivado do domínio
       const domain = domainOf(siteUrl);
       if (!domain) return null;
       const srv = 'https://de1.api.radio-browser.info';
-      // 1) pode ser afinal o URL do stream registado
       try {
         const s = await RocStorage.cachedFetchJson(`${srv}/json/url/${encodeURIComponent(siteUrl)}`).catch(() => null);
-        if (s && s.url_resolved) return s;
+        if (s && s.url_resolved) return { ...s, via: 'url-exact' };
       } catch (e) {}
-      // 2) procurar por nome derivado do domínio e filtrar por homepage igual
-      const base = domain.split('.')[0].replace(/[-_.]/g, ' ').trim();
+      const base = baseNameFromDomain(siteUrl);
       if (!base || base.length < 3) return null;
       try {
         const list = await RocStorage.cachedFetchJson(`${srv}/json/stations/search?name=${encodeURIComponent(base)}&limit=50&order=clickcount&reverse=true`).catch(() => []);
         if (!Array.isArray(list)) return null;
         const sameHomepage = list.find(s => domainOf(s.homepage || '') === domain);
-        if (sameHomepage) return sameHomepage;
+        if (sameHomepage) return { ...sameHomepage, via: 'homepage-match' };
         const sameStreamDomain = list.find(s => domainOf(s.url_resolved || '') === domain);
-        if (sameStreamDomain) return sameStreamDomain;
+        if (sameStreamDomain) return { ...sameStreamDomain, via: 'stream-domain-match' };
       } catch (e) {}
       return null;
     }

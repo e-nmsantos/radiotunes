@@ -202,6 +202,147 @@ function handleIcy(req, res) {
   });
 }
 
+/**
+ * /extract?url=... — extrai o URL do stream de um site de rádio.
+ * Estratégias:
+ *   1. URLs "stream-ish" no HTML e nos bundles JS (script src).
+ *   2. Padrão Supabase (apps Lovable/React): projeto + anon key no bundle →
+ *      tabelas de configuração comuns (site_settings, settings, ...).
+ *   3. Subdomínios clássicos de streaming (stream./radio./live./listen.).
+ * Os candidatos são testados com GET Range; devolve o primeiro que responde
+ * áudio: { found, stream, title, tested }.
+ */
+const STREAMISH = /(stream|listen|live|direct|audio|\.mp3|\.m3u8|\.aac|\.pls|\.ogg|icecast|shoutcast|radioca|azuracast|zeno\.fm|iono\.fm|fastcast|streamguys|securenetsystems|radiojar|samcloud)/i;
+const NOT_STREAM_EXT = /\.(png|jpe?g|gif|webp|svg|css|js|json|woff2?|ttf|ico|txt|xml|mp4|webm)(\?|#|$)/i;
+
+function isStreamishUrl(u) {
+  if (!/^https?:\/\//i.test(u)) return false;
+  if (NOT_STREAM_EXT.test(u)) return false;
+  return STREAMISH.test(u);
+}
+
+function collectUrls(text, into) {
+  const re = /https?:\/\/[^\s"'<>`\\)\]]+/g;
+  let m;
+  while ((m = re.exec(text))) {
+    const u = m[0].replace(/[.,;]+$/, '');
+    if (isStreamishUrl(u)) into.add(u);
+  }
+}
+
+async function fetchText(url, timeoutMs) {
+  const res = await fetch(url, {
+    headers: { 'User-Agent': UA, 'Accept': '*/*' },
+    signal: AbortSignal.timeout(timeoutMs),
+    redirect: 'follow',
+  });
+  if (!res.ok) return null;
+  return res.text();
+}
+
+async function quickStreamProbe(url) {
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA, 'Range': 'bytes=0-1024', 'Accept': '*/*', 'Icy-MetaData': '1' },
+      signal: AbortSignal.timeout(6000),
+      redirect: 'follow',
+    });
+    if (res.status !== 200 && res.status !== 206) return null;
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    const hasIcy = !!res.headers.get('icy-name') || !!res.headers.get('icy-br');
+    if (ct.startsWith('audio/') || ct.includes('ogg') || ct.includes('mpegurl') || ct.includes('octet-stream') || hasIcy || ct === '') {
+      return {
+        icyName: res.headers.get('icy-name') || null,
+        icyBr: res.headers.get('icy-br') ? parseInt(res.headers.get('icy-br'), 10) : null,
+      };
+    }
+    return null;
+  } catch (e) { return null; }
+}
+
+async function supabaseCandidates(jsText, into) {
+  const proj = /https?:\/\/([a-z0-9]+)\.supabase\.co/i.exec(jsText);
+  const key = /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/.exec(jsText);
+  if (!proj || !key) return;
+  const headers = { apikey: key[0], Authorization: 'Bearer ' + key[0] };
+  for (const table of ['site_settings', 'settings', 'config', 'streams', 'stations', 'radio_settings', 'radio']) {
+    try {
+      const res = await fetch(`https://${proj[1]}.supabase.co/rest/v1/${table}?select=*&limit=50`, {
+        headers, signal: AbortSignal.timeout(6000),
+      });
+      if (!res.ok) continue;
+      const rows = await res.json();
+      if (!Array.isArray(rows)) continue;
+      for (const row of rows) {
+        if (!row || typeof row !== 'object') continue;
+        for (const v of Object.values(row)) {
+          if (typeof v === 'string' && isStreamishUrl(v)) into.add(v);
+        }
+      }
+    } catch (e) { /* tabela inexistente ou sem permissões */ }
+  }
+}
+
+function handleExtract(req, res) {
+  const target = parseTarget(req.url);
+  if (!target) { res.writeHead(400, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ error: 'url= inválida' })); }
+
+  (async () => {
+    const candidates = new Set();
+    let title = null;
+    let pageUrl = target.href;
+    try {
+      const html = await fetchText(pageUrl, 7000);
+      if (html) {
+        collectUrls(html, candidates);
+        const tm = /<title[^>]*>([^<]+)<\/title>/i.exec(html);
+        if (tm) title = tm[1].trim();
+        const srcs = [...html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)]
+          .map((mm) => { try { return new URL(mm[1], pageUrl).href; } catch (e) { return null; } })
+          .filter(Boolean).slice(0, 5);
+        for (const s of srcs) {
+          try {
+            const js = await fetchText(s, 7000);
+            if (js) {
+              collectUrls(js, candidates);
+              await supabaseCandidates(js, candidates);
+            }
+          } catch (e) {}
+        }
+      }
+    } catch (e) {}
+
+    // subdomínios clássicos de streaming do próprio domínio
+    try {
+      const host = new URL(pageUrl).hostname.replace(/^www\./, '');
+      const parts = host.split('.');
+      const reg = parts.length >= 2 ? parts.slice(-2).join('.') : host;
+      for (const sub of ['stream', 'radio', 'listen', 'live', 'streaming', 'player']) {
+        candidates.add(`https://${sub}.${reg}/stream`);
+        candidates.add(`https://${sub}.${reg}/live`);
+      }
+    } catch (e) {}
+
+    for (const u of candidates) {
+      const probe = await quickStreamProbe(u);
+      if (probe) {
+        setCors(res);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({
+          found: true, stream: u, title: title || probe.icyName,
+          bitrate: probe.icyBr || null, tested: candidates.size,
+        }));
+      }
+    }
+    setCors(res);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ found: false, stream: null, title, tested: candidates.size }));
+  })().catch(() => {
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ found: false, error: 'falha ao aceder ao site' }));
+  });
+}
+
 const server = http.createServer((req, res) => {
   setCors(res);
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
@@ -209,11 +350,12 @@ const server = http.createServer((req, res) => {
   if (path === '/ping') { res.writeHead(200, { 'Content-Type': 'text/plain' }); return res.end('pong'); }
   if (path === '/stream') return handleStream(req, res);
   if (path === '/icy') return handleIcy(req, res);
+  if (path === '/extract') return handleExtract(req, res);
   res.writeHead(404, { 'Content-Type': 'text/plain' });
-  res.end('Roc Waves proxy: usar /ping, /stream?url=..., /icy?url=...');
+  res.end('Roc Waves proxy: usar /ping, /stream?url=..., /icy?url=..., /extract?url=...');
 });
 
 server.listen(PORT, () => {
   console.log(`🎧 Roc Waves proxy ativo em http://localhost:${PORT}`);
-  console.log('   Endpoints: /ping | /stream?url=<stream> | /icy?url=<stream>');
+  console.log('   Endpoints: /ping | /stream?url= | /icy?url= | /extract?url=<site>');
 });
