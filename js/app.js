@@ -2614,20 +2614,24 @@
           redirect: 'follow',
         });
         clearTimeout(t);
-        if (res.ok) {
-          if (res.body) { try { await res.body.cancel(); } catch (e) {} }
-          return { healthy: true };
-        }
+        // CRÍTICO: fechar SEMPRE a ligação — um stream infinito deixado
+        // aberto continuaria a descarregar para sempre em background,
+        // saturando a rede e impedindo a reprodução real das rádios.
+        if (res.body) { try { await res.body.cancel(); } catch (e) {} }
+        if (res.ok) return { healthy: true };
         if (res.status >= 400) return { healthy: false, reason: 'HTTP ' + res.status };
         return { healthy: true };
       } catch (e) { /* sem CORS ou falha de rede — testar no-cors */ }
-      // 2) Sem CORS: fetch no-cors completa mesmo com 4xx opaco, mas deteta
-      //    falhas de rede reais (DNS morto, ligação recusada, offline).
+      // 2) Sem CORS: fetch no-cors deteta falhas de rede reais (DNS morto,
+      //    ligação recusada). A resposta é opaca (não tem .body cancelável),
+      //    por isso abortamos o controlador LOGO após receber os headers:
+      //    sem isto, o stream infinito continuaria a descarregar para sempre.
       try {
         const ctrl = new AbortController();
         const t = setTimeout(() => ctrl.abort(), 5000);
         await fetch(url, { mode: 'no-cors', signal: ctrl.signal });
         clearTimeout(t);
+        ctrl.abort(); // fecha a ligação imediatamente (headers já recebidos)
         return { healthy: true, limited: true };
       } catch (e) {
         return { healthy: false, reason: 'inacessível' };
@@ -2642,6 +2646,9 @@
           .filter(s => s && s.id && s.stream_url && !s.stream_url.includes('.m3u8'));
         let flagged = false;
         for (const st of targets) {
+          // Nunca sondar a estação em reprodução: não competir com a
+          // ligação ativa do <audio> — a auditoria é 100% passiva.
+          if (isPlaying && String(st.id) === String(currentStationId)) continue;
           const cacheKey = 'health:' + st.id;
           const cached = await RocStorage.get(cacheKey, 24 * 60 * 60 * 1000);
           if (cached) {

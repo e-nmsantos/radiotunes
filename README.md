@@ -90,7 +90,7 @@ Aplicação completa de streaming de mais de **45.000 estações de rádio mundi
 
 ## 🚀 Como Abrir e Usar
 
-1. Dá **duplo clique** em [`run.bat`](run.bat) ou abre [`index.html`](index.html).
+1. **Duplo clique em [`run.bat`](run.bat)** — abre o player direto no navegador, sem menus nem consolas. (O menu de desenvolvimento continua disponível executando `run.ps1` no PowerShell.)
 2. Para correr os testes unitários em Roc:
    ```powershell
    roc test Radio.roc
@@ -101,7 +101,7 @@ Aplicação completa de streaming de mais de **45.000 estações de rádio mundi
    ```
 4. *(Recomendado)* Para DSP total, Now Playing real e streams `http://`:
    ```powershell
-   node proxy/server.cjs   # deixa correr; a app deteta automaticamente
+   .\proxy.bat   # ou: node proxy/server.cjs — deixa a janela aberta
    ```
 5. Verificação de saúde dos streams + logos (agente de manutenção):
    ```powershell

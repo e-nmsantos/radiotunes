@@ -1,4 +1,8 @@
 @echo off
 chcp 65001 > nul
-setlocal
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0run.ps1" %*
+rem ============================================================
+rem  Roc Waves - Arranque direto: abre o player no navegador.
+rem  Sem menus, sem consolas. Para DSP total usar proxy.bat.
+rem ============================================================
+start "" "%~dp0index.html"
+exit /b
