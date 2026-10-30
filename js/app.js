@@ -156,7 +156,7 @@
       { 
         id: "m_pt_11", 
         name: "Rádio Nova Era", 
-        stream_url: "https://stream.radionovaera.pt/novaera.mp3", 
+        stream_url: "http://centova.radio.com.pt:9478/", 
         category: "Eletrónica", 
         genre: "Dance, EDM & House", 
         country: "Portugal", 
@@ -171,14 +171,14 @@
       { 
         id: "m_pt_12", 
         name: "Rádio Radar 97.8", 
-        stream_url: "https://stream-icy.bauermedia.pt/radar.mp3", 
+        stream_url: "http://proic1.redeaudio.com/radar_aac", 
         category: "Rock", 
         genre: "Indie Rock & Post-Punk", 
         country: "Portugal", 
         region: "Portugal",
         flag: "🇵🇹", 
         lat: 38.7223, lon: -9.1393, city: "Lisboa",
-        bit_rate: 128, 
+        bit_rate: 192, 
         image: "https://cdn-radiotime-logos.tunein.com/s6713g.png",
         color: "from-purple-700 to-slate-900",
         desc: "Excelente música indie na capital" 
@@ -186,7 +186,7 @@
       { 
         id: "m_pt_13", 
         name: "Rádio Observador", 
-        stream_url: "https://stream-icy.bauermedia.pt/observador.mp3", 
+        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/OBSERVADORAAC.aac", 
         category: "Notícias", 
         genre: "Opinião & Informação Viva", 
         country: "Portugal", 
@@ -201,14 +201,14 @@
       { 
         id: "m_pt_14", 
         name: "Rádio Universitária de Coimbra (RUC)", 
-        stream_url: "https://ruc.fm:8443/live", 
+        stream_url: "http://streamer.radio.co/s81d30349a/low", 
         category: "Rock", 
         genre: "Alternativa & Académica", 
         country: "Portugal", 
         region: "Portugal",
         flag: "🇵🇹", 
         lat: 40.2033, lon: -8.4103, city: "Coimbra",
-        bit_rate: 128, 
+        bit_rate: 64, 
         image: "https://cdn-radiotime-logos.tunein.com/s6717g.png",
         color: "from-blue-800 to-indigo-900",
         desc: "Voz académica e independente de Coimbra" 
@@ -216,14 +216,14 @@
       { 
         id: "m_pt_15", 
         name: "Rádio Universitária do Minho (RUM)", 
-        stream_url: "https://stream.rum.pt/rum.mp3", 
+        stream_url: "http://centova.radio.com.pt:9558/;", 
         category: "Música", 
         genre: "Cultura & Indie Pop", 
         country: "Portugal", 
         region: "Portugal",
         flag: "🇵🇹", 
         lat: 41.5454, lon: -8.4265, city: "Braga",
-        bit_rate: 128, 
+        bit_rate: 192, 
         image: "https://cdn-radiotime-logos.tunein.com/s6718g.png",
         color: "from-red-600 to-slate-900",
         desc: "A rádio universitária de Braga e Guimarães" 
@@ -246,7 +246,7 @@
       { 
         id: "m_pt_17", 
         name: "Posto Emissor do Funchal", 
-        stream_url: "https://stream.pefunchal.com/live", 
+        stream_url: "https://centova.radio.com.pt/proxy/422?mp=/stream;", 
         category: "Música", 
         genre: "Tradição Madeirense & Notícias", 
         country: "Portugal", 
@@ -261,14 +261,14 @@
       { 
         id: "m_pt_18", 
         name: "Antena 9 Açores", 
-        stream_url: "https://antena9.stream.pt/live", 
+        stream_url: "http://server1.veemesoft.com.ar:8064/live", 
         category: "Música", 
         genre: "Pop & Cultura Açoriana", 
         country: "Portugal", 
         region: "Portugal",
         flag: "🇵🇹", 
         lat: 37.7412, lon: -25.6756, city: "Ponta Delgada",
-        bit_rate: 128, 
+        bit_rate: 32, 
         image: null,
         color: "from-blue-600 to-emerald-700",
         desc: "Direto do Arquipélago dos Açores" 
@@ -340,7 +340,7 @@
       { 
         id: "m_105", 
         name: "Radio Marca", 
-        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/RADIOMARCA.mp3", 
+        stream_url: "https://www.marca.com/radio/geoblock/getSrcApp.php?dial=Nacional&dist=radiomarcaweb", 
         category: "Desporto", 
         genre: "Futebol & Desporto", 
         country: "Espanha", 
@@ -370,14 +370,14 @@
       { 
         id: "m_es_107", 
         name: "Flaix FM Barcelona", 
-        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/FLAIXFM.mp3", 
+        stream_url: "https://stream.flaixfm.cat/icecast", 
         category: "Eletrónica", 
         genre: "Dance & EDM Hits", 
         country: "Espanha", 
         region: "Espanha",
         flag: "🇪🇸", 
         lat: 41.3879, lon: 2.1699, city: "Barcelona",
-        bit_rate: 128, 
+        bit_rate: 125, 
         image: "https://flaixfm.cat/favicon.ico",
         color: "from-amber-500 to-red-600",
         desc: "El poder del ritmo en Cataluña" 
@@ -385,14 +385,14 @@
       { 
         id: "m_es_108", 
         name: "Canal Fiesta Radio", 
-        stream_url: "https://rtva-live-mp3.flumotion.com/rtva/canalfiesta.mp3", 
+        stream_url: "https://rtva-live-radio.flumotion.com/rtva/cfr.mp3", 
         category: "Música", 
         genre: "Pop Latino & Flamenco Pop", 
         country: "Espanha", 
         region: "Espanha",
         flag: "🇪🇸", 
         lat: 37.3891, lon: -5.9845, city: "Sevilha",
-        bit_rate: 128, 
+        bit_rate: 320, 
         image: "https://cdn-radiotime-logos.tunein.com/s15219g.png",
         color: "from-orange-500 to-amber-600",
         desc: "La música del sur de España • Sevilla" 
@@ -573,7 +573,7 @@
       { 
         id: "m_fr_27", 
         name: "NRJ France", 
-        stream_url: "https://scdn.nrjaudio.fm/adwz1/fr/30001/mp3_128.mp3", 
+        stream_url: "https://streaming.nrjaudio.fm/ou7xugf3s5gi?origine=playernrj&aw_0_req.userConsentV2=&aw_0_1st.station=NRJ-Hits", 
         category: "Música", 
         genre: "Hit Music Only", 
         country: "França", 
@@ -652,7 +652,7 @@
       { 
         id: "m_de_4", 
         name: "Radio Hamburg", 
-        stream_url: "https://stream.radiohamburg.de/rhh-live/mp3-192", 
+        stream_url: "https://stream.laut.fm/hitradiohamburg", 
         category: "Música", 
         genre: "Mega-Hits & Pop", 
         country: "Alemanha", 
@@ -686,7 +686,7 @@
       { 
         id: "m_it_2", 
         name: "Radio Monte Carlo Italia", 
-        stream_url: "https://stream.radiomontecarlo.net/rmc", 
+        stream_url: "http://icecast.unitedradio.it/RMC.mp3", 
         category: "Relax", 
         genre: "Lounge, Soul & Pop Chic", 
         country: "Itália", 
@@ -701,14 +701,14 @@
       { 
         id: "m_it_3", 
         name: "Radio Deejay Roma", 
-        stream_url: "https://stream.zeno.fm/k80v2c199xzuv", 
+        stream_url: "https://4c4b867c89244861ac216426883d1ad0.msvdn.net/radiodeejay/radiodeejay/master_ma.m3u8", 
         category: "Música", 
         genre: "Pop, Dance & Talk Show", 
         country: "Itália", 
         region: "Europa",
         flag: "🇮🇹", 
         lat: 41.9028, lon: 12.4964, city: "Roma",
-        bit_rate: 128, 
+        bit_rate: 122, 
         image: "https://cdn-radiotime-logos.tunein.com/s25014g.png",
         color: "from-cyan-500 to-indigo-700",
         desc: "One Nation One Station • Roma" 
@@ -716,7 +716,7 @@
       { 
         id: "m_it_4", 
         name: "Radio Kiss Kiss Napoli", 
-        stream_url: "https://stream.kisskiss.it/kisskiss.mp3", 
+        stream_url: "http://wma07.fluidstream.net:4610/", 
         category: "Música", 
         genre: "Top Italian Hits & Pop", 
         country: "Itália", 
@@ -843,8 +843,8 @@
       // ==========================================
       { 
         id: "m_301", 
-        name: "Apple Music Hits Live", 
-        stream_url: "https://ice1.somafm.com/indiepop-128-mp3", 
+        name: "SomaFM Indie Pop Rocks", 
+        stream_url: "https://ice2.somafm.com/indiepop-128-mp3", 
         category: "Música", 
         genre: "Pop & Indie Hits", 
         country: "Estados Unidos", 
@@ -889,7 +889,7 @@
       { 
         id: "m_304", 
         name: "SomaFM Groove Salad", 
-        stream_url: "https://ice1.somafm.com/groovesalad-128-mp3", 
+        stream_url: "https://ice2.somafm.com/groovesalad-128-mp3", 
         category: "Relax", 
         genre: "Downtempo & Chillout", 
         country: "Estados Unidos", 
@@ -904,7 +904,7 @@
       { 
         id: "m_us_305", 
         name: "Power 106 FM Los Angeles", 
-        stream_url: "https://ice64.securenetsystems.net/KPWR", 
+        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/KPWR_SC", 
         category: "Música", 
         genre: "Hip-Hop & R&B", 
         country: "Estados Unidos", 
@@ -934,7 +934,7 @@
       { 
         id: "m_us_307", 
         name: "Hot 97 New York", 
-        stream_url: "https://ice42.securenetsystems.net/WQHT", 
+        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/WQHTFMAAC.aac", 
         category: "Música", 
         genre: "Hip-Hop & Urban Culture", 
         country: "Estados Unidos", 
@@ -949,7 +949,7 @@
       { 
         id: "m_ca_308", 
         name: "CBC Radio One Toronto", 
-        stream_url: "https://cbcradiolive.akamaized.net/hls/live/2041734/ES_R1ETR/master.m3u8", 
+        stream_url: "https://17813.live.streamtheworld.com/CBLAFM_CBC_SC", 
         category: "Notícias", 
         genre: "Canadian News & Talk", 
         country: "Canadá", 
@@ -964,7 +964,7 @@
       { 
         id: "m_ca_309", 
         name: "CHOM 97.7 Classic Rock", 
-        stream_url: "https://ice23.securenetsystems.net/CHOM", 
+        stream_url: "https://rogers-hls.leanstream.co/rogers/chomfm.stream/playlist.m3u8", 
         category: "Rock", 
         genre: "Classic Rock & Metal", 
         country: "Canadá", 
@@ -983,7 +983,7 @@
       { 
         id: "m_11", 
         name: "Jovem Pan FM", 
-        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/JP_SP_FMAAC.aac", 
+        stream_url: "https://stream.zeno.fm/c45wbq2us3buv", 
         category: "Música", 
         genre: "Pop & Notícias Brasil", 
         country: "Brasil", 
@@ -1013,7 +1013,7 @@
       { 
         id: "m_13", 
         name: "Bossa Nova Brazil", 
-        stream_url: "https://stream.zeno.fm/k22222180v8uv", 
+        stream_url: "http://54.38.43.201:8009/stream-128kmp3-BossaNovaBrazil", 
         category: "Relax", 
         genre: "Bossa Nova & MPB", 
         country: "Brasil", 
@@ -1043,14 +1043,14 @@
       { 
         id: "m_br_15", 
         name: "Rádio Itatiaia", 
-        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/ITATIAIA_FMAAC.aac", 
+        stream_url: "https://8903.brasilstream.com.br/stream", 
         category: "Notícias", 
         genre: "Notícias & Futebol Brasileiro", 
         country: "Brasil", 
         region: "Brasil",
         flag: "🇧🇷", 
         lat: -19.9167, lon: -43.9345, city: "Belo Horizonte",
-        bit_rate: 128, 
+        bit_rate: 64, 
         image: "https://cdn-radiotime-logos.tunein.com/s10500g.png",
         color: "from-red-600 to-yellow-600",
         desc: "A rádio de Minas Gerais • Belo Horizonte" 
@@ -1073,14 +1073,14 @@
       { 
         id: "m_ar_1", 
         name: "Radio Mitre Buenos Aires", 
-        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/MITRE_AM790.mp3", 
+        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/AM790_56AAC.aac", 
         category: "Notícias", 
         genre: "Noticias & Debate Argentina", 
         country: "Argentina", 
         region: "América Latina",
         flag: "🇦🇷", 
         lat: -34.6037, lon: -58.3816, city: "Buenos Aires",
-        bit_rate: 128, 
+        bit_rate: 64, 
         image: "https://cdn-radiotime-logos.tunein.com/s25052g.png",
         color: "from-sky-500 to-blue-800",
         desc: "El aire de las noticias • Buenos Aires" 
@@ -1088,7 +1088,7 @@
       { 
         id: "m_ar_2", 
         name: "Radio Disney Argentina", 
-        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/DISNEY_ARG_SC", 
+        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/DISNEY_ARG_BA_ADP.aac", 
         category: "Música", 
         genre: "Pop Juvenil & Sucessos", 
         country: "Argentina", 
@@ -1103,14 +1103,14 @@
       { 
         id: "m_co_1", 
         name: "Caracol Radio Bogotá", 
-        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/CARACOL_BOGOTAAAC.aac", 
+        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/CARACOL_RADIOAAC.aac", 
         category: "Notícias", 
         genre: "Noticias & Deportes Colombia", 
         country: "Colômbia", 
         region: "América Latina",
         flag: "🇨🇴", 
         lat: 4.7110, lon: -74.0721, city: "Bogotá",
-        bit_rate: 128, 
+        bit_rate: 32, 
         image: "https://cdn-radiotime-logos.tunein.com/s25056g.png",
         color: "from-yellow-500 to-red-600",
         desc: "Más compañía en Colombia • Bogotá" 
@@ -1118,14 +1118,14 @@
       { 
         id: "m_cl_1", 
         name: "Radio Cooperativa Chile", 
-        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/COOPERATIVA_AAC.aac", 
+        stream_url: "https://unlimited3-cl.dps.live/cooperativafm/mp3/icecast.audio", 
         category: "Notícias", 
         genre: "Información & Debate", 
         country: "Chile", 
         region: "América Latina",
         flag: "🇨🇱", 
         lat: -33.4489, lon: -70.6693, city: "Santiago",
-        bit_rate: 128, 
+        bit_rate: 48, 
         image: "https://cdn-radiotime-logos.tunein.com/s25058g.png",
         color: "from-blue-600 to-red-700",
         desc: "La voz de Chile • Santiago" 
@@ -1137,14 +1137,14 @@
       { 
         id: "m_26", 
         name: "Tokyo Anime Radio", 
-        stream_url: "https://cast.animenfo.com:8000/animenfo.mp3", 
+        stream_url: "https://stream.zenolive.com/xwa8ckz7mzzuv", 
         category: "Música", 
         genre: "J-Pop & Anime OST", 
         country: "Japão", 
         region: "Ásia",
         flag: "🇯🇵", 
         lat: 35.6762, lon: 139.6503, city: "Tóquio",
-        bit_rate: 128, 
+        bit_rate: 192, 
         image: "https://cdn-radiotime-logos.tunein.com/s276274g.png",
         color: "from-pink-500 to-rose-600",
         desc: "Direct J-Pop stream from Tokyo" 
@@ -1182,7 +1182,7 @@
       { 
         id: "m_in_1", 
         name: "Radio Mirchi Top 20", 
-        stream_url: "https://stream.zeno.fm/4vkvwzvb9xzuv", 
+        stream_url: "https://eu8.fastcast4u.com/proxy/clyedupq/stream", 
         category: "Música", 
         genre: "Bollywood Hits & Desi Pop", 
         country: "Índia", 
@@ -1212,7 +1212,7 @@
       { 
         id: "m_th_1", 
         name: "Bangkok Radio Dance", 
-        stream_url: "https://stream.zeno.fm/uqv56h4m6tzuv", 
+        stream_url: "https://bcr.radiocult.fm/stream", 
         category: "Eletrónica", 
         genre: "Tropical House & Club", 
         country: "Tailândia", 
@@ -1231,14 +1231,14 @@
       { 
         id: "m_za_1", 
         name: "Metro FM South Africa", 
-        stream_url: "https://edge.iono.fm/xice/metrofm_live.mp3", 
+        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/METROFMAAC.aac", 
         category: "Música", 
         genre: "Amapiano, R&B & Urban", 
         country: "África do Sul", 
         region: "África",
         flag: "🇿🇦", 
         lat: -26.2041, lon: 28.0473, city: "Joanesburgo",
-        bit_rate: 128, 
+        bit_rate: 48, 
         image: "https://www.metrofm.co.za/metro-fm/wp-content/uploads/2024/04/cropped-metro-fm-icon-32x32.png",
         color: "from-emerald-600 to-yellow-600",
         desc: "It's Where You're At • Johannesburg" 
@@ -1261,14 +1261,14 @@
       { 
         id: "m_ao_1", 
         name: "Rádio Nacional de Angola (RNA)", 
-        stream_url: "https://stream.zeno.fm/5rt46g14b9xzuv", 
+        stream_url: "https://paineldj5.com.br:20088/stream", 
         category: "Notícias", 
         genre: "Kizomba, Semba & Informação", 
         country: "Angola", 
         region: "África",
         flag: "🇦🇴", 
         lat: -8.8390, lon: 13.2894, city: "Luanda",
-        bit_rate: 128, 
+        bit_rate: 64, 
         image: null,
         color: "from-red-600 to-yellow-500",
         desc: "A voz de Angola para o mundo • Luanda" 
@@ -1276,14 +1276,14 @@
       { 
         id: "m_ao_2", 
         name: "LAC Luanda Antena Comercial", 
-        stream_url: "https://stream.zeno.fm/3rt46g14b9xzuv", 
+        stream_url: "http://live.paineldj.com.br:8662/live", 
         category: "Música", 
         genre: "Música Angolana & Pop", 
         country: "Angola", 
         region: "África",
         flag: "🇦🇴", 
         lat: -8.8390, lon: 13.2894, city: "Luanda",
-        bit_rate: 128, 
+        bit_rate: 320, 
         image: null,
         color: "from-amber-600 to-slate-900",
         desc: "A primeira estação privada de Angola" 
@@ -1291,14 +1291,14 @@
       { 
         id: "m_cv_1", 
         name: "Rádio de Cabo Verde (RCV)", 
-        stream_url: "https://stream.zeno.fm/6rt46g14b9xzuv", 
+        stream_url: "https://a8.my-control-panel.com:8670/radio.mp3", 
         category: "Música", 
         genre: "Morna, Coladeira & Notícias", 
         country: "Cabo Verde", 
         region: "África",
         flag: "🇨🇻", 
         lat: 14.9330, lon: -23.5133, city: "Praia",
-        bit_rate: 128, 
+        bit_rate: 320, 
         image: "https://cdn-radiotime-logos.tunein.com/s25078g.png",
         color: "from-blue-600 to-yellow-500",
         desc: "Sons e alma das ilhas crioulas • Praia" 
@@ -1306,7 +1306,7 @@
       { 
         id: "m_mz_1", 
         name: "Rádio Moçambique (RM)", 
-        stream_url: "https://stream.zeno.fm/8rt46g14b9xzuv", 
+        stream_url: "http://node.stream-africa.com:8000/Nampula", 
         category: "Notícias", 
         genre: "Marrabenta & Notícias de Maputo", 
         country: "Moçambique", 
@@ -1325,14 +1325,14 @@
       { 
         id: "m_au_1", 
         name: "Triple J ABC Australia", 
-        stream_url: "https://live-radio01.mediahubaustralia.com/2TJW/mp3/", 
+        stream_url: "https://mediaserviceslive.akamaized.net/hls/live/2038308/triplejnsw/master.m3u8", 
         category: "Rock", 
         genre: "Aussie Indie & Alternative", 
         country: "Austrália", 
         region: "Oceania",
         flag: "🇦🇺", 
         lat: -33.8688, lon: 151.2093, city: "Sydney",
-        bit_rate: 128, 
+        bit_rate: 252, 
         image: "https://cdn-radiotime-logos.tunein.com/s25082g.png",
         color: "from-red-600 to-amber-500",
         desc: "We love Australian music • Sydney" 
@@ -1340,14 +1340,14 @@
       { 
         id: "m_au_2", 
         name: "FOX FM 101.9 Melbourne", 
-        stream_url: "https://stream.zeno.fm/vxt46g14b9xzuv", 
+        stream_url: "http://cfgw.streamon.fm/stream/CFGW-64k.aac", 
         category: "Música", 
         genre: "Hit Music & Fun", 
         country: "Austrália", 
         region: "Oceania",
         flag: "🇦🇺", 
         lat: -37.8136, lon: 144.9631, city: "Melbourne",
-        bit_rate: 128, 
+        bit_rate: 64, 
         image: "https://cdn-radiotime-logos.tunein.com/s25084g.png",
         color: "from-blue-600 to-indigo-800",
         desc: "Melbourne's #1 Hit Station" 
@@ -1355,14 +1355,14 @@
       { 
         id: "m_nz_1", 
         name: "ZM Online Hits Auckland", 
-        stream_url: "https://stream.zeno.fm/zxt46g14b9xzuv", 
+        stream_url: "https://playerservices.streamtheworld.com/api/livestream-redirect/NZME_33AAC.m3u8", 
         category: "Música", 
         genre: "Top 40 & New Zealand Pop", 
         country: "Nova Zelândia", 
         region: "Oceania",
         flag: "🇳🇿", 
         lat: -36.8485, lon: 174.7633, city: "Auckland",
-        bit_rate: 128, 
+        bit_rate: 64, 
         image: "https://cdn-radiotime-logos.tunein.com/s25086g.png",
         color: "from-cyan-500 to-blue-600",
         desc: "All the Hits across NZ • Auckland" 
@@ -2879,25 +2879,57 @@
       }
     }
 
-    function handleAudioError() {
+    // Distingue a causa da falha: fetch sem CORS lança TypeError (bloqueio CORS);
+    // se responder, o status HTTP diz se o stream está morto (4xx/5xx).
+    async function classifyStreamFailure(url) {
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 4500);
+        const res = await fetch(url, { method: 'GET', headers: { Range: 'bytes=0-1' }, signal: ctrl.signal });
+        clearTimeout(t);
+        return { reachable: true, status: res.status };
+      } catch (e) {
+        return { reachable: false, status: 0 };
+      }
+    }
+
+    async function handleAudioError() {
       console.warn('Erro de reprodução no stream atual');
       const failedUrl = currentStationStreamUrl();
-      // Stream bloqueado por CORS: repetir via proxy (DSP mantém-se) ou em modo direto.
+      // Só há ambiguidade na 1ª tentativa (com crossOrigin anónimo).
       if (audio.crossOrigin === 'anonymous' && failedUrl && !corsBlockedStreamUrls.includes(failedUrl)) {
-        corsBlockedStreamUrls = [failedUrl, ...corsBlockedStreamUrls.filter(u => u !== failedUrl)].slice(0, 300);
-        persist('roc_user_cors_blocked', JSON.stringify(corsBlockedStreamUrls));
-        const autoplayRetry = lastPlayIntent;
-        if (proxyAvailable) {
-          showToast('A ligar via proxy de áudio para ativar o DSP neste stream.', '🎛️');
-          audio.src = AUDIO_PROXY_BASE + '/stream?url=' + encodeURIComponent(failedUrl);
-        } else {
-          showToast('Este stream não suporta DSP (CORS) — modo de áudio direto ativado.', '🎛️');
-          resetAudioEngine();
-          audio.crossOrigin = null;
-          audio.src = failedUrl;
+        const probe = await classifyStreamFailure(failedUrl);
+
+        if (!probe.reachable) {
+          // Falha de CORS: repetir via proxy (DSP mantém-se) ou em modo direto.
+          corsBlockedStreamUrls = [failedUrl, ...corsBlockedStreamUrls.filter(u => u !== failedUrl)].slice(0, 300);
+          persist('roc_user_cors_blocked', JSON.stringify(corsBlockedStreamUrls));
+          const autoplayRetry = lastPlayIntent;
+          if (proxyAvailable) {
+            showToast('A ligar via proxy de áudio para ativar o DSP neste stream.', '🎛️');
+            audio.src = AUDIO_PROXY_BASE + '/stream?url=' + encodeURIComponent(failedUrl);
+          } else {
+            showToast('Este stream não suporta DSP (CORS) — modo de áudio direto ativado.', '🎛️');
+            resetAudioEngine();
+            audio.crossOrigin = null;
+            audio.src = failedUrl;
+          }
+          audio.load();
+          if (autoplayRetry) startAudio();
+          return;
         }
-        audio.load();
-        if (autoplayRetry) startAudio();
+
+        if (probe.status >= 400) {
+          // Stream morto no servidor da rádio (ex.: 404) — não é problema de CORS/DSP.
+          showToast('Este stream está indisponível no servidor da rádio (HTTP ' + probe.status + ').', '📡');
+          showStreamError(`O servidor da rádio respondeu HTTP ${probe.status} — stream inativo ou mudado de endereço.`);
+        } else {
+          // URL acessível, mas a reprodução falhou (falha transitória, codec, etc.)
+          showToast('Falha transitória no stream — tenta reconectar ou escolhe outra estação.', '📡');
+          showStreamError('O stream está acessível mas a reprodução falhou. Tenta reconectar.');
+        }
+        isPlaying = false;
+        updatePlayState();
         return;
       }
       if (audio.src && audio.src !== window.location.href) {
@@ -2932,9 +2964,13 @@
       }
     }
 
-    function showStreamError() {
+    function showStreamError(reason) {
       const el = document.getElementById('stream-error-banner');
       if (el) el.classList.remove('hidden');
+      if (reason) {
+        const txt = document.getElementById('stream-error-text');
+        if (txt) txt.textContent = reason;
+      }
     }
 
     function retryCurrentStream() {
