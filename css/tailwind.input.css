@@ -1,0 +1,5 @@
+/* Roc Waves — fonte do Tailwind compilado.
+   Compilar com: npx tailwindcss -i css/tailwind.input.css -o css/tailwind.css --minify */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

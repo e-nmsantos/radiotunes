@@ -11,3 +11,6 @@ Thumbs.db
 
 # Relatórios do agente de saúde (gerados por tools/health-check.cjs)
 tools/reports/
+
+# Dependências de desenvolvimento (Tailwind CLI)
+node_modules/
