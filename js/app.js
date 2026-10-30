@@ -14,7 +14,7 @@
         flag: "🇵🇹", 
         lat: 38.7223, lon: -9.1393, city: "Lisboa",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6706g.png",
+        image: "https://static2.mytuner.mobi/media/tvos_radios/drkZNBUn6W.png",
         color: "from-amber-500 to-red-600",
         desc: "A Melhor Música de Sempre • Lisboa" 
       },
@@ -29,7 +29,7 @@
         flag: "🇵🇹", 
         lat: 38.7223, lon: -9.1393, city: "Lisboa",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6708g.png",
+        image: "https://rfmsite-images.azureedge.net/icons/touch-icon-iphone-retina.png",
         color: "from-blue-500 to-cyan-400",
         desc: "Só Grandes Músicas • Lisboa" 
       },
@@ -59,7 +59,7 @@
         flag: "🇵🇹", 
         lat: 38.7223, lon: -9.1393, city: "Lisboa",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6704g.png",
+        image: "https://www.celsoazevedo.com/files/2024/tsf.png",
         color: "from-red-600 to-slate-900",
         desc: "Informação e Notícias em Direto 24h" 
       },
@@ -104,7 +104,7 @@
         flag: "🇵🇹", 
         lat: 38.7223, lon: -9.1393, city: "Lisboa",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6709g.png",
+        image: "https://cdn-radiotime-logos.tunein.com/s6745q.png",
         color: "from-pink-500 to-purple-600",
         desc: "A rádio dos grandes sucessos jovens" 
       },
@@ -134,7 +134,7 @@
         flag: "🇵🇹", 
         lat: 38.7223, lon: -9.1393, city: "Lisboa",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6709g.png",
+        image: "https://cidade.fm/favicon.ico",
         color: "from-red-500 to-pink-600",
         desc: "A Tua Rádio de Sucessos Urbanos" 
       },
@@ -149,7 +149,7 @@
         flag: "🇵🇹", 
         lat: 38.7223, lon: -9.1393, city: "Lisboa",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6703g.png",
+        image: "https://rrsite-images.azureedge.net/favicon/apple-touch-icon.png",
         color: "from-blue-600 to-sky-500",
         desc: "A par com o mundo • Lisboa" 
       },
@@ -164,7 +164,7 @@
         flag: "🇵🇹", 
         lat: 41.1579, lon: -8.6291, city: "Porto",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6715g.png",
+        image: "https://radionovaera.pt/resources/img/favicon/android-icon-192x192.png",
         color: "from-cyan-500 to-blue-600",
         desc: "A maior rádio de dança do Norte • Porto" 
       },
@@ -239,7 +239,7 @@
         flag: "🇵🇹", 
         lat: 37.0194, lon: -7.9304, city: "Faro",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6720g.png",
+        image: null,
         color: "from-cyan-600 to-teal-800",
         desc: "A voz e música do Algarve e Monchique" 
       },
@@ -254,7 +254,7 @@
         flag: "🇵🇹", 
         lat: 32.6500, lon: -16.9080, city: "Funchal",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6724g.png",
+        image: "https://www.celsoazevedo.com/files/2026/pef-am.png",
         color: "from-amber-600 to-blue-800",
         desc: "Emissora histórica da Ilha da Madeira" 
       },
@@ -269,7 +269,7 @@
         flag: "🇵🇹", 
         lat: 37.7412, lon: -25.6756, city: "Ponta Delgada",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s6727g.png",
+        image: null,
         color: "from-blue-600 to-emerald-700",
         desc: "Direto do Arquipélago dos Açores" 
       },
@@ -303,7 +303,7 @@
         flag: "🇪🇸", 
         lat: 40.4168, lon: -3.7038, city: "Madrid",
         bit_rate: 128, 
-        image: "https://d3kle7qwymxpcy.cloudfront.net/images/broadcasts/4c/ce/10732/1/c175.png",
+        image: "https://los40es00.epimg.net/favicon.png",
         color: "from-yellow-600 to-amber-800",
         desc: "Los números 1 de tu vida" 
       },
@@ -348,7 +348,7 @@
         flag: "🇪🇸", 
         lat: 40.4168, lon: -3.7038, city: "Madrid",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s24996g.png",
+        image: "https://www.marca.com/apple-touch-icon-precomposed.png",
         color: "from-red-600 to-red-900",
         desc: "El deporte en directo" 
       },
@@ -363,7 +363,7 @@
         flag: "🇪🇸", 
         lat: 38.9067, lon: 1.4206, city: "Ibiza",
         bit_rate: 192, 
-        image: "https://cdn-radiotime-logos.tunein.com/s42468g.png",
+        image: "https://static-media.streema.com/media/cache/3f/59/3f598fc0753b556f206a5c9d80d034ea.jpg",
         color: "from-cyan-500 to-fuchsia-600",
         desc: "Direct from Ibiza Clubs" 
       },
@@ -378,7 +378,7 @@
         flag: "🇪🇸", 
         lat: 41.3879, lon: 2.1699, city: "Barcelona",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s15217g.png",
+        image: "https://flaixfm.cat/favicon.ico",
         color: "from-amber-500 to-red-600",
         desc: "El poder del ritmo en Cataluña" 
       },
@@ -457,7 +457,7 @@
         flag: "🇬🇧", 
         lat: 51.5074, lon: -0.1278, city: "Londres",
         bit_rate: 192, 
-        image: "https://cdn-radiotime-logos.tunein.com/s44477g.png",
+        image: "https://cdn-radiotime-logos.tunein.com/s44491q.png",
         color: "from-teal-600 to-slate-900",
         desc: "The home of cutting-edge music" 
       },
@@ -472,7 +472,7 @@
         flag: "🇬🇧", 
         lat: 51.5074, lon: -0.1278, city: "Londres",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s17062g.png",
+        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRAcdmwRcs4FcWk_OQqxq4EyZH5YA7ixM2dvQ&usqp=CAU",
         color: "from-yellow-500 to-amber-700",
         desc: "The World's Biggest Sports Radio" 
       },
@@ -487,7 +487,7 @@
         flag: "🇬🇧", 
         lat: 51.5074, lon: -0.1278, city: "Londres",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s16597g.png",
+        image: "https://assets6.capitalfm.com/2016/11/capital-3d-network-logo-large-canvas-1458228638-herowidev4-0.jpg",
         color: "from-blue-600 to-red-600",
         desc: "The UK's No.1 Hit Music Station" 
       },
@@ -502,7 +502,7 @@
         flag: "🇬🇧", 
         lat: 51.5074, lon: -0.1278, city: "Londres",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s2904g.png",
+        image: "https://www.classicfm.com/assets_v4r/classic/img/favicon-196x196.png",
         color: "from-amber-700 to-slate-900",
         desc: "Música Clássica para todos" 
       },
@@ -536,7 +536,7 @@
         flag: "🇫🇷", 
         lat: 48.8566, lon: 2.3522, city: "Paris",
         bit_rate: 192, 
-        image: "https://cdn-radiotime-logos.tunein.com/s13369g.png",
+        image: "https://www.jazzradio.fr/apple-touch-icon-120x120.png",
         color: "from-blue-600 to-amber-700",
         desc: "La radio de tous les Jazz • Paris" 
       },
@@ -551,7 +551,7 @@
         flag: "🇫🇷", 
         lat: 48.8566, lon: 2.3522, city: "Paris",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s308552g.png",
+        image: "https://upload.wikimedia.org/wikipedia/en/f/f5/Lofi_Girl_logo_2024.jpg?utm_source=en.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled",
         color: "from-indigo-600 to-rose-500",
         desc: "Relax / Study beats live • Paris" 
       },
@@ -566,7 +566,7 @@
         flag: "🇫🇷", 
         lat: 48.8566, lon: 2.3522, city: "Paris",
         bit_rate: 192, 
-        image: "https://cdn-radiotime-logos.tunein.com/s15228g.png",
+        image: "https://www.radiofrance.fr/s3/cruiser-production/2023/03/3a1422a4-6f1f-4e17-874c-bad21e67f39b/300x300_sc_fip-avatar.jpg",
         color: "from-rose-600 to-purple-800",
         desc: "La radio musicale la plus éclectique au monde" 
       },
@@ -596,7 +596,7 @@
         flag: "🇫🇷", 
         lat: 43.2965, lon: 5.3698, city: "Marselha",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s15234g.png",
+        image: "https://play-lh.googleusercontent.com/EkigAkEtsnvSZgXUXgY4eFsBcLgKo9KKloDC784c-QuF25wHe0wOpP2TgqVBUN_4Zbp5QUXhbIFNbaqD5ho_8Q=w240-h480",
         color: "from-cyan-500 to-indigo-600",
         desc: "Feel Good Music from the French Riviera" 
       },
@@ -630,7 +630,7 @@
         flag: "🇩🇪", 
         lat: 48.1351, lon: 11.5820, city: "Munique",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25000g.png",
+        image: "https://i.postimg.cc/TYJQSsJx/1000002936.webp",
         color: "from-blue-600 to-indigo-900",
         desc: "Bayerns bester Musikmix • München" 
       },
@@ -660,7 +660,7 @@
         flag: "🇩🇪", 
         lat: 53.5511, lon: 9.9937, city: "Hamburgo",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25004g.png",
+        image: "https://www.radiohamburg.de/assets/icons/apple-touch-icon.png",
         color: "from-yellow-600 to-slate-900",
         desc: "Mehr Vielfalt mit den besten Hits" 
       },
@@ -679,7 +679,7 @@
         flag: "🇮🇹", 
         lat: 45.4642, lon: 9.1900, city: "Milão",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25010g.png",
+        image: "https://cloud.rtl.it/assets/www.rtl.it/3.0.64/img/logo/favicon-96x96.png",
         color: "from-red-600 to-blue-800",
         desc: "La prima radio in Italia • Milano" 
       },
@@ -724,7 +724,7 @@
         flag: "🇮🇹", 
         lat: 40.8518, lon: 14.2681, city: "Nápoles",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25016g.png",
+        image: "https://kisskiss.it/wp-content/uploads/2022/07/cropped-favicon-new-kisskiss-180x180.png",
         color: "from-pink-600 to-rose-700",
         desc: "Play Everywhere • Napoli" 
       },
@@ -743,7 +743,7 @@
         flag: "🇳🇱", 
         lat: 52.3676, lon: 4.9041, city: "Amesterdão",
         bit_rate: 192, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25020g.png",
+        image: "https://www.npo3fm.nl/apple-touch-icon.png",
         color: "from-orange-500 to-slate-900",
         desc: "Laat je horen • Amsterdam" 
       },
@@ -758,7 +758,7 @@
         flag: "🇳🇱", 
         lat: 51.9244, lon: 4.4777, city: "Roterdão",
         bit_rate: 192, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25022g.png",
+        image: "https://www.slam.nl/favicon.ico",
         color: "from-cyan-400 to-blue-700",
         desc: "Play Music, Play Life • Rotterdam" 
       },
@@ -773,7 +773,7 @@
         flag: "🇸🇪", 
         lat: 59.3293, lon: 18.0686, city: "Estocolmo",
         bit_rate: 192, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25024g.png",
+        image: "https://static-cdn.sr.se/images/3632/2276510_512_512.jpg",
         color: "from-yellow-400 to-blue-600",
         desc: "Ny musik och aktuellt • Stockholm" 
       },
@@ -818,7 +818,7 @@
         flag: "🇬🇷", 
         lat: 37.9838, lon: 23.7275, city: "Atenas",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25030g.png",
+        image: null,
         color: "from-cyan-600 to-blue-800",
         desc: "Athens Coolest Radio Station • Athens" 
       },
@@ -852,7 +852,7 @@
         flag: "🇺🇸", 
         lat: 40.7128, lon: -74.0060, city: "Nova Iorque",
         bit_rate: 256, 
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Apple_Music_logo.svg/320px-Apple_Music_logo.svg.png",
+        image: null,
         color: "from-rose-500 via-red-500 to-pink-600",
         desc: "Global Hits live from New York City" 
       },
@@ -882,7 +882,7 @@
         flag: "🇺🇸", 
         lat: 38.9072, lon: -77.0369, city: "Washington",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s21588g.png",
+        image: "https://static-assets.npr.org/static/images/favicon/favicon-96x96.png",
         color: "from-blue-600 to-red-600",
         desc: "National Public Radio USA • Washington DC" 
       },
@@ -927,7 +927,7 @@
         flag: "🇺🇸", 
         lat: 29.9511, lon: -90.0715, city: "Nova Orleães",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25042g.png",
+        image: "https://www.wwoz.org//sites/default/files/favicons-bw/apple-touch-icon-57x57.png",
         color: "from-yellow-600 to-purple-900",
         desc: "Guardians of the New Orleans Groove" 
       },
@@ -957,7 +957,7 @@
         flag: "🇨🇦", 
         lat: 43.6532, lon: -79.3832, city: "Toronto",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25046g.png",
+        image: "https://subscriptions.cbc.ca/newsletter_static/images/1581432928232-cbc-toronto.png",
         color: "from-red-700 to-rose-900",
         desc: "Canada's National Public Radio • Toronto" 
       },
@@ -1066,7 +1066,7 @@
         flag: "🇲🇽", 
         lat: 19.4326, lon: -99.1332, city: "Cidade do México",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25050g.png",
+        image: "https://los40es00.epimg.net/estaticos/recursosgraficos/v1/img/app/los40_192.png",
         color: "from-emerald-600 to-red-600",
         desc: "Music Inspires Life • CDMX" 
       },
@@ -1160,7 +1160,7 @@
         flag: "🇯🇵", 
         lat: 34.6937, lon: 135.5023, city: "Osaka",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25060g.png",
+        image: null,
         color: "from-rose-400 to-pink-600",
         desc: "Sweet Japanese Melodies • Osaka" 
       },
@@ -1190,7 +1190,7 @@
         flag: "🇮🇳", 
         lat: 19.0760, lon: 72.8777, city: "Mumbai",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25064g.png",
+        image: "https://onlineradiohub.com/wp-content/uploads/2023/05/radio-mirchi-hindi-fm.jpg",
         color: "from-amber-500 to-orange-600",
         desc: "It's Hot! Top Bollywood in Mumbai" 
       },
@@ -1205,7 +1205,7 @@
         flag: "🇦🇪", 
         lat: 25.2048, lon: 55.2708, city: "Dubai",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25066g.png",
+        image: "https://static.mytuner.mobi/media/tvos_radios/HGDyN8ySPT.jpg",
         color: "from-amber-600 to-yellow-500",
         desc: "Dubai's Longest Running English Radio" 
       },
@@ -1239,7 +1239,7 @@
         flag: "🇿🇦", 
         lat: -26.2041, lon: 28.0473, city: "Joanesburgo",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25070g.png",
+        image: "https://www.metrofm.co.za/metro-fm/wp-content/uploads/2024/04/cropped-metro-fm-icon-32x32.png",
         color: "from-emerald-600 to-yellow-600",
         desc: "It's Where You're At • Johannesburg" 
       },
@@ -1254,7 +1254,7 @@
         flag: "🇿🇦", 
         lat: -33.9249, lon: 18.4241, city: "Cidade do Cabo",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25072g.png",
+        image: null,
         color: "from-blue-700 to-teal-800",
         desc: "Join the conversation • Cape Town" 
       },
@@ -1269,7 +1269,7 @@
         flag: "🇦🇴", 
         lat: -8.8390, lon: 13.2894, city: "Luanda",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25074g.png",
+        image: null,
         color: "from-red-600 to-yellow-500",
         desc: "A voz de Angola para o mundo • Luanda" 
       },
@@ -1284,7 +1284,7 @@
         flag: "🇦🇴", 
         lat: -8.8390, lon: 13.2894, city: "Luanda",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25076g.png",
+        image: null,
         color: "from-amber-600 to-slate-900",
         desc: "A primeira estação privada de Angola" 
       },
@@ -1314,7 +1314,7 @@
         flag: "🇲🇿", 
         lat: -25.9692, lon: 32.5732, city: "Maputo",
         bit_rate: 128, 
-        image: "https://cdn-radiotime-logos.tunein.com/s25080g.png",
+        image: null,
         color: "from-emerald-700 to-red-600",
         desc: "Emissora Nacional de Moçambique • Maputo" 
       },
@@ -1801,7 +1801,7 @@
             title,
             artist: artist || (s.name || ''),
             album: 'Roc Waves Global Radio',
-            artwork: [{ src: s.image || 'https://cdn-radiotime-logos.tunein.com/s6706g.png', sizes: '512x512', type: 'image/png' }]
+            artwork: [{ src: firstStationLogo(s), sizes: '512x512' }]
           });
         }
       } catch (e) {}
@@ -2268,14 +2268,12 @@
       
       const imgEl = document.getElementById('sheet-cover-img');
       const fallbackEl = document.getElementById('sheet-cover-fallback');
-      if (s.image) {
-        imgEl.src = s.image;
+      // Capa via cadeia de logos (image → favicon → homepage → monograma)
+      if (imgEl) {
         imgEl.classList.remove('hidden');
-        fallbackEl.classList.add('hidden');
-      } else {
-        imgEl.classList.add('hidden');
-        fallbackEl.classList.remove('hidden');
+        setImgWithLogoChain(imgEl, s);
       }
+      if (fallbackEl) fallbackEl.classList.add('hidden');
       document.getElementById('sheet-fav-btn').textContent = userFavorites.includes(String(s.id)) ? '⭐ Favorito' : '☆ Favorito';
       document.getElementById('sheet-lib-btn').textContent = userLibrary.includes(String(s.id)) ? '📌 Na Biblioteca' : '➕ Biblioteca';
       document.getElementById('sheet-play-btn').textContent = isPlaying ? '⏸️' : '▶️';
@@ -2512,6 +2510,75 @@
       if (descEl) descEl.textContent = desc;
     }
 
+    // ===================== Motor de Logos (cadeia de fallback) =====================
+    // Ordem: image → favicon → apple-touch-icon/favicon do homepage → monograma SVG.
+    // URLs que falham são memorizadas por sessão para não repetir tentativas.
+    const failedLogoUrls = new Set();
+
+    /** Monograma SVG (data URI) com as iniciais — último recurso decente. */
+    function stationMonogram(s) {
+      const words = (s.name || 'R').trim().split(/\s+/);
+      const initials = ((words[0] || 'R')[0] + (words[1] ? words[1][0] : '')).toUpperCase();
+      let h = 0;
+      const key = String(s.id || '') + (s.name || '');
+      for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+      const h1 = h % 360, h2 = (h1 + 40) % 360;
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='hsl(${h1},70%,45%)'/><stop offset='1' stop-color='hsl(${h2},75%,55%)'/></linearGradient></defs><rect width='100' height='100' fill='url(#g)'/><text x='50' y='54' font-family='system-ui,sans-serif' font-size='38' font-weight='800' fill='white' text-anchor='middle' dominant-baseline='central'>${initials}</text></svg>`;
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
+
+    /** Candidatos a logo por ordem de preferência (último = monograma). */
+    function stationLogoCandidates(s) {
+      const out = [];
+      const push = u => {
+        if (u && typeof u === 'string' && u.startsWith('http') && !failedLogoUrls.has(u) && !out.includes(u)) out.push(u);
+      };
+      push(s.image);
+      push(s.favicon);
+      if (s.homepage && s.homepage.startsWith('http')) {
+        const home = s.homepage.replace(/\/+$/, '');
+        push(home + '/apple-touch-icon.png');
+        push(home + '/apple-touch-icon-precomposed.png');
+        push(home + '/favicon.ico');
+      }
+      out.push(stationMonogram(s));
+      return out;
+    }
+
+    /** Primeiro candidato (para atribuir a src / artwork). */
+    function firstStationLogo(s) {
+      return stationLogoCandidates(s)[0];
+    }
+
+    /** <img> do player/TV: tenta candidatos por ordem até um carregar. */
+    function setImgWithLogoChain(img, s) {
+      const candidates = stationLogoCandidates(s);
+      let i = 0;
+      img.onerror = () => {
+        if (candidates[i] && candidates[i].startsWith('http')) failedLogoUrls.add(candidates[i]);
+        i++;
+        if (i < candidates.length) {
+          img.src = candidates[i];
+        } else {
+          img.onerror = null;
+          img.src = stationMonogram(s);
+        }
+      };
+      img.src = candidates[0];
+    }
+
+    /** Fallback inline dos cartões da grelha (onerror nos templates). */
+    window.rocCardLogoFallback = function (img) {
+      try {
+        if (img.src && img.src.startsWith('http')) failedLogoUrls.add(img.src);
+        const sid = img.dataset.rocStation;
+        const s = getAllStations().find(x => String(x.id) === String(sid));
+        if (!s) { img.onerror = null; return; }
+        const next = stationLogoCandidates(s).find(u => u.startsWith('http'));
+        img.src = next || stationMonogram(s);
+      } catch (e) { img.onerror = null; }
+    };
+
     function getAllStations() {
       const deletedSet = new Set(deletedStationIds.map(String));
       const mapDiscovered = typeof mapDiscoveredStations !== 'undefined' && Array.isArray(mapDiscoveredStations) ? mapDiscoveredStations : [];
@@ -2639,31 +2706,17 @@
       const tvImgEl = document.getElementById('tv-cover-img');
       const tvFallbackEl = document.getElementById('tv-cover-fallback');
 
-      if (s.image) {
-        if (imgEl) {
-          imgEl.src = s.image;
-          imgEl.classList.remove('hidden');
-          imgEl.onerror = () => {
-            imgEl.classList.add('hidden');
-            if (fallbackEl) fallbackEl.classList.remove('hidden');
-          };
-        }
-        if (fallbackEl) fallbackEl.classList.add('hidden');
-        if (tvImgEl) {
-          tvImgEl.src = s.image;
-          tvImgEl.classList.remove('hidden');
-          tvImgEl.onerror = () => {
-            tvImgEl.classList.add('hidden');
-            if (tvFallbackEl) tvFallbackEl.classList.remove('hidden');
-          };
-        }
-        if (tvFallbackEl) tvFallbackEl.classList.add('hidden');
-      } else {
-        if (imgEl) imgEl.classList.add('hidden');
-        if (fallbackEl) fallbackEl.classList.remove('hidden');
-        if (tvImgEl) tvImgEl.classList.add('hidden');
-        if (tvFallbackEl) tvFallbackEl.classList.remove('hidden');
+      // Capa via cadeia de logos: image → favicon → homepage → monograma SVG
+      if (imgEl) {
+        imgEl.classList.remove('hidden');
+        setImgWithLogoChain(imgEl, s);
       }
+      if (fallbackEl) fallbackEl.classList.add('hidden');
+      if (tvImgEl) {
+        tvImgEl.classList.remove('hidden');
+        setImgWithLogoChain(tvImgEl, s);
+      }
+      if (tvFallbackEl) tvFallbackEl.classList.add('hidden');
 
       if (hlsInstance) {
         hlsInstance.destroy();
@@ -2731,7 +2784,7 @@
           artist: `${station.country || 'Global'} • ${station.genre || station.category}`,
           album: 'Roc Waves Global Radio',
           artwork: [
-            { src: station.image || 'https://cdn-radiotime-logos.tunein.com/s6706g.png', sizes: '512x512', type: 'image/png' }
+            { src: firstStationLogo(station), sizes: '512x512' }
           ]
         });
 
@@ -3439,6 +3492,10 @@
               favorite: false,
               inLibrary: false,
               image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
+            favicon: item.favicon || null,
+            homepage: item.homepage || null,
+              favicon: item.favicon || null,
+              homepage: item.homepage || null,
               color: getRandomGradient(item.stationuuid || String(idx)),
               desc: item.state ? `${item.state}, ${safeCountry}` : safeCountry
             };
@@ -3613,6 +3670,10 @@
               favorite: false,
               inLibrary: false,
               image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
+            favicon: item.favicon || null,
+            homepage: item.homepage || null,
+              favicon: item.favicon || null,
+              homepage: item.homepage || null,
               color: getRandomGradient(item.stationuuid || String(idx)),
               desc: item.state ? `${item.state}, ${safeCountry}` : safeCountry
             };
@@ -4060,6 +4121,10 @@
               favorite: false,
               inLibrary: false,
               image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
+            favicon: item.favicon || null,
+            homepage: item.homepage || null,
+              favicon: item.favicon || null,
+              homepage: item.homepage || null,
               color: getRandomGradient(item.stationuuid || String(idx)),
               desc: item.state ? `${item.state}, ${safeCountry}` : safeCountry
             };
@@ -4128,11 +4193,9 @@
           const isCurrent = String(s.id) === String(currentStationId);
           const isFav = userFavorites.includes(String(s.id));
           const isInLib = userLibrary.includes(String(s.id));
-          const bgGrad = s.color || 'from-cyan-600 to-blue-700';
           const safeName = (s.name || 'Rádio').replace(/"/g, '&quot;');
           const safeGenre = (s.genre || s.desc || 'Música & Rádio').replace(/"/g, '&quot;');
           const safeCountry = (s.country || 'Mundo').replace(/"/g, '&quot;');
-          const initial = (s.name || 'R').trim().charAt(0).toUpperCase();
 
           return `
             <div 
@@ -4146,7 +4209,7 @@
               <!-- Cover Header -->
               <div class="flex items-start justify-between gap-3 mb-3">
                 <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition shadow-md relative">
-                  ${s.image ? `<img src="${s.image}" alt="${safeName}" class="w-full h-full object-cover" onerror="this.outerHTML='<div class=\\'w-full h-full bg-gradient-to-tr ${bgGrad} flex items-center justify-center text-white font-black text-xl\\'>${initial}</div>'" />` : `<div class="w-full h-full bg-gradient-to-tr ${bgGrad} flex items-center justify-center text-white font-black text-xl">${initial}</div>`}
+                  ${s.image ? `<img src="${s.image}" data-roc-station="${s.id}" alt="${safeName}" class="w-full h-full object-cover" onerror="rocCardLogoFallback(this)" />` : `<img src="${stationMonogram(s)}" alt="${safeName}" class="w-full h-full object-cover" />`}
                 </div>
                 <div class="flex items-center gap-1">
                   <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
@@ -4311,6 +4374,8 @@ active_stations = [
             favorite: false,
             inLibrary: false,
             image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
+            favicon: item.favicon || null,
+            homepage: item.homepage || null,
             color: getRandomGradient(item.stationuuid || String(idx)),
             desc: item.state ? `${item.state}, ${safeCountry}` : safeCountry
           };
@@ -4356,6 +4421,8 @@ active_stations = [
             favorite: false,
             inLibrary: false,
             image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
+            favicon: item.favicon || null,
+            homepage: item.homepage || null,
             color: "from-purple-600 to-indigo-700",
             desc: `Top #${idx+1} Mundial (${item.clickcount || 0} cliques)`
           }));
