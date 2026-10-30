@@ -3369,8 +3369,13 @@
           center: [20, 0],
           zoom: 2,
           minZoom: 2,
-          maxZoom: 16
+          maxZoom: 16,
+          zoomControl: false
         });
+
+        // Zoom no canto inferior direito: o superior esquerdo está ocupado
+        // pelo HUD "Rede Global" e o zoom nativo ficava escondido por baixo.
+        L.control.zoom({ position: 'bottomright' }).addTo(leafletMap);
 
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
           attribution: '&copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
@@ -5098,14 +5103,77 @@ active_stations = [
     }
     function closeAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
 
-    document.getElementById('custom-form').addEventListener('submit', (e) => {
+    // ---- Descoberta de rádio pelo link do site ----
+    // Se o URL colado não for um stream direto, procuramos a rádio na
+    // radio-browser: 1) URL exato; 2) nome derivado do domínio com homepage
+    // no mesmo domínio. Assim o utilizador só precisa do site da rádio.
+    function domainOf(u) {
+      try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return null; }
+    }
+
+    function looksLikeStreamUrl(u) {
+      if (/\.(mp3|m3u8|aac|ogg|opus|flac|pls)(\?|#|$)/i.test(u)) return true;
+      if (/:\d{2,5}(\/|$)/.test(u)) return true; // porta típica de icecast/shoutcast
+      try {
+        const p = new URL(u).pathname.toLowerCase();
+        if (/(stream|listen|live|direct|audio)(\/|$)/.test(p)) return true;
+      } catch (e) {}
+      return false;
+    }
+
+    async function discoverStationFromSite(siteUrl) {
+      const domain = domainOf(siteUrl);
+      if (!domain) return null;
+      const srv = 'https://de1.api.radio-browser.info';
+      // 1) pode ser afinal o URL do stream registado
+      try {
+        const s = await RocStorage.cachedFetchJson(`${srv}/json/url/${encodeURIComponent(siteUrl)}`).catch(() => null);
+        if (s && s.url_resolved) return s;
+      } catch (e) {}
+      // 2) procurar por nome derivado do domínio e filtrar por homepage igual
+      const base = domain.split('.')[0].replace(/[-_.]/g, ' ').trim();
+      if (!base || base.length < 3) return null;
+      try {
+        const list = await RocStorage.cachedFetchJson(`${srv}/json/stations/search?name=${encodeURIComponent(base)}&limit=50&order=clickcount&reverse=true`).catch(() => []);
+        if (!Array.isArray(list)) return null;
+        const sameHomepage = list.find(s => domainOf(s.homepage || '') === domain);
+        if (sameHomepage) return sameHomepage;
+        const sameStreamDomain = list.find(s => domainOf(s.url_resolved || '') === domain);
+        if (sameStreamDomain) return sameStreamDomain;
+      } catch (e) {}
+      return null;
+    }
+
+    document.getElementById('custom-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const name = document.getElementById('cust-name').value.trim();
-      const url = document.getElementById('cust-url').value.trim();
-      const image = document.getElementById('cust-image').value.trim() || null;
+      let name = document.getElementById('cust-name').value.trim();
+      let url = document.getElementById('cust-url').value.trim();
+      let image = document.getElementById('cust-image').value.trim() || null;
       const cat = document.getElementById('cust-cat').value;
-      const country = document.getElementById('cust-country').value.trim() || 'Portugal';
-      
+      let country = document.getElementById('cust-country').value.trim() || 'Portugal';
+      let bitRate = 128;
+
+      // Link de site (não de stream): descobrir automaticamente a rádio
+      if (!looksLikeStreamUrl(url)) {
+        const submitBtn = e.submitter || document.querySelector('#custom-form button[type="submit"]');
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '🔎 A descobrir o stream...'; }
+        const found = await discoverStationFromSite(url);
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Guardar'; }
+        if (found && found.url_resolved) {
+          if (!name) name = found.name;
+          url = found.url_resolved;
+          if (!image && found.favicon && found.favicon.startsWith('http')) image = found.favicon;
+          if (found.country) country = found.country;
+          if (found.bitrate) bitRate = found.bitrate;
+          showToast(`Rádio descoberta pelo link do site${found.name ? `: ${found.name}` : ''}!`, '🔎', 'success');
+        } else {
+          showToast('Não encontrámos o stream deste site. Cola o URL direto do stream (ex: .../live.mp3) ou tenta o site oficial.', '🔍');
+          return;
+        }
+      }
+      if (!name) name = 'Rádio Personalizada';
+      if (!url) return;
+
       const newId = `custom_${Date.now()}`;
       const newStation = {
         id: newId,
@@ -5115,14 +5183,15 @@ active_stations = [
         genre: cat,
         country,
         flag: "📍",
-        bit_rate: 128,
+        bit_rate: bitRate,
         favorite: true,
         inLibrary: true,
         image,
+        favicon: image,
         color: "from-cyan-600 to-blue-700",
         desc: "Stream próprio adicionado"
       };
-      
+
       userCustomStations.unshift(newStation);
       userFavorites.push(newId);
       userLibrary.push(newId);
