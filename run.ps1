@@ -123,6 +123,14 @@ function Run-Action ($act) {
     }
 }
 
+# Arranque direto: sem argumentos, o player abre imediatamente no navegador
+# e o menu fica disponível de seguida na mesma janela.
+if ($Action -eq "") {
+    Write-Host "--- A ABRIR O PLAYER DE RADIO NO NAVEGADOR ---" -ForegroundColor Green
+    Start-Process "$PSScriptRoot\index.html"
+    Start-Sleep -Milliseconds 800
+}
+
 if ($Action -ne "") {
     Run-Action $Action
 } else {

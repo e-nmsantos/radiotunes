@@ -2580,10 +2580,11 @@
     };
 
     // ============ Auditor de Saúde em Background ============
-    // Arranca 8s depois da app (não bloqueia o arranque) e verifica os
-    // streams do catálogo em fundo: o browser é a sonda mais fiel (TLS
-    // real, headers reais). Resultados em cache IndexedDB 24h e badge ⚠
-    // nos cartões. Só MARCA — a reparação fica para o CI/humano.
+    // Arranca imediatamente com a app (em fundo, cadência suave — nunca
+    // bloqueia a UI) e verifica os streams do catálogo: o browser é a
+    // sonda mais fiel (TLS real, headers reais). Resultados em cache
+    // IndexedDB 24h e badge ⚠ nos cartões. Só MARCA — a reparação
+    // fica para o CI/humano.
     const unhealthyStationIds = new Set();
     let healthAuditRunning = false;
 
@@ -5274,5 +5275,6 @@ active_stations = [
     sync10BandSliders();
     selectStation(currentStationId, false);
 
-    // Auditoria de saúde em background: 8s após o arranque, sem bloquear a UI.
-    setTimeout(() => { runBackgroundHealthAudit().catch(() => {}); }, 8000);
+    // Auditoria de saúde em background: arranca imediatamente com a app,
+    // em fundo e com cadência suave — nunca bloqueia a UI.
+    runBackgroundHealthAudit().catch(() => {});
