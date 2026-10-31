@@ -78,7 +78,13 @@ Aplicação completa de streaming de mais de **45.000 estações de rádio mundi
 * [`Radio.roc`](Radio.roc): Regras de negócio funcionais (estações, favoritos, filtros avançados, biblioteca, 10-Band EQ, DVR agendado, playlists, sleep timer, alarmes e M3U com 14 testes unitários).
 * [`js/roc-core.js`](js/roc-core.js): Porto JS fiel das regras de `Radio.roc` — usada diretamente pela UI (navegação cíclica, M3U, filtros) e testada em `test/roc-core.test.mjs` (14 testes `node --test`).
 * [`js/storage.js`](js/storage.js): Camada IndexedDB com cache TTL de 24h para a API radio-browser e persistência das estações descobertas no mapa.
-* [`js/app.js`](js/app.js): Lógica da aplicação (player, mapa, DSP Web Audio, DVR, playlists, descoberta) — carregada pelo `index.html`.
+* [`js/app/`](js/app/): Lógica da aplicação, em scripts clássicos carregados por ordem pelo `index.html` (partilham o âmbito global):
+  * `core.js` — escape/XSS, delegação de eventos (`data-action`), i18n `t()`, estado, backup, proxy e ICY
+  * `soundscapes.js` — sons ambiente sintetizados · `library.js` — toasts, categorias, cartões, eliminação com undo
+  * `health.js` — logos e auditor de saúde · `player.js` — reprodução, PiP, vistas e playlists
+  * `map.js` — mapa mundial e descoberta geográfica · `browse.js` — filtros, grelha, pesquisa, Top 50
+  * `features.js` — EQ, sleep timer, alarme, DVR, gravação, backup, temas, atalhos · `visualizer.js` — espectros
+  * `init.js` — arranque: carregado por último, chama tudo o que precisa de todos os módulos (os outros declaram funções e estado e só ligam listeners)
 * [`js/catalog.js`](js/catalog.js) & [`js/i18n.js`](js/i18n.js): Dados separados da lógica — catálogo mestre de 89 rádios e traduções (pt/en/es/fr).
 * [`css/tailwind.css`](css/tailwind.css): Tailwind **compilado e minificado** (43 KB, sem CDN nem flash de estilo). Recompilar: `npx tailwindcss -i css/tailwind.input.css -o css/tailwind.css --minify`.
 * **Backup automático**: cada alteração escreve um snapshot da coleção em IndexedDB; se o localStorage for limpo, a app restaura favoritos/playlists/categorias sozinha ao abrir.

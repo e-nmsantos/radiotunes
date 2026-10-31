@@ -1717,6 +1717,16 @@
   <script src="js/storage.js"></script>
   <script src="js/catalog.js"></script>
   <script src="js/i18n.js"></script>
-  <script src="js/app.js"></script>
+  <!-- App: scripts clássicos por esta ordem (partilham o âmbito global); só init.js arranca a app -->
+  <script src="js/app/core.js"></script>
+  <script src="js/app/soundscapes.js"></script>
+  <script src="js/app/library.js"></script>
+  <script src="js/app/health.js"></script>
+  <script src="js/app/player.js"></script>
+  <script src="js/app/map.js"></script>
+  <script src="js/app/browse.js"></script>
+  <script src="js/app/features.js"></script>
+  <script src="js/app/visualizer.js"></script>
+  <script src="js/app/init.js"></script>
 </body>
 </html>

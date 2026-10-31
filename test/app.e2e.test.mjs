@@ -73,7 +73,10 @@ before(async () => {
   server = spawn(process.execPath, [path.join(ROOT, 'tools/serve.cjs')], { env: { ...process.env, PORT: String(APP_PORT) }, stdio: 'ignore' });
   profile = fs.mkdtempSync(path.join(os.tmpdir(), 'roc-e2e-'));
   chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${CDP_PORT}`, `--user-data-dir=${profile}`,
-    '--no-first-run', '--no-default-browser-check', '--autoplay-policy=no-user-gesture-required', 'about:blank'], { stdio: 'ignore' });
+    '--no-first-run', '--no-default-browser-check', '--autoplay-policy=no-user-gesture-required',
+    // Runners de CI (Ubuntu 24.04) bloqueiam o sandbox do Chrome via AppArmor
+    ...(process.env.CI ? ['--no-sandbox'] : []),
+    'about:blank'], { stdio: 'ignore' });
 
   let page;
   for (let i = 0; i < 50 && !page; i++) {
@@ -94,6 +97,10 @@ before(async () => {
   });
   await send('Runtime.enable');
   await send('Page.enable');
+  // Conta os carregamentos de documento (deteta recarregamentos inesperados).
+  await send('Page.addScriptToEvaluateOnNewDocument', {
+    source: `sessionStorage.__rocLoads = String((+sessionStorage.__rocLoads || 0) + 1);`,
+  });
   await loadApp();
 });
 
@@ -109,6 +116,14 @@ after(async () => {
 test('arranca sem exceções nem avisos na consola', { skip }, async () => {
   await sleep(1500); // deixa correr o arranque assíncrono (proxy, auditoria, SW)
   assert.deepEqual(consoleProblems, []);
+});
+
+test('PWA: a 1.ª instalação do service worker não recarrega a página', { skip }, async () => {
+  // Perfil novo: o SW instala e passa a controlar a página (controllerchange).
+  // Isso não pode recarregar a app — cortaria a rádio a quem a abre pela 1.ª vez.
+  await waitFor(`!!navigator.serviceWorker.controller`, 20000);
+  await sleep(1000);
+  assert.equal(await evaluate(`sessionStorage.__rocLoads`), '1', 'a página foi recarregada');
 });
 
 test('dependências CDN carregam (versão fixa + SRI)', { skip }, async () => {
@@ -174,7 +189,8 @@ test('XSS: título ICY malicioso no histórico não executa código', { skip }, 
 });
 
 test('nenhum template injeta dados em handlers inline (onclick="...${...}")', async () => {
-  const src = fs.readFileSync(path.join(ROOT, 'js/app.js'), 'utf8');
+  const dir = path.join(ROOT, 'js/app');
+  const src = fs.readdirSync(dir).map((f) => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n');
   const offenders = src.match(/\bon[a-z]+="[^"]*\$\{[^"]*"/g) || [];
   assert.deepEqual(offenders, []);
 });

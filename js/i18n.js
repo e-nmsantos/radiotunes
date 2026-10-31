@@ -1,6 +1,7 @@
 //! Roc Waves — Dicionários de tradução (pt / en / es / fr).
     const I18N = {
       pt: {
+        updateReady: "Nova versão disponível — recarrega a página quando quiseres.",
         playlistCount: "{count} estações adicionadas",
         playPlaylist: "Tocar Playlist",
         deletePlaylist: "Eliminar playlist",
@@ -135,6 +136,7 @@
         turnOff: "Desligar",
       },
       en: {
+        updateReady: "A new version is available — reload whenever you like.",
         playlistCount: "{count} stations added",
         playPlaylist: "Play Playlist",
         deletePlaylist: "Delete playlist",
@@ -269,6 +271,7 @@
         turnOff: "Dismiss",
       },
       es: {
+        updateReady: "Nueva versión disponible: recarga la página cuando quieras.",
         playlistCount: "{count} emisoras añadidas",
         playPlaylist: "Reproducir Lista",
         deletePlaylist: "Eliminar lista",
@@ -403,6 +406,7 @@
         turnOff: "Apagar",
       },
       fr: {
+        updateReady: "Nouvelle version disponible — recharge la page quand tu veux.",
         playlistCount: "{count} stations ajoutées",
         playPlaylist: "Lire la Playlist",
         deletePlaylist: "Supprimer la playlist",

@@ -34,7 +34,8 @@ test('os marcadores {x} são os mesmos em todos os idiomas', () => {
 });
 
 test('todas as chaves usadas no código existem no dicionário', () => {
-  const sources = ['js/app.js', 'index.html'].map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
+  const appFiles = fs.readdirSync(path.join(ROOT, 'js/app')).map((f) => 'js/app/' + f);
+  const sources = [...appFiles, 'index.html'].map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
   const used = new Set([
     ...[...sources.matchAll(/\bt\('(\w+)'/g)].map((m) => m[1]),
     ...[...sources.matchAll(/data-i18n="(\w+)"/g)].map((m) => m[1]),
