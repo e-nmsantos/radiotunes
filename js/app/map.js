@@ -25,6 +25,13 @@ let mapClusterGroup = null;
 let hasStartedMassiveDiscovery = false;
 
 function initWorldMap() {
+  // O Leaflet só é descarregado quando o mapa é aberto pela primeira vez.
+  if (typeof L === 'undefined') {
+    ensureLib('leaflet')
+      .then(() => { if (currentView === 'map') initWorldMap(); })
+      .catch(() => showToast(t('mapLoadFailed'), '🗺️', 'warning'));
+    return;
+  }
   if (!leafletMap) {
     leafletMap = L.map('world-map', {
       center: [20, 0],

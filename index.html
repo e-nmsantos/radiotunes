@@ -2,7 +2,7 @@
 <html lang="pt" class="theme-cyan">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Roc Waves - Rádio Mundial Hi-Fi, DSP 3D, PiP & DVR</title>
   
   <!-- Forçar HTTPS / SSL Automático -->
@@ -23,14 +23,24 @@
 
   <!-- Tailwind CSS compilado (css/tailwind.css; fonte css/tailwind.input.css) -->
   <link rel="stylesheet" href="css/tailwind.css">
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.7.4/dist/hls.min.js" integrity="sha384-p9vgU/7IYJWd3I4STrtqxqR/2cAQlhIX7D/HrTnIMEjjcUox165b7se7sxmm3zDg" crossorigin="anonymous"></script>
-  
-  <!-- Leaflet.js & MarkerCluster for Interactive World Radio Map -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" integrity="sha384-pmjIAcz2bAn0xukfxADbZIb3t8oRT9Sv0rvO+BR5Csr6Dhqq+nZs59P0pPKQJkEV" crossorigin="anonymous" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" integrity="sha384-wgw+aLYNQ7dlhK47ZPK7FRACiq7ROZwgFNg0m04avm4CaXS+Z9Y7nMu8yNjBKYC+" crossorigin="anonymous" />
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" integrity="sha384-eXVCORTRlv4FUUgS/xmOyr66XBVraen8ATNLMESp92FKXLAMiKkerixTiBvXriZr" crossorigin="anonymous"></script>
+  <!-- hls.js e Leaflet carregam a pedido (ver ensureLib em js/app/core.js) -->
+  <script src="js/roc-core.js" defer></script>
+  <script src="js/storage.js" defer></script>
+  <script src="js/catalog.js" defer></script>
+  <script src="js/i18n.js" defer></script>
+  <!-- App: scripts clássicos com defer — descarregam em paralelo com o HTML e
+       executam por esta ordem depois do parse (partilham o âmbito global); init.js arranca a app -->
+  <script src="js/app/core.js" defer></script>
+  <script src="js/app/soundscapes.js" defer></script>
+  <script src="js/app/library.js" defer></script>
+  <script src="js/app/health.js" defer></script>
+  <script src="js/app/player.js" defer></script>
+  <script src="js/app/map.js" defer></script>
+  <script src="js/app/browse.js" defer></script>
+  <script src="js/app/features.js" defer></script>
+  <script src="js/app/visualizer.js" defer></script>
+  <script src="js/app/init.js" defer></script>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
 
   <style>
     /* Acessibilidade: indicação clara de foco por teclado */
@@ -272,7 +282,7 @@
     }
   </style>
 </head>
-<body class="text-slate-100 antialiased min-h-screen flex flex-col md:flex-row pb-44 md:pb-28">
+<body class="text-slate-100 antialiased min-h-screen flex flex-col md:flex-row pb-[calc(9rem+env(safe-area-inset-bottom))] md:pb-28">
 
   <!-- Toast Notification Floating Container -->
   <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full px-3"></div>
@@ -518,20 +528,20 @@
       <div class="relative w-full">
         <input 
           type="text" 
-          id="search-input" 
+          id="search-input" data-i18n-placeholder="searchPlaceholder" 
           placeholder="Pesquisar em +45.000 rádios mundiais (ex: Los 40, BBC, Apple, Kiss FM, Comercial, Jovem Pan, Jazz, Rock)..." 
-          class="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-12 pr-44 py-4 text-sm md:text-base text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 shadow-2xl transition"
+          class="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-12 pr-28 sm:pr-44 py-4 text-sm md:text-base text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 shadow-2xl transition"
           autocomplete="off"
         />
         <svg class="w-6 h-6 absolute left-4 top-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         
         <div class="absolute right-3 top-3 flex items-center gap-2">
           <span id="search-spinner" class="hidden w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></span>
-          <button onclick="toggleAdvancedFilters()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 transition flex items-center gap-1">
-            <span>⚙️</span> <span data-i18n="filters">Filtros</span>
+          <button onclick="toggleAdvancedFilters()" title="Filtros" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 transition flex items-center gap-1">
+            <span>⚙️</span> <span class="hidden sm:inline" data-i18n="filters">Filtros</span>
           </button>
-          <button onclick="triggerGlobalSearch()" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs shadow-md transition active:scale-95 flex items-center gap-1.5">
-            <span data-i18n="search">Pesquisar</span> 🌐
+          <button onclick="triggerGlobalSearch()" title="Pesquisar" class="px-3 sm:px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs shadow-md transition active:scale-95 flex items-center gap-1.5">
+            <span class="hidden sm:inline" data-i18n="search">Pesquisar</span> 🌐
           </button>
         </div>
       </div>
@@ -813,7 +823,7 @@
         <span id="results-count" class="text-xs text-slate-400">A carregar...</span>
       </div>
 
-      <div id="stations-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div id="stations-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4">
         <!-- Station Cards injected dynamically -->
       </div>
 
@@ -860,11 +870,11 @@
   </main>
 
   <!-- Persistent Bottom Player Bar -->
-  <footer class="fixed bottom-16 md:bottom-0 left-0 right-0 h-20 md:h-24 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 z-40 px-3 md:px-8 flex items-center justify-between gap-2 md:gap-0 shadow-2xl py-2 md:py-0">
+  <footer class="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-0 left-0 right-0 h-16 md:h-24 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 z-40 px-3 md:px-8 flex items-center justify-between gap-2 md:gap-0 shadow-2xl py-2 md:py-0">
     
     <!-- Left: Current Station Details & External Search -->
-    <div class="flex items-center gap-3 md:gap-4 w-auto md:w-1/3 min-w-[140px] max-w-sm justify-between md:justify-start">
-      <div class="flex items-center gap-2.5 md:gap-3 min-w-0 cursor-pointer" onclick="handlePlayerClick()">
+    <div class="flex items-center gap-3 md:gap-4 flex-1 md:flex-none min-w-0 md:w-1/3 max-w-sm justify-between md:justify-start">
+      <div class="flex items-center gap-2.5 md:gap-3 min-w-0 flex-1 md:flex-none cursor-pointer" onclick="handlePlayerClick()">
         <div id="player-cover-wrap" class="w-11 h-11 md:w-14 md:h-14 rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0 shadow-lg relative transition-transform">
           <img id="player-cover-img" src="" alt="Capa" class="w-full h-full object-cover hidden" />
           <div id="player-cover-fallback" class="w-full h-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white text-lg md:text-2xl font-black">
@@ -873,7 +883,7 @@
         </div>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-1.5 md:gap-2">
-            <h4 id="player-station-name" class="text-xs md:text-sm font-extrabold text-white truncate max-w-[120px] sm:max-w-[160px] md:max-w-none">LOS 40 España</h4>
+            <h4 id="player-station-name" class="text-sm font-extrabold text-white truncate">LOS 40 España</h4>
             <span id="player-live-badge" class="hidden px-1.5 py-0.5 rounded-full text-[8px] md:text-[9px] font-black bg-red-500 text-white animate-pulse">LIVE</span>
           </div>
           <!-- Live Now Playing Track Info -->
@@ -883,8 +893,8 @@
         </div>
       </div>
 
-      <!-- Quick Action Icons -->
-      <div class="flex items-center gap-1.5 flex-shrink-0">
+      <!-- Quick Action Icons (no telemóvel estão no player em ecrã inteiro) -->
+      <div class="hidden md:flex items-center gap-1.5 flex-shrink-0">
         <button id="player-fav-btn" onclick="toggleCurrentFav()" class="p-1.5 text-xl text-slate-500 hover:text-amber-400 transition" title="Marcar Favorito">☆</button>
         <button id="player-lib-btn" onclick="toggleCurrentLib()" class="p-1.5 text-sm text-slate-500 hover:text-cyan-400 transition" title="Incluir na Minha Biblioteca">📌</button>
         <button onclick="togglePictureInPicture()" class="p-1.5 text-slate-400 hover:text-cyan-400 transition text-sm" title="Mini-Player Flutuante (Picture-in-Picture)">
@@ -906,17 +916,17 @@
     </div>
 
     <!-- Center: Master Controls & Visualizer -->
-    <div class="flex flex-col items-center justify-center gap-1 flex-1 max-w-md">
-      <div class="flex items-center gap-4">
+    <div class="flex flex-col items-center justify-center gap-1 flex-none md:flex-1 max-w-md">
+      <div class="flex items-center gap-1 md:gap-4">
         
         <!-- Record Stream Button -->
-        <button id="record-btn" onclick="toggleStreamRecording()" class="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-slate-800 transition" title="Gravar Transmissão">
+        <button id="record-btn" onclick="toggleStreamRecording()" class="hidden md:block p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-slate-800 transition" title="Gravar Transmissão">
           <div class="w-3.5 h-3.5 rounded-full border-2 border-current flex items-center justify-center">
             <div id="record-dot" class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
           </div>
         </button>
 
-        <button onclick="playPrev()" class="p-2 rounded-xl hover:bg-slate-800 text-slate-300 hover:text-white transition" title="Estação Anterior" aria-label="Estação anterior">
+        <button onclick="playPrev()" class="hidden md:block p-2 rounded-xl hover:bg-slate-800 text-slate-300 hover:text-white transition" title="Estação Anterior" aria-label="Estação anterior">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
         </button>
 
@@ -929,19 +939,19 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
         </button>
 
-        <button onclick="openSleepModal()" id="player-sleep-btn" class="p-2 rounded-xl text-slate-400 hover:text-amber-400 hover:bg-slate-800 transition text-xs font-mono" title="Sleep Timer">
+        <button onclick="openSleepModal()" id="player-sleep-btn" class="hidden md:block p-2 rounded-xl text-slate-400 hover:text-amber-400 hover:bg-slate-800 transition text-xs font-mono" title="Sleep Timer">
           <span id="player-sleep-txt">⏳</span>
         </button>
       </div>
 
       <!-- Live Spectrum Canvas -->
-      <div class="w-48 h-3.5 flex items-center justify-center overflow-hidden">
+      <div class="hidden md:flex w-48 h-3.5 items-center justify-center overflow-hidden">
         <canvas id="mini-visualizer" class="w-full h-full"></canvas>
       </div>
     </div>
 
     <!-- Right: Volume, Soundscapes & Equalizer -->
-    <div class="flex items-center justify-end gap-3 w-full md:w-1/3 min-w-[160px]">
+    <div class="hidden md:flex items-center justify-end gap-3 w-full md:w-1/3 min-w-[160px]">
       <div class="hidden sm:flex flex-col items-end text-right text-[11px] text-slate-500">
         <span id="player-bitrate" class="font-mono text-cyan-400 font-bold">128 kbps</span>
         <span id="player-country">Espanha</span>
@@ -977,30 +987,30 @@
   </footer>
  
   <!-- Fixed Mobile Bottom Navigation Bar -->
-  <nav id="mobile-bottom-nav" class="fixed bottom-0 left-0 right-0 h-16 bg-slate-950/95 backdrop-blur-lg border-t border-slate-800 z-40 md:hidden flex items-center justify-around px-1 shadow-2xl">
-    <button onclick="setView('home')" id="mob-nav-home" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-cyan-400 transition">
+  <nav id="mobile-bottom-nav" class="fixed bottom-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-slate-950/95 backdrop-blur-lg border-t border-slate-800 z-40 md:hidden flex items-center justify-around px-1 shadow-2xl">
+    <button onclick="setView('home')" id="mob-nav-home" class="mob-nav-btn flex flex-col items-center justify-center flex-1 min-h-[44px] py-1 text-cyan-400 transition">
       <span class="text-lg">🔥</span>
-      <span class="text-[10px] font-bold" data-i18n="home">Início</span>
+      <span class="text-[10px] font-bold whitespace-nowrap leading-tight mt-0.5" data-i18n="navHome">Início</span>
     </button>
-    <button onclick="setView('map')" id="mob-nav-map" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-400 hover:text-white transition">
+    <button onclick="setView('map')" id="mob-nav-map" class="mob-nav-btn flex flex-col items-center justify-center flex-1 min-h-[44px] py-1 text-slate-400 hover:text-white transition">
       <span class="text-lg">🗺️</span>
-      <span class="text-[10px] font-bold" data-i18n="worldMap">Mapa</span>
+      <span class="text-[10px] font-bold whitespace-nowrap leading-tight mt-0.5" data-i18n="navMap">Mapa</span>
     </button>
-    <button onclick="setView('favorites')" id="mob-nav-favorites" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-400 hover:text-white transition">
+    <button onclick="setView('favorites')" id="mob-nav-favorites" class="mob-nav-btn flex flex-col items-center justify-center flex-1 min-h-[44px] py-1 text-slate-400 hover:text-white transition">
       <span class="text-lg">⭐</span>
-      <span class="text-[10px] font-bold" data-i18n="myFavorites">Favoritos</span>
+      <span class="text-[10px] font-bold whitespace-nowrap leading-tight mt-0.5" data-i18n="navFavorites">Favoritos</span>
     </button>
-    <button onclick="setView('library')" id="mob-nav-library" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-400 hover:text-white transition">
+    <button onclick="setView('library')" id="mob-nav-library" class="mob-nav-btn flex flex-col items-center justify-center flex-1 min-h-[44px] py-1 text-slate-400 hover:text-white transition">
       <span class="text-lg">📌</span>
-      <span class="text-[10px] font-bold" data-i18n="myLibrary">Biblioteca</span>
+      <span class="text-[10px] font-bold whitespace-nowrap leading-tight mt-0.5" data-i18n="navLibrary">Biblioteca</span>
     </button>
-    <button onclick="setView('playlists')" id="mob-nav-playlists" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-400 hover:text-white transition">
+    <button onclick="setView('playlists')" id="mob-nav-playlists" class="mob-nav-btn flex flex-col items-center justify-center flex-1 min-h-[44px] py-1 text-slate-400 hover:text-white transition">
       <span class="text-lg">📂</span>
-      <span class="text-[10px] font-bold" data-i18n="myPlaylists">Playlists</span>
+      <span class="text-[10px] font-bold whitespace-nowrap leading-tight mt-0.5" data-i18n="navPlaylists">Playlists</span>
     </button>
-    <button onclick="openMobileToolsDrawer()" id="mob-nav-tools" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-400 hover:text-white transition">
+    <button onclick="openMobileToolsDrawer()" id="mob-nav-tools" class="mob-nav-btn flex flex-col items-center justify-center flex-1 min-h-[44px] py-1 text-slate-400 hover:text-white transition">
       <span class="text-lg">🛠️</span>
-      <span class="text-[10px] font-bold" data-i18n="mobileTools">Mais</span>
+      <span class="text-[10px] font-bold whitespace-nowrap leading-tight mt-0.5" data-i18n="navMore">Mais</span>
     </button>
   </nav>
 
@@ -1514,6 +1524,8 @@
         </div>
       </form>
     </div>
+  </div>
+
   <!-- Modal 11: Create Custom Category -->
   <div id="category-create-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
@@ -1605,6 +1617,16 @@
         <button id="sheet-lib-btn" onclick="toggleCurrentLib()" class="px-3 py-2 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-cyan-400 font-bold active:scale-95">📌 Biblioteca</button>
         <button onclick="openStationCategoryModal(currentStationId)" class="px-3 py-2 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-purple-400 font-bold active:scale-95">🏷️ Categoria</button>
         <button onclick="closeMobileSheetPlayer(); openDeleteStationModal(currentStationId);" class="px-3 py-2 rounded-2xl bg-red-950/40 border border-red-800/60 text-xs text-red-400 font-bold active:scale-95">🗑️ Eliminar</button>
+      </div>
+
+      <!-- Ferramentas -->
+      <div class="grid grid-cols-3 gap-2 w-full max-w-xs pt-1">
+        <button onclick="closeMobileSheetPlayer(); openEqualizerModal();" class="sheet-tool"><span class="text-lg">🎚️</span><span data-i18n="sheetEq">Equalizador</span></button>
+        <button onclick="closeMobileSheetPlayer(); openSoundscapesModal();" class="sheet-tool"><span class="text-lg">🌧️</span><span data-i18n="sheetSounds">Sons</span></button>
+        <button onclick="closeMobileSheetPlayer(); openSleepModal();" class="sheet-tool"><span class="text-lg">⏳</span><span data-i18n="sheetSleep">Sleep</span></button>
+        <button onclick="closeMobileSheetPlayer(); openTrackHistoryModal();" class="sheet-tool"><span class="text-lg">📜</span><span data-i18n="sheetHistory">Histórico</span></button>
+        <button onclick="shareCurrentStation()" class="sheet-tool"><span class="text-lg">🔗</span><span data-i18n="sheetShare">Partilhar</span></button>
+        <button onclick="toggleStreamRecording()" class="sheet-tool"><span class="text-lg">⏺️</span><span data-i18n="sheetRecord">Gravar</span></button>
       </div>
     </div>
 
@@ -1713,20 +1735,5 @@
 
   <audio id="audio-player" preload="none"></audio>
 
-  <script src="js/roc-core.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/catalog.js"></script>
-  <script src="js/i18n.js"></script>
-  <!-- App: scripts clássicos por esta ordem (partilham o âmbito global); só init.js arranca a app -->
-  <script src="js/app/core.js"></script>
-  <script src="js/app/soundscapes.js"></script>
-  <script src="js/app/library.js"></script>
-  <script src="js/app/health.js"></script>
-  <script src="js/app/player.js"></script>
-  <script src="js/app/map.js"></script>
-  <script src="js/app/browse.js"></script>
-  <script src="js/app/features.js"></script>
-  <script src="js/app/visualizer.js"></script>
-  <script src="js/app/init.js"></script>
 </body>
 </html>

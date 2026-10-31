@@ -149,7 +149,13 @@ function selectStation(id, autoplay = true) {
 
   const streamUrl = s.stream_url;
   lastPlayIntent = autoplay;
-  if (streamUrl && streamUrl.includes('.m3u8') && Hls.isSupported()) {
+  const isHlsStream = !!streamUrl && streamUrl.includes('.m3u8');
+  if (isHlsStream && typeof Hls === 'undefined') {
+    // hls.js só é descarregado na primeira rádio HLS; depois repete a seleção.
+    ensureLib('hls')
+      .then(() => { if (String(currentStationId) === String(s.id)) selectStation(s.id, autoplay); })
+      .catch(() => showStreamError());
+  } else if (isHlsStream && Hls.isSupported()) {
     // HLS via MSE é same-origin: DSP sempre disponível
     ensureDspMode(true);
     hlsInstance = new Hls();
@@ -183,7 +189,7 @@ function selectStation(id, autoplay = true) {
   startNowPlayingPolling();
 
   saveState();
-  updatePiPCanvas();
+  if (document.pictureInPictureElement) updatePiPCanvas();
 }
 
 function addTrackToHistory(title, artist) {
@@ -285,7 +291,17 @@ function resetAudioEngine() {
 }
 
 // Liga (ou desliga) o DSP conforme o stream atual suportar CORS.
+// Montar o motor DSP (AudioContext, EQ, reverb) é caro e o browser só o deixa
+// arrancar com um gesto do utilizador: sem intenção de tocar (ex.: ao abrir a
+// app) fica pendente e é ligado no primeiro play.
+let pendingDspMode = false;
+
 function ensureDspMode(wantDsp) {
+  if (wantDsp && !dspConnected && !audioCtx && !lastPlayIntent) {
+    pendingDspMode = true;
+    return;
+  }
+  pendingDspMode = false;
   if (wantDsp && !dspConnected) {
     initAudioContext();
     if (audioCtx && isAudioContextReady && !sourceNode && filters10["32"]) {
@@ -365,6 +381,8 @@ async function handleAudioError() {
 
 
 function startAudio() {
+  lastPlayIntent = true;
+  if (pendingDspMode) ensureDspMode(true);
   initAudioContext();
   if (audioCtx && audioCtx.state === 'suspended') {
     audioCtx.resume().catch(() => {});
@@ -445,7 +463,7 @@ function updatePlayState() {
   const sheetPlayBtn = document.getElementById('sheet-play-btn');
   if (sheetPlayBtn) sheetPlayBtn.textContent = isPlaying ? '⏸️' : '▶️';
   renderRocPreview();
-  updatePiPCanvas();
+  if (document.pictureInPictureElement) updatePiPCanvas();
 }
 
 function playNext() {

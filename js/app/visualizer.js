@@ -7,10 +7,16 @@ const miniCanvas = document.getElementById('mini-visualizer');
 const miniCtx = miniCanvas.getContext('2d');
 const tvCanvas = document.getElementById('tv-visualizer');
 const tvCtx = tvCanvas.getContext('2d');
+const tvModal = document.getElementById('tv-ambient-modal');
 
 function resizeCanvas() {
   miniCanvas.width = miniCanvas.parentElement.clientWidth * window.devicePixelRatio;
   miniCanvas.height = miniCanvas.parentElement.clientHeight * window.devicePixelRatio;
+}
+// ResizeObserver mede depois do layout (sem forçar um layout síncrono no
+// arranque) e acompanha o canvas a aparecer/esconder (ex.: telemóvel ↔ desktop).
+if (window.ResizeObserver) {
+  new ResizeObserver(resizeCanvas).observe(miniCanvas.parentElement);
 }
 function resizeTVCanvas() {
   if (tvCanvas.parentElement) {
@@ -19,15 +25,23 @@ function resizeTVCanvas() {
   }
 }
 window.addEventListener('resize', () => {
-  resizeCanvas();
+  if (!window.ResizeObserver) resizeCanvas();
   resizeTVCanvas();
 });
-resizeCanvas();
+if (!window.ResizeObserver) resizeCanvas();
 
 let visualizerStep = 0;
 const freqData = new Uint8Array(64);
 
 function drawSpectrum() {
+  // Nada visível (mini-visualizador escondido no telemóvel, modo TV fechado):
+  // não gastar CPU/bateria a desenhar.
+  const tvVisible = !tvModal.classList.contains('hidden'); // sem forçar layout
+  if (miniCanvas.width === 0 && !tvVisible) {
+    visualizerStep++;
+    requestAnimationFrame(drawSpectrum);
+    return;
+  }
   miniCtx.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
   tvCtx.clearRect(0, 0, tvCanvas.width, tvCanvas.height);
 

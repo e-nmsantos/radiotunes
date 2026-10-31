@@ -9,7 +9,7 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const modules = fs.readdirSync(path.join(ROOT, 'js/app')).filter((f) => f.endsWith('.js'));
 
-const inHtml = [...read('index.html').matchAll(/<script src="js\/app\/([\w-]+\.js)"><\/script>/g)].map((m) => m[1]);
+const inHtml = [...read('index.html').matchAll(/<script src="js\/app\/([\w-]+\.js)"( defer)?><\/script>/g)].map((m) => m[1]);
 const inSw = [...read('sw.js').matchAll(/'\.\/js\/app\/([\w-]+\.js)'/g)].map((m) => m[1]);
 
 test('todos os módulos de js/app/ são carregados pelo index.html', () => {
@@ -23,4 +23,29 @@ test('o service worker guarda os mesmos módulos, pela mesma ordem (app offline)
 test('core.js carrega primeiro e init.js por último', () => {
   assert.equal(inHtml[0], 'core.js');
   assert.equal(inHtml.at(-1), 'init.js');
+});
+
+test('nenhum modal/sheet fica aninhado dentro de outro (ficaria invisível)', () => {
+  // Um </div> em falta já escondeu 5 modais dentro do "Adicionar Rádio".
+  const html = read('index.html').replace(/<!--[\s\S]*?-->/g, '');
+  const stack = [];
+  const nested = [];
+  for (const m of html.matchAll(/<(\/?)div\b([^>]*)>/g)) {
+    if (m[1]) { stack.pop(); continue; }
+    const id = (/\bid="([^"]+)"/.exec(m[2]) || [])[1] || '';
+    const isOverlay = /(modal|sheet)$/.test(id);
+    if (isOverlay) {
+      const parent = stack.filter(Boolean).at(-1);
+      if (parent) nested.push(`${id} dentro de ${parent}`);
+    }
+    stack.push(isOverlay ? id : null);
+  }
+  assert.deepEqual(nested, []);
+  assert.equal(stack.length, 0, 'há <div> por fechar');
+});
+
+test('os scripts locais usam defer (descarregam em paralelo com o HTML)', () => {
+  const tags = [...read('index.html').matchAll(/<script src="(js\/[^"]+)"([^>]*)>/g)];
+  assert.ok(tags.length >= 14);
+  for (const [, src, attrs] of tags) assert.match(attrs, /\bdefer\b/, src);
 });

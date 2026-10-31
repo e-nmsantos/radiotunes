@@ -254,6 +254,46 @@ function closeMobileToolsDrawer() {
   document.getElementById('mobile-tools-modal').classList.add('hidden');
 }
 
+// Menu ⋯ dos cartões no telemóvel: folha de ações que sobe do fundo do ecrã.
+function openStationActions(stationId) {
+  const st = getAllStations().find(s => String(s.id) === String(stationId));
+  if (!st) return;
+  let sheet = document.getElementById('station-actions-sheet');
+  if (!sheet) {
+    sheet = document.createElement('div');
+    sheet.id = 'station-actions-sheet';
+    sheet.className = 'fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end md:hidden';
+    // Qualquer ação (ou tocar fora) fecha a folha; a ação corre a seguir via delegação.
+    sheet.addEventListener('click', (e) => {
+      if (e.target === sheet || e.target.closest('[data-action]')) closeStationActions();
+    });
+    document.body.appendChild(sheet);
+  }
+  const inLib = userLibrary.includes(String(st.id));
+  const row = (action, icon, label, extra = '') =>
+    `<button ${uiAction(action, st.id, ...(action === 'selectStation' ? [true] : []))} class="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl active:bg-slate-800 text-left text-sm font-semibold ${extra}">
+       <span class="text-xl w-7 text-center">${icon}</span><span>${escapeHtml(label)}</span>
+     </button>`;
+  sheet.innerHTML = `
+    <div class="w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-2xl sheet-up">
+      <div class="w-10 h-1 rounded-full bg-slate-700 mx-auto mb-3"></div>
+      <div class="px-4 pb-2 mb-1 border-b border-slate-800">
+        <h4 class="text-base font-black text-white truncate">${escapeHtml(st.name)}</h4>
+        <p class="text-xs text-slate-400 truncate">${escapeHtml(st.genre || st.category || '')} · ${st.flag || '🌐'} ${escapeHtml(st.country || '')}</p>
+      </div>
+      ${row('selectStation', '▶️', t('listenLive'), 'text-cyan-400')}
+      ${row('handleCardCategoryClick', '🏷️', t('moveToCategory'), 'text-slate-200')}
+      ${row('handleCardLibraryClick', inLib ? '📌' : '➕', inLib ? t('removeFromLibrary') : t('addToLibrary'), 'text-slate-200')}
+      ${row('handleCardDeleteClick', '🗑️', t('deleteStation'), 'text-red-400')}
+    </div>`;
+  sheet.classList.remove('hidden');
+}
+
+function closeStationActions() {
+  const sheet = document.getElementById('station-actions-sheet');
+  if (sheet) sheet.classList.add('hidden');
+}
+
 // Explicit Card Action Handlers
 let lastDeletedStation = null;
 

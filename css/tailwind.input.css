@@ -3,3 +3,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Botões da grelha de ferramentas do player em ecrã inteiro (telemóvel) */
+@layer components {
+  .sheet-tool {
+    @apply flex flex-col items-center justify-center gap-1 py-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-[11px] font-bold text-slate-300 active:scale-95 transition;
+  }
+}
+
+/* Folha de ações a subir do fundo */
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.sheet-up { animation: sheet-up .22s cubic-bezier(.2,.8,.2,1); }
+
+/* Desempenho: cartões fora do ecrã não fazem layout nem pintura até se aproximarem */
+.station-card { content-visibility: auto; contain-intrinsic-size: auto 72px; }
+@media (min-width: 768px) { .station-card { contain-intrinsic-size: auto 180px; } }

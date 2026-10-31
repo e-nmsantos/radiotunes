@@ -196,15 +196,15 @@ function render() {
           data-drag-station="${escapeHtml(s.id)}"
           ondragend="handleDragEnd(event)"
           ${uiAction('selectStation', s.id, true)}
-          class="station-card group cursor-pointer rounded-2xl p-4 border flex flex-col justify-between select-none ${isCurrent ? 'bg-cyan-500/15 border-cyan-500/60 shadow-xl shadow-cyan-500/15' : 'bg-slate-900 border-slate-800 hover:border-cyan-500/40 hover:bg-slate-800/80'}"
+          class="station-card group cursor-pointer rounded-2xl p-3 md:p-4 border flex flex-row items-center gap-3 md:flex-col md:items-stretch md:justify-between md:gap-0 select-none ${isCurrent ? 'bg-cyan-500/15 border-cyan-500/60 shadow-xl shadow-cyan-500/15' : 'bg-slate-900 border-slate-800 hover:border-cyan-500/40 hover:bg-slate-800/80'}"
         >
 
-          <!-- Cover Header -->
-          <div class="flex items-start justify-between gap-3 mb-3">
-            <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition shadow-md relative">
+          <!-- Cover Header (no telemóvel: só o logo, em linha) -->
+          <div class="flex items-start justify-between gap-3 md:mb-3 flex-shrink-0">
+            <div class="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition shadow-md relative">
               ${safeImageUrl(s.image) ? `<img src="${safeImageUrl(s.image)}" data-roc-station="${escapeHtml(s.id)}" alt="${safeName}" loading="lazy" decoding="async" class="w-full h-full object-cover" onerror="rocCardLogoFallback(this)" />` : `<img src="${stationMonogram(s)}" alt="${safeName}" loading="lazy" decoding="async" class="w-full h-full object-cover" />`}
             </div>
-            <div class="flex items-center gap-1">
+            <div class="hidden md:flex items-center gap-1">
               <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
                 ${s.flag || '🌐'} ${safeCountry}
               </span>
@@ -225,18 +225,29 @@ function render() {
           </div>
 
           <!-- Info -->
-          <div>
+          <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
               <h3 class="text-sm font-extrabold text-white truncate ${isCurrent ? 'text-cyan-400' : ''}">
                 ${safeName}
               </h3>
               ${isCurrent && isPlaying ? '<span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping flex-shrink-0"></span>' : ''}
+              ${isUnhealthy ? `<span class="md:hidden text-[10px] text-red-400 flex-shrink-0" title="Stream em falha na última verificação automática">⚠</span>` : ''}
             </div>
-            <p class="text-xs text-slate-400 truncate mt-0.5">${safeGenre}</p>
+            <p class="text-xs text-slate-400 truncate mt-0.5">${safeGenre}<span class="md:hidden"> · ${s.flag || '🌐'} ${safeCountry}</span></p>
+          </div>
+
+          <!-- Ações no telemóvel: favorito + menu ⋯ (o resto vive no menu) -->
+          <div class="flex md:hidden items-center flex-shrink-0 -mr-1">
+            <button ${uiAction('handleCardFavClick', s.id)} class="w-10 h-10 rounded-xl text-lg flex items-center justify-center text-slate-400 active:scale-90 transition" title="Favorito">
+              ${isFav ? '⭐' : '☆'}
+            </button>
+            <button ${uiAction('openStationActions', s.id)} class="w-10 h-10 rounded-xl text-xl leading-none flex items-center justify-center text-slate-400 active:scale-90 transition" title="${escapeHtml(t('moreActions'))}">
+              ⋯
+            </button>
           </div>
 
           <!-- Footer info with Category Tag -->
-          <div class="mt-3 pt-2.5 border-t border-slate-800/50 flex items-center justify-between text-[11px] text-slate-500">
+          <div class="hidden md:flex mt-3 pt-2.5 border-t border-slate-800/50 items-center justify-between text-[11px] text-slate-500">
             <span class="px-2 py-0.5 rounded-lg bg-slate-950 text-cyan-400 border border-slate-800/80 font-semibold flex items-center gap-1">
               <span class="text-xs">🏷️</span> <span class="truncate max-w-[90px]">${s.category || 'Música'}</span>
             </span>

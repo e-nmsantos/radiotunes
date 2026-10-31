@@ -36,6 +36,9 @@ updateCounts();
 sync10BandSliders();
 selectStation(currentStationId, false);
 
-// Auditoria de saúde em background: arranca imediatamente com a app,
-// em fundo e com cadência suave — nunca bloqueia a UI.
-runBackgroundHealthAudit().catch(() => {});
+// Auditoria de saúde em background: arranca quando o browser fica ocioso
+// (depois do arranque, sem disputar CPU/rede com a 1.ª pintura), com cadência suave.
+(window.requestIdleCallback || ((cb) => setTimeout(cb, 3000)))(
+  () => runBackgroundHealthAudit().catch(() => {}),
+  { timeout: 8000 }
+);

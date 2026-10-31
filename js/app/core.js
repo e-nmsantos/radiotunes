@@ -31,6 +31,7 @@ const UI_ACTIONS = {
   selectCategory: false, assignCategoryToStation: false,
   deletePlaylist: false, playPlaylistFirstStation: false,
   selectStation: false, flyToStationOnMap: false, openTrackSearch: false,
+  openStationActions: false,
   handleCardCategoryClick: true, handleCardLibraryClick: true,
   handleCardFavClick: true, handleCardDeleteClick: true,
 };
@@ -64,6 +65,48 @@ document.addEventListener('drop', (e) => {
   if (el) handleDropCategory(e, el.dataset.dropCategory, el);
 });
 
+// ===================== Bibliotecas a pedido =====================
+// hls.js e Leaflet só são descarregados quando são precisos (stream .m3u8 /
+// abrir o mapa): o arranque fica muito mais leve, sobretudo no telemóvel.
+// Versões fixas + SRI, como antes no <head>.
+const LAZY_LIBS = {
+  hls: [
+    ['js', 'https://cdn.jsdelivr.net/npm/hls.js@1.7.4/dist/hls.min.js', 'sha384-p9vgU/7IYJWd3I4STrtqxqR/2cAQlhIX7D/HrTnIMEjjcUox165b7se7sxmm3zDg'],
+  ],
+  leaflet: [
+    ['css', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', 'sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H'],
+    ['css', 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css', 'sha384-pmjIAcz2bAn0xukfxADbZIb3t8oRT9Sv0rvO+BR5Csr6Dhqq+nZs59P0pPKQJkEV'],
+    ['css', 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css', 'sha384-wgw+aLYNQ7dlhK47ZPK7FRACiq7ROZwgFNg0m04avm4CaXS+Z9Y7nMu8yNjBKYC+'],
+    ['js', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', 'sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH'],
+    ['js', 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js', 'sha384-eXVCORTRlv4FUUgS/xmOyr66XBVraen8ATNLMESp92FKXLAMiKkerixTiBvXriZr'],
+  ],
+};
+const lazyLibPromises = {};
+
+function loadAsset(kind, url, integrity) {
+  return new Promise((resolve, reject) => {
+    const el = document.createElement(kind === 'js' ? 'script' : 'link');
+    if (kind === 'js') el.src = url; else { el.rel = 'stylesheet'; el.href = url; }
+    el.integrity = integrity;
+    el.crossOrigin = 'anonymous';
+    el.onload = resolve;
+    el.onerror = () => reject(new Error('falha ao carregar ' + url));
+    document.head.appendChild(el);
+  });
+}
+
+/** Carrega uma biblioteca uma única vez (CSS em paralelo, scripts por ordem). */
+function ensureLib(name) {
+  if (!lazyLibPromises[name]) {
+    const assets = LAZY_LIBS[name];
+    lazyLibPromises[name] = (async () => {
+      await Promise.all(assets.filter(a => a[0] === 'css').map(a => loadAsset(...a)));
+      for (const a of assets.filter(a => a[0] === 'js')) await loadAsset(...a);
+    })().catch(err => { delete lazyLibPromises[name]; throw err; });
+  }
+  return lazyLibPromises[name];
+}
+
 function openTrackSearch(service, title) {
   const q = encodeURIComponent(title || '');
   const url = service === 'youtube'
@@ -88,6 +131,10 @@ function changeLanguage(lang) {
   document.getElementById('lang-select').value = lang;
   
   const dict = I18N[lang] || I18N.pt;
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (dict[key]) el.setAttribute('placeholder', dict[key]);
+  });
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (dict[key]) {

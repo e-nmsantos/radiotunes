@@ -126,9 +126,16 @@ test('PWA: a 1.ª instalação do service worker não recarrega a página', { sk
   assert.equal(await evaluate(`sessionStorage.__rocLoads`), '1', 'a página foi recarregada');
 });
 
-test('dependências CDN carregam (versão fixa + SRI)', { skip }, async () => {
+test('hls.js e Leaflet não carregam no arranque e carregam a pedido (versão fixa + SRI)', { skip }, async () => {
+  assert.equal(await evaluate('typeof Hls'), 'undefined', 'hls.js não devia carregar no arranque');
+  assert.equal(await evaluate('typeof L'), 'undefined', 'Leaflet não devia carregar no arranque');
+  await evaluate(`ensureLib('hls')`);
   assert.equal(await evaluate('typeof Hls'), 'function');
+  await evaluate(`ensureLib('leaflet')`);
   assert.equal(await evaluate('typeof L.markerClusterGroup'), 'function');
+  // integridade verificada pelo browser: todos os assets dinâmicos levam SRI
+  const sri = await evaluate(`[...document.querySelectorAll('head script[src^="https"], head link[href^="https"][rel=stylesheet]')].every(e => e.integrity.startsWith('sha384-'))`);
+  assert.equal(sri, true);
 });
 
 test('persistência: favoritos e idioma sobrevivem a um reload', { skip }, async () => {
@@ -303,4 +310,29 @@ test('PWA: ícones do manifest existem e o service worker ativa', { skip }, asyn
   assert.ok(icons.length >= 3);
   for (const i of icons) assert.equal(i, '200 image/png');
   await waitFor(`navigator.serviceWorker.getRegistration().then(r => !!(r && r.active))`);
+});
+
+test('telemóvel: mini-player, menu "Mais" e menu ⋯ dos cartões abrem e ficam visíveis', { skip }, async () => {
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
+  try {
+    await sleep(400);
+    const out = await evaluate(`(async () => {
+      const visible = (id) => { const el = document.getElementById(id); return !!el && el.getClientRects().length > 0; };
+      const wait = () => new Promise(r => setTimeout(r, 250));
+      setView('home'); await wait();
+      document.querySelector('footer [onclick="handlePlayerClick()"]').click(); await wait();
+      const sheet = visible('mobile-player-sheet'); closeMobileSheetPlayer();
+      document.getElementById('mob-nav-tools').click(); await wait();
+      const tools = visible('mobile-tools-modal'); closeMobileToolsDrawer();
+      document.querySelector('.station-card [data-action="openStationActions"]').click(); await wait();
+      const actions = visible('station-actions-sheet');
+      document.querySelector('#station-actions-sheet [data-action="handleCardCategoryClick"]').click(); await wait();
+      const category = visible('station-category-modal'); closeStationCategoryModal();
+      const navOneLine = [...document.querySelectorAll('#mobile-bottom-nav [data-i18n]')].every(s => s.getClientRects().length === 1);
+      return { sheet, tools, actions, category, navOneLine };
+    })()`);
+    assert.deepEqual(out, { sheet: true, tools: true, actions: true, category: true, navOneLine: true });
+  } finally {
+    await send('Emulation.clearDeviceMetricsOverride');
+  }
 });
