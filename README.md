@@ -99,10 +99,11 @@ Aplicação completa de streaming de mais de **45.000 estações de rádio mundi
    ```powershell
    roc test Radio.roc
    ```
-3. Para correr os testes JS do RocCore:
+3. Para correr todos os testes JS (RocCore, i18n e end-to-end num Chrome headless):
    ```powershell
-   node --test test/roc-core.test.mjs
+   node --test "test/*.test.mjs"
    ```
+   Os testes end-to-end abrem a app num Chrome real e verificam arranque sem erros, persistência, XSS, i18n, acessibilidade e PWA. Sem Chrome instalado ficam como *skipped* (ou define `CHROME_PATH`). Correm também no GitHub Actions a cada push.
 4. *(Recomendado)* Para DSP total, Now Playing real e streams `http://`:
    ```powershell
    .\proxy.bat   # ou: node proxy/server.cjs — deixa a janela aberta

@@ -2112,33 +2112,7 @@
           const sid = `geo_${safeId(item.stationuuid || item.changeuuid) || (Date.now() + '_' + idx)}`;
           if (!seenIds.has(sid)) {
             seenIds.add(sid);
-            const cat = getCategoryFromTags(item.tags || item.name || "");
-            const flag = getFlagEmoji(item.countrycode || "");
-            const safeCountry = item.country || (item.countrycode ? item.countrycode.toUpperCase() : "Global");
-
-            const newSt = {
-              id: sid,
-              name: (item.name || 'Rádio Local').trim(),
-              stream_url: item.url_resolved || item.url,
-              category: cat,
-              tags: item.tags || "",
-              genre: item.tags ? item.tags.split(',').slice(0, 2).map(t => t.trim()).join(' / ') : cat,
-              country: safeCountry,
-              city: item.state || safeCountry,
-              flag: flag,
-              lat: lat,
-              lon: lon,
-              bit_rate: item.bitrate || 128,
-              favorite: false,
-              inLibrary: false,
-              image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
-            favicon: item.favicon || null,
-            homepage: item.homepage || null,
-              favicon: item.favicon || null,
-              homepage: item.homepage || null,
-              color: getRandomGradient(item.stationuuid || String(idx)),
-              desc: item.state ? `${item.state}, ${safeCountry}` : safeCountry
-            };
+            const newSt = mapRadioBrowserStation(item, idx, { id: sid, fallbackName: 'Rádio Local', extra: { lat: lat, lon: lon } });
 
             newStations.push(newSt);
             mapDiscoveredStations.push(newSt);
@@ -2290,33 +2264,7 @@
           const sid = `geo_${safeId(item.stationuuid || item.changeuuid) || (Date.now() + '_' + idx)}`;
           if (!seenIds.has(sid)) {
             seenIds.add(sid);
-            const cat = getCategoryFromTags(item.tags || item.name || "");
-            const flag = getFlagEmoji(item.countrycode || "");
-            const safeCountry = item.country || (item.countrycode ? item.countrycode.toUpperCase() : "Global");
-
-            const newSt = {
-              id: sid,
-              name: (item.name || 'Rádio Local').trim(),
-              stream_url: item.url_resolved || item.url,
-              category: cat,
-              tags: item.tags || "",
-              genre: item.tags ? item.tags.split(',').slice(0, 2).map(t => t.trim()).join(' / ') : cat,
-              country: safeCountry,
-              city: item.state || cityName || safeCountry,
-              flag: flag,
-              lat: lat,
-              lon: lon,
-              bit_rate: item.bitrate || 128,
-              favorite: false,
-              inLibrary: false,
-              image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
-            favicon: item.favicon || null,
-            homepage: item.homepage || null,
-              favicon: item.favicon || null,
-              homepage: item.homepage || null,
-              color: getRandomGradient(item.stationuuid || String(idx)),
-              desc: item.state ? `${item.state}, ${safeCountry}` : safeCountry
-            };
+            const newSt = mapRadioBrowserStation(item, idx, { id: sid, fallbackName: 'Rádio Local', cityFallback: cityName, extra: { lat: lat, lon: lon } });
 
             newStations.push(newSt);
             mapDiscoveredStations.push(newSt);
@@ -2744,31 +2692,7 @@
           }
 
           apiSearchResults = filtered.map((item, idx) => {
-            const cat = getCategoryFromTags(item.tags || item.name || "");
-            const flag = getFlagEmoji(item.countrycode || "");
-            const safeCountry = item.country || (item.countrycode ? item.countrycode.toUpperCase() : "Global");
-            return {
-              id: `rb_${safeId(item.stationuuid) || idx}`,
-              name: (item.name || 'Rádio Sem Nome').trim(),
-              stream_url: item.url_resolved || item.url,
-              category: cat,
-              tags: item.tags || "",
-              genre: item.tags ? item.tags.split(',').slice(0, 2).map(t => t.trim()).join(' / ') : cat,
-              country: safeCountry,
-              flag: flag,
-              lat: item.geo_lat || null,
-              lon: item.geo_long || null,
-              bit_rate: item.bitrate || 128,
-              favorite: false,
-              inLibrary: false,
-              image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
-            favicon: item.favicon || null,
-            homepage: item.homepage || null,
-              favicon: item.favicon || null,
-              homepage: item.homepage || null,
-              color: getRandomGradient(item.stationuuid || String(idx)),
-              desc: item.state ? `${item.state}, ${safeCountry}` : safeCountry
-            };
+            return mapRadioBrowserStation(item, idx);
           });
 
           statusIcon.textContent = "✅";
@@ -3052,29 +2976,7 @@ active_stations = [
 
       if (rawData && rawData.length > 0) {
         apiSearchResults = rawData.map((item, idx) => {
-          const cat = getCategoryFromTags(item.tags || item.name || "");
-          const flag = getFlagEmoji(item.countrycode || "");
-          const safeCountry = item.country || (item.countrycode ? item.countrycode.toUpperCase() : "Global");
-          return {
-            id: `rb_${safeId(item.stationuuid) || idx}`,
-            name: (item.name || 'Rádio Sem Nome').trim(),
-            stream_url: item.url_resolved || item.url,
-            category: cat,
-            tags: item.tags || "",
-            genre: item.tags ? item.tags.split(',').slice(0, 2).map(t => t.trim()).join(' / ') : cat,
-            country: safeCountry,
-            flag: flag,
-            lat: item.geo_lat || null,
-            lon: item.geo_long || null,
-            bit_rate: item.bitrate || 128,
-            favorite: false,
-            inLibrary: false,
-            image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
-            favicon: item.favicon || null,
-            homepage: item.homepage || null,
-            color: getRandomGradient(item.stationuuid || String(idx)),
-            desc: item.state ? `${item.state}, ${safeCountry}` : safeCountry
-          };
+          return mapRadioBrowserStation(item, idx);
         });
 
         statusIcon.textContent = "✅";
@@ -3104,23 +3006,15 @@ active_stations = [
       try {
         const data = await RocStorage.cachedFetchJson('https://de1.api.radio-browser.info/json/stations/topclick/50');
         if (data && data.length > 0) {
-          apiSearchResults = data.map((item, idx) => ({
+          apiSearchResults = data.map((item, idx) => mapRadioBrowserStation(item, idx, {
             id: `top_${safeId(item.stationuuid) || idx}`,
-            name: item.name.trim(),
-            stream_url: item.url_resolved || item.url,
-            category: getCategoryFromTags(item.tags || ""),
-            tags: item.tags || "",
-            genre: item.tags ? item.tags.split(',').slice(0, 2).join(' / ') : "Top Mundial",
-            country: item.country || "Mundo",
-            flag: getFlagEmoji(item.countrycode || ""),
-            bit_rate: item.bitrate || 128,
-            favorite: false,
-            inLibrary: false,
-            image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
-            favicon: item.favicon || null,
-            homepage: item.homepage || null,
-            color: "from-purple-600 to-indigo-700",
-            desc: `Top #${idx+1} Mundial (${item.clickcount || 0} cliques)`
+            extra: {
+              category: getCategoryFromTags(item.tags || ""),
+              genre: item.tags ? item.tags.split(',').slice(0, 2).join(' / ') : "Top Mundial",
+              country: item.country || "Mundo",
+              color: "from-purple-600 to-indigo-700",
+              desc: `Top #${idx+1} Mundial (${item.clickcount || 0} cliques)`
+            }
           }));
           statusIcon.textContent = "✅";
           statusText.textContent = "50 Rádios Mundiais mais populares carregadas!";
@@ -3132,6 +3026,39 @@ active_stations = [
         spinner.classList.add('hidden');
         render();
       }
+    }
+
+    /**
+     * Converte uma estação da API radio-browser no formato interno da app.
+     * opts.id           — ID (por omissão rb_<uuid>)
+     * opts.fallbackName — nome quando a API não o traz
+     * opts.cityFallback — cidade quando item.state não existe
+     * opts.extra        — campos que substituem os calculados (ex.: lat/lon numéricos)
+     */
+    function mapRadioBrowserStation(item, idx, opts = {}) {
+      const cat = getCategoryFromTags(item.tags || item.name || "");
+      const safeCountry = item.country || (item.countrycode ? item.countrycode.toUpperCase() : "Global");
+      return Object.assign({
+        id: opts.id || `rb_${safeId(item.stationuuid) || idx}`,
+        name: (item.name || opts.fallbackName || 'Rádio Sem Nome').trim(),
+        stream_url: item.url_resolved || item.url,
+        category: cat,
+        tags: item.tags || "",
+        genre: item.tags ? item.tags.split(',').slice(0, 2).map(t => t.trim()).join(' / ') : cat,
+        country: safeCountry,
+        city: item.state || opts.cityFallback || safeCountry,
+        flag: getFlagEmoji(item.countrycode || ""),
+        lat: item.geo_lat || null,
+        lon: item.geo_long || null,
+        bit_rate: item.bitrate || 128,
+        favorite: false,
+        inLibrary: false,
+        image: item.favicon && item.favicon.startsWith('http') ? item.favicon : null,
+        favicon: item.favicon || null,
+        homepage: item.homepage || null,
+        color: getRandomGradient(item.stationuuid || String(idx)),
+        desc: item.state ? `${item.state}, ${safeCountry}` : safeCountry
+      }, opts.extra);
     }
 
     function getCategoryFromTags(tags) {

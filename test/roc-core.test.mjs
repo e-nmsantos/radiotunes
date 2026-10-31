@@ -1,5 +1,5 @@
 // Testes do RocCore — espelham os 14 testes de Radio.roc
-// Executar com: node --test test/
+// Executar com: node --test "test/*.test.mjs"
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
