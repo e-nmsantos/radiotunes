@@ -15,7 +15,25 @@ jobs:
         with:
           node-version: 22
 
-      # Unitários (RocCore + i18n) e end-to-end num Chrome headless
+      # Unitários (RocCore + i18n + estrutura) e end-to-end num Chrome headless
       # (o runner ubuntu-latest já traz o google-chrome).
       - name: Testes
-        run: node --test "test/*.test.mjs"
+        run: >
+          node --test
+          --test-reporter=spec --test-reporter-destination=stdout
+          --test-reporter=tap --test-reporter-destination=test-results.tap
+          "test/*.test.mjs"
+
+      # Cada teste falhado vira uma anotação no GitHub (visível no commit/PR).
+      - name: Anotar falhas
+        if: failure()
+        run: |
+          node -e '
+            const lines = require("fs").readFileSync("test-results.tap", "utf8").split("\n");
+            for (let i = 0; i < lines.length; i++) {
+              const m = /^\s*not ok \d+ - (.*)$/.exec(lines[i]);
+              if (!m) continue;
+              const detail = lines.slice(i + 1, i + 40).join(" ").replace(/\s+/g, " ");
+              const err = (/error: (.*?)(code:|stack:|\.\.\.)/.exec(detail) || [, detail])[1];
+              console.log(`::error title=${m[1].replace(/[:,]/g, " ")}::${err.slice(0, 900)}`);
+            }'
