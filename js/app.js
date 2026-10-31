@@ -1,6 +1,43 @@
 
 
+    // Escapa texto externo (radio-browser, metadados ICY, nomes do utilizador)
+    // antes de o inserir em HTML — impede injeção de código via nomes/títulos.
+    function escapeHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // IDs vão parar a handlers inline (onclick="...('id')"): só caracteres seguros.
+    function safeId(value) {
+      return String(value == null ? '' : value).replace(/[^\w-]/g, '');
+    }
+
+    // URLs de imagem: apenas http(s)/data, escapados para atributo.
+    function safeImageUrl(url) {
+      const u = String(url || '').trim();
+      return /^(https?:|data:image\/)/i.test(u) ? escapeHtml(u) : '';
+    }
+
+    // encodeURIComponent não codifica ' ( ) — necessário dentro de onclick='...'.
+    function encodeForInlineJs(value) {
+      return encodeURIComponent(String(value == null ? '' : value)).replace(/['()*!]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+    }
+
+    // Literal JS seguro para handlers inline: onclick="fn(${jsArg(x)})".
+    function jsArg(value) {
+      return escapeHtml(JSON.stringify(String(value == null ? '' : value)));
+    }
+
     let currentLang = localStorage.getItem('roc_user_lang') || 'pt';
+
+    // Tradução com interpolação: t('loadingCity', { city }) → "A carregar ... {city}".
+    function t(key, vars) {
+      const dict = I18N[currentLang] || I18N.pt;
+      let str = dict[key] != null ? dict[key] : (I18N.pt[key] != null ? I18N.pt[key] : key);
+      if (vars) for (const k in vars) str = str.split('{' + k + '}').join(vars[k]);
+      return str;
+    }
 
     function changeLanguage(lang) {
       currentLang = lang;
@@ -14,6 +51,7 @@
           el.textContent = dict[key];
         }
       });
+      refreshViewHeader(currentView);
       render();
     }
 
@@ -246,7 +284,7 @@
     let quotaWarned = false;
     function persist(key, value) {
       try {
-        persist(key, value);
+        localStorage.setItem(key, value);
         return true;
       } catch (e) {
         console.warn('Persistência falhou (quota?):', key, e);
@@ -460,7 +498,7 @@
       toast.className = `toast-slide p-3.5 rounded-2xl border shadow-2xl backdrop-blur-md flex items-center gap-3 text-xs pointer-events-auto transition-all ${bgClass}`;
       toast.innerHTML = `
         <span class="text-xl flex-shrink-0">${icon}</span>
-        <span class="flex-1 font-medium leading-tight">${msg}</span>
+        <span class="flex-1 font-medium leading-tight">${escapeHtml(msg)}</span>
       `;
       container.appendChild(toast);
       setTimeout(() => {
@@ -482,16 +520,16 @@
           const count = cat.id === 'Todas' ? all.length : all.filter(s => s.category === cat.id).length;
           return `
             <button 
-              onclick="selectCategory('${cat.id}')" 
-              id="cat-${cat.id}" 
+              onclick="selectCategory(${jsArg(cat.id)})" 
+              id="cat-${escapeHtml(cat.id)}" 
               ondragover="handleDragOver(event)" 
               ondragleave="handleDragLeave(event)" 
-              ondrop="handleDropCategory(event, '${cat.id}')" 
+              ondrop="handleDropCategory(event, ${jsArg(cat.id)})" 
               class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium transition ${isSelected ? 'bg-cyan-500/20 text-cyan-400 font-bold border border-cyan-500/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}"
             >
               <span class="flex items-center gap-2 truncate">
                 <span>${cat.icon || '📁'}</span> 
-                <span class="truncate">${cat.name}</span>
+                <span class="truncate">${escapeHtml(cat.name)}</span>
               </span>
               <span class="text-[10px] ${isSelected ? 'bg-cyan-500/30 text-cyan-300' : 'bg-slate-800 text-slate-400'} px-2 py-0.5 rounded-full flex-shrink-0">${count}</span>
             </button>
@@ -504,15 +542,15 @@
           const isSelected = selectedCategory === cat.id;
           return `
             <button 
-              onclick="selectCategory('${cat.id}')" 
-              id="car-cat-${cat.id}" 
+              onclick="selectCategory(${jsArg(cat.id)})" 
+              id="car-cat-${escapeHtml(cat.id)}" 
               ondragover="handleDragOver(event)" 
               ondragleave="handleDragLeave(event)" 
-              ondrop="handleDropCategory(event, '${cat.id}')" 
+              ondrop="handleDropCategory(event, ${jsArg(cat.id)})" 
               class="cat-pill-btn px-3.5 py-1.5 rounded-xl font-medium border flex-shrink-0 transition flex items-center gap-1.5 ${isSelected ? 'bg-cyan-500 text-slate-950 font-bold border-cyan-400 shadow-md shadow-cyan-500/20' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white'}"
             >
               <span>${cat.icon || '📁'}</span>
-              <span>${cat.name}</span>
+              <span>${escapeHtml(cat.name)}</span>
             </button>
           `;
         }).join('');
@@ -606,8 +644,8 @@
         infoEl.innerHTML = `
           <span class="text-2xl">${station.flag || '📻'}</span>
           <div class="min-w-0 flex-1">
-            <h4 class="text-xs font-bold text-white truncate">${station.name}</h4>
-            <p class="text-[11px] text-slate-400">Categoria atual: <span class="text-cyan-400 font-semibold">${station.category || 'Música'}</span></p>
+            <h4 class="text-xs font-bold text-white truncate">${escapeHtml(station.name)}</h4>
+            <p class="text-[11px] text-slate-400">${t('currentCategory')}: <span class="text-cyan-400 font-semibold">${escapeHtml(station.category || 'Música')}</span></p>
           </div>
         `;
       }
@@ -615,9 +653,9 @@
       const listEl = document.getElementById('station-category-options-list');
       if (listEl) {
         listEl.innerHTML = userCategories.filter(c => c.id !== 'Todas').map(cat => `
-          <button onclick="assignCategoryToStation('${targetStationForCategory}', '${cat.id}')" class="w-full p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 flex items-center justify-between text-xs transition">
-            <span class="flex items-center gap-2 font-medium text-white"><span>${cat.icon || '📁'}</span> <span>${cat.name}</span></span>
-            <span class="text-cyan-400 font-bold text-xs">Mover ➔</span>
+          <button onclick="assignCategoryToStation(${jsArg(targetStationForCategory)}, ${jsArg(cat.id)})" class="w-full p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 flex items-center justify-between text-xs transition">
+            <span class="flex items-center gap-2 font-medium text-white"><span>${cat.icon || '📁'}</span> <span>${escapeHtml(cat.name)}</span></span>
+            <span class="text-cyan-400 font-bold text-xs">${t('moveTo')}</span>
           </button>
         `).join('');
       }
@@ -829,10 +867,10 @@
       toast.innerHTML = `
         <div class="flex items-center gap-2.5 min-w-0 flex-1">
           <span class="text-xl flex-shrink-0">🗑️</span>
-          <span class="font-bold truncate text-slate-200">Rádio <span class="text-white font-extrabold">"${stationName}"</span> eliminada!</span>
+          <span class="font-bold truncate text-slate-200">${t('stationDeleted', { name: `<span class="text-white font-extrabold">"${escapeHtml(stationName)}"</span>` })}</span>
         </div>
         <button onclick="undoLastDelete(this)" class="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition active:scale-95 flex-shrink-0 shadow-md shadow-cyan-500/20">
-          ↩️ Desfazer
+          ↩️ ${t('undo')}
         </button>
       `;
       container.appendChild(toast);
@@ -1730,37 +1768,42 @@
         playlistsContainer.classList.remove('hidden');
         renderPlaylistsView();
       }
-      
+
+      refreshViewHeader(view);
+      render();
+    }
+
+    // Título da secção + banner explicativo da vista atual (no idioma ativo).
+    function refreshViewHeader(view) {
       const titleEl = document.getElementById('section-title');
+      if (!titleEl) return;
       const dict = I18N[currentLang] || I18N.pt;
       if (view === 'favorites') {
         titleEl.innerHTML = `<span>⭐</span> ${dict.myFavorites}`;
-        updateExplainerBanner('⭐', 'Os Teus Favoritos Rápidos', 'As tuas rádios de eleição marcadas com estrela para acesso imediato.');
+        updateExplainerBanner('⭐', t('exFavTitle'), t('exFavDesc'));
       } else if (view === 'library') {
         titleEl.innerHTML = `<span>📌</span> ${dict.myLibrary}`;
-        updateExplainerBanner('📌', 'A Tua Biblioteca Pessoal', 'O teu acervo completo de rádios guardadas, personalizadas e organizadas por ti.');
+        updateExplainerBanner('📌', t('exLibTitle'), t('exLibDesc'));
       } else if (view === 'recents') {
         titleEl.innerHTML = `<span>🕒</span> ${dict.recentlyPlayed}`;
-        updateExplainerBanner('🕒', 'Histórico de Reprodução Recente', 'As últimas estações que sintonizaste para retomares de onde paraste.');
+        updateExplainerBanner('🕒', t('exRecTitle'), t('exRecDesc'));
       } else if (view === 'topworld') {
         titleEl.innerHTML = `<span>🌍</span> ${dict.top50World}`;
-        updateExplainerBanner('🌍', 'Top 50 Rádios Mundiais', 'As estações mais populares e icónicas de todos os continentes.');
+        updateExplainerBanner('🌍', t('exTopTitle'), t('exTopDesc'));
       } else if (view === 'playlists') {
-        titleEl.innerHTML = `<span>📂</span> Playlists Temáticas`;
-        updateExplainerBanner('📂', 'As Tuas Pastas & Playlists', 'Cria agrupamentos personalizados de rádios para momentos específicos.');
+        titleEl.innerHTML = `<span>📂</span> ${t('viewPlaylistsTitle')}`;
+        updateExplainerBanner('📂', t('exPlTitle'), t('exPlDesc'));
       } else if (view === 'map') {
-        titleEl.innerHTML = `<span>🗺️</span> Mapa Interativo Mundial`;
-        updateExplainerBanner('🗺️', 'Exploração Geográfica Global', 'Navega pelo globo e clica nas cidades para ouvir as emissões locais.');
+        titleEl.innerHTML = `<span>🗺️</span> ${t('viewMapTitle')}`;
+        updateExplainerBanner('🗺️', t('exMapTitle'), t('exMapDesc'));
       } else {
         titleEl.innerHTML = `<span>🔥</span> ${dict.popularStations}`;
-        if (selectedCategory && selectedCategory !== 'all') {
-          updateExplainerBanner('🏷️', `Género: ${selectedCategory}`, `Estações classificadas no género musical ou tema "${selectedCategory}".`);
+        if (selectedCategory && selectedCategory !== 'all' && selectedCategory !== 'Todas') {
+          updateExplainerBanner('🏷️', t('exGenreTitle', { cat: selectedCategory }), t('exGenreDesc', { cat: selectedCategory }));
         } else {
-          updateExplainerBanner('📻', 'Catálogo Geral de Estações', 'Explora todas as rádios disponíveis por país, género musical ou pesquisa.');
+          updateExplainerBanner('📻', t('exAllTitle'), t('exAllDesc'));
         }
       }
-      
-      render();
     }
 
     // Playlists Feature Engine
@@ -1777,7 +1820,7 @@
               <button onclick="deletePlaylist('${pl.id}')" class="text-slate-500 hover:text-red-400 text-xs">🗑️</button>
             </div>
             <div>
-              <h3 class="text-base font-black text-white">${pl.name}</h3>
+              <h3 class="text-base font-black text-white">${escapeHtml(pl.name)}</h3>
               <p class="text-xs text-slate-400">${count} estações adicionadas</p>
             </div>
             <div class="flex gap-2 pt-2">
@@ -1949,7 +1992,7 @@
       const customIcon = L.divIcon({
         className: 'custom-radio-pin',
         html: `
-          <div class="radio-garden-dot ${isCurrent ? 'is-active' : ''}" title="${st.name} (${st.city || st.country})">
+          <div class="radio-garden-dot ${isCurrent ? 'is-active' : ''}" title="${escapeHtml(st.name)} (${escapeHtml(st.city || st.country)})">
             <div class="dot-ring"></div>
             <div class="dot-core"></div>
           </div>
@@ -1963,9 +2006,9 @@
       marker.stationId = String(st.id);
       marker.stationData = st;
 
-      const safeName = (st.name || 'Rádio').replace(/"/g, '&quot;');
-      const safeCity = (st.city ? st.city + ', ' : '') + (st.country || 'Mundo');
-      const safeGenre = (st.genre || st.category || 'Música').replace(/"/g, '&quot;');
+      const safeName = escapeHtml(st.name || 'Rádio');
+      const safeCity = escapeHtml((st.city ? st.city + ', ' : '') + (st.country || 'Mundo'));
+      const safeGenre = escapeHtml(st.genre || st.category || 'Música');
 
       marker.bindPopup(`
         <div class="p-2 space-y-2.5 text-slate-100 min-w-[220px]">
@@ -1978,11 +2021,11 @@
             </div>
           </div>
           <div class="flex items-center justify-between text-[10px] text-slate-400">
-            <span>🏷️ ${st.category || 'Música'}</span>
+            <span>🏷️ ${escapeHtml(st.category || 'Música')}</span>
             <span class="font-mono text-cyan-400 font-bold">${st.bit_rate || 128} kbps</span>
           </div>
           <button onclick="selectStation('${st.id}', true)" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-xs shadow-lg transition active:scale-95 flex items-center justify-center gap-1.5">
-            <span>▶️</span> <span>Ouvir em Direto</span>
+            <span>▶️</span> <span>${t('listenLive')}</span>
           </button>
         </div>
       `);
@@ -2066,7 +2109,7 @@
         const lon = parseFloat(item.geo_long);
 
         if (!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0 && (item.url_resolved || item.url)) {
-          const sid = `geo_${item.stationuuid || item.changeuuid || (Date.now() + '_' + idx)}`;
+          const sid = `geo_${safeId(item.stationuuid || item.changeuuid) || (Date.now() + '_' + idx)}`;
           if (!seenIds.has(sid)) {
             seenIds.add(sid);
             const cat = getCategoryFromTags(item.tags || item.name || "");
@@ -2149,7 +2192,7 @@
 
       const countEl = document.getElementById('map-visible-count');
       if (countEl) {
-        countEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> A sintonizar rádios locais nesta área...`;
+        countEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> ${t('loadingLocal')}`;
       }
 
       const center = bounds.getCenter();
@@ -2189,7 +2232,7 @@
 
       const countEl = document.getElementById('map-visible-count');
       if (countEl) {
-        countEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span> A carregar todas as rádios de ${cleanCity}...`;
+        countEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span> ${escapeHtml(t('loadingCity', { city: cleanCity }))}`;
       }
 
       try {
@@ -2244,7 +2287,7 @@
         }
 
         if (!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0 && (item.url_resolved || item.url)) {
-          const sid = `geo_${item.stationuuid || item.changeuuid || (Date.now() + '_' + idx)}`;
+          const sid = `geo_${safeId(item.stationuuid || item.changeuuid) || (Date.now() + '_' + idx)}`;
           if (!seenIds.has(sid)) {
             seenIds.add(sid);
             const cat = getCategoryFromTags(item.tags || item.name || "");
@@ -2328,9 +2371,9 @@
 
       container.innerHTML = inViewport.map(s => {
         const isCurrent = String(s.id) === String(currentStationId);
-        const safeName = (s.name || 'Rádio').replace(/"/g, '&quot;');
-        const safeCity = (s.city || s.country || 'Global').replace(/"/g, '&quot;');
-        const safeGenre = (s.genre || s.category || 'Música').replace(/"/g, '&quot;');
+        const safeName = escapeHtml(s.name || 'Rádio');
+        const safeCity = escapeHtml(s.city || s.country || 'Global');
+        const safeGenre = escapeHtml(s.genre || s.category || 'Música');
 
         return `
           <div class="p-3 rounded-2xl bg-slate-950/80 border ${isCurrent ? 'border-cyan-400 shadow-md shadow-cyan-500/20' : 'border-slate-800 hover:border-slate-700'} flex flex-col justify-between gap-2.5 transition">
@@ -2393,9 +2436,9 @@
 
       container.innerHTML = filtered.map(s => {
         const isCurrent = String(s.id) === String(currentStationId);
-        const safeName = (s.name || 'Rádio').replace(/"/g, '&quot;');
-        const safeCity = (s.city || s.country || 'Global').replace(/"/g, '&quot;');
-        const safeGenre = (s.genre || s.category || 'Música').replace(/"/g, '&quot;');
+        const safeName = escapeHtml(s.name || 'Rádio');
+        const safeCity = escapeHtml(s.city || s.country || 'Global');
+        const safeGenre = escapeHtml(s.genre || s.category || 'Música');
 
         return `
           <div class="p-3 rounded-2xl bg-slate-950/80 border ${isCurrent ? 'border-cyan-400 shadow-md shadow-cyan-500/20' : 'border-slate-800 hover:border-slate-700'} flex flex-col justify-between gap-2.5 transition">
@@ -2628,7 +2671,7 @@
       renderCategories();
       setView('home');
       if (cat !== 'all') {
-        updateExplainerBanner('🏷️', `Género: ${cat}`, `Estações classificadas no género musical ou tema "${cat}".`);
+        updateExplainerBanner('🏷️', t('exGenreTitle', { cat }), t('exGenreDesc', { cat }));
       }
       render();
     }
@@ -2705,7 +2748,7 @@
             const flag = getFlagEmoji(item.countrycode || "");
             const safeCountry = item.country || (item.countrycode ? item.countrycode.toUpperCase() : "Global");
             return {
-              id: `rb_${item.stationuuid || idx}`,
+              id: `rb_${safeId(item.stationuuid) || idx}`,
               name: (item.name || 'Rádio Sem Nome').trim(),
               stream_url: item.url_resolved || item.url,
               category: cat,
@@ -2829,9 +2872,9 @@
           const isCurrent = String(s.id) === String(currentStationId);
           const isFav = userFavorites.includes(String(s.id));
           const isInLib = userLibrary.includes(String(s.id));
-          const safeName = (s.name || 'Rádio').replace(/"/g, '&quot;');
-          const safeGenre = (s.genre || s.desc || 'Música & Rádio').replace(/"/g, '&quot;');
-          const safeCountry = (s.country || 'Mundo').replace(/"/g, '&quot;');
+          const safeName = escapeHtml(s.name || 'Rádio');
+          const safeGenre = escapeHtml(s.genre || s.desc || 'Música & Rádio');
+          const safeCountry = escapeHtml(s.country || 'Mundo');
           const isUnhealthy = unhealthyStationIds.has(String(s.id));
 
           return `
@@ -2846,7 +2889,7 @@
               <!-- Cover Header -->
               <div class="flex items-start justify-between gap-3 mb-3">
                 <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition shadow-md relative">
-                  ${s.image ? `<img src="${s.image}" data-roc-station="${s.id}" alt="${safeName}" loading="lazy" decoding="async" class="w-full h-full object-cover" onerror="rocCardLogoFallback(this)" />` : `<img src="${stationMonogram(s)}" alt="${safeName}" loading="lazy" decoding="async" class="w-full h-full object-cover" />`}
+                  ${safeImageUrl(s.image) ? `<img src="${safeImageUrl(s.image)}" data-roc-station="${s.id}" alt="${safeName}" loading="lazy" decoding="async" class="w-full h-full object-cover" onerror="rocCardLogoFallback(this)" />` : `<img src="${stationMonogram(s)}" alt="${safeName}" loading="lazy" decoding="async" class="w-full h-full object-cover" />`}
                 </div>
                 <div class="flex items-center gap-1">
                   <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
@@ -3013,7 +3056,7 @@ active_stations = [
           const flag = getFlagEmoji(item.countrycode || "");
           const safeCountry = item.country || (item.countrycode ? item.countrycode.toUpperCase() : "Global");
           return {
-            id: `rb_${item.stationuuid || idx}`,
+            id: `rb_${safeId(item.stationuuid) || idx}`,
             name: (item.name || 'Rádio Sem Nome').trim(),
             stream_url: item.url_resolved || item.url,
             category: cat,
@@ -3062,7 +3105,7 @@ active_stations = [
         const data = await RocStorage.cachedFetchJson('https://de1.api.radio-browser.info/json/stations/topclick/50');
         if (data && data.length > 0) {
           apiSearchResults = data.map((item, idx) => ({
-            id: `top_${item.stationuuid || idx}`,
+            id: `top_${safeId(item.stationuuid) || idx}`,
             name: item.name.trim(),
             stream_url: item.url_resolved || item.url,
             category: getCategoryFromTags(item.tags || ""),
@@ -3304,7 +3347,7 @@ active_stations = [
     function openAlarmModal() {
       const select = document.getElementById('alarm-station-select');
       const all = getAllStations();
-      select.innerHTML = all.map(s => `<option value="${s.id}" ${s.id === alarmSettings.stationId ? 'selected' : ''}>${s.name} (${s.country || 'Global'})</option>`).join('');
+      select.innerHTML = all.map(s => `<option value="${escapeHtml(s.id)}" ${s.id === alarmSettings.stationId ? 'selected' : ''}>${escapeHtml(s.name)} (${escapeHtml(s.country || 'Global')})</option>`).join('');
       document.getElementById('alarm-time-input').value = alarmSettings.time || '07:30';
       document.getElementById('alarm-toggle').checked = !!alarmSettings.enabled;
       document.getElementById('alarm-modal').classList.remove('hidden');
@@ -3363,7 +3406,7 @@ active_stations = [
     function openDVRModal() {
       const select = document.getElementById('dvr-station-select');
       const all = getAllStations();
-      select.innerHTML = all.map(s => `<option value="${s.id}" ${s.id === dvrSettings.stationId ? 'selected' : ''}>${s.name} (${s.country || 'Global'})</option>`).join('');
+      select.innerHTML = all.map(s => `<option value="${escapeHtml(s.id)}" ${s.id === dvrSettings.stationId ? 'selected' : ''}>${escapeHtml(s.name)} (${escapeHtml(s.country || 'Global')})</option>`).join('');
       document.getElementById('dvr-start-time').value = dvrSettings.time || '08:00';
       document.getElementById('dvr-duration').value = dvrSettings.duration || 30;
       document.getElementById('dvr-toggle').checked = !!dvrSettings.enabled;
@@ -3416,20 +3459,20 @@ active_stations = [
     function renderTrackHistoryList() {
       const container = document.getElementById('history-tracks-list');
       if (trackHistory.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500 py-4 text-center">Nenhuma música no histórico ainda.</p>`;
+        container.innerHTML = `<p class="text-xs text-slate-500 py-4 text-center">${t('noTrackHistory')}</p>`;
         return;
       }
       container.innerHTML = trackHistory.map(item => `
         <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
           <div class="min-w-0 flex-1 pr-2">
-            <h5 class="font-bold text-white truncate">${item.title}</h5>
-            <p class="text-[10px] text-slate-400">${item.artist} • ${item.time}</p>
+            <h5 class="font-bold text-white truncate">${escapeHtml(item.title)}</h5>
+            <p class="text-[10px] text-slate-400">${escapeHtml(item.artist)} • ${escapeHtml(item.time)}</p>
           </div>
           <div class="flex items-center gap-1.5 flex-shrink-0">
-            <button onclick="window.open('https://open.spotify.com/search/${encodeURIComponent(item.title)}', '_blank')" class="px-2 py-1 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-[10px] font-bold">
+            <button onclick="window.open('https://open.spotify.com/search/${encodeForInlineJs(item.title)}', '_blank')" class="px-2 py-1 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-[10px] font-bold">
               Spotify
             </button>
-            <button onclick="window.open('https://www.youtube.com/results?search_query=${encodeURIComponent(item.title)}', '_blank')" class="px-2 py-1 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[10px] font-bold">
+            <button onclick="window.open('https://www.youtube.com/results?search_query=${encodeForInlineJs(item.title)}', '_blank')" class="px-2 py-1 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[10px] font-bold">
               YouTube
             </button>
           </div>
@@ -3632,7 +3675,7 @@ active_stations = [
     function openAddModal() {
       const catSelect = document.getElementById('cust-cat');
       if (catSelect) {
-        catSelect.innerHTML = userCategories.filter(c => c.id !== 'Todas').map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        catSelect.innerHTML = userCategories.filter(c => c.id !== 'Todas').map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('');
       }
       document.getElementById('add-modal').classList.remove('hidden');
     }
@@ -3926,6 +3969,19 @@ active_stations = [
     if (stationParam) {
       currentStationId = stationParam;
     }
+
+    // Acessibilidade: botões só com ícone ganham nome acessível a partir do title
+    // (também nos cartões e listas gerados dinamicamente).
+    function labelIconButtons(root) {
+      root.querySelectorAll('button[title]:not([aria-label])').forEach(b => b.setAttribute('aria-label', b.getAttribute('title')));
+    }
+    labelIconButtons(document);
+    new MutationObserver(muts => {
+      for (const m of muts) {
+        for (const n of m.addedNodes) if (n.nodeType === 1) labelIconButtons(n.matches('button') ? n.parentNode || n : n);
+        if (m.type === 'attributes' && m.target.matches('button')) m.target.setAttribute('aria-label', m.target.getAttribute('title') || '');
+      }
+    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['title'] });
 
     // Initial load
     changeLanguage(currentLang);

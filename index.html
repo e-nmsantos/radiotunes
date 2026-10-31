@@ -14,6 +14,8 @@
 
   <!-- PWA Meta Tags -->
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <meta name="theme-color" content="#06b6d4">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,14 +23,14 @@
 
   <!-- Tailwind CSS compilado (css/tailwind.css; fonte css/tailwind.input.css) -->
   <link rel="stylesheet" href="css/tailwind.css">
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.7.4/dist/hls.min.js" integrity="sha384-p9vgU/7IYJWd3I4STrtqxqR/2cAQlhIX7D/HrTnIMEjjcUox165b7se7sxmm3zDg" crossorigin="anonymous"></script>
   
   <!-- Leaflet.js & MarkerCluster for Interactive World Radio Map -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" integrity="sha384-pmjIAcz2bAn0xukfxADbZIb3t8oRT9Sv0rvO+BR5Csr6Dhqq+nZs59P0pPKQJkEV" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" integrity="sha384-wgw+aLYNQ7dlhK47ZPK7FRACiq7ROZwgFNg0m04avm4CaXS+Z9Y7nMu8yNjBKYC+" crossorigin="anonymous" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" integrity="sha384-eXVCORTRlv4FUUgS/xmOyr66XBVraen8ATNLMESp92FKXLAMiKkerixTiBvXriZr" crossorigin="anonymous"></script>
 
   <style>
     /* Acessibilidade: indicação clara de foco por teclado */
@@ -1387,7 +1389,7 @@
 
       <div class="flex items-center gap-6">
         <div id="tv-digital-clock" class="text-2xl md:text-3xl font-mono font-black text-white tracking-widest">00:00:00</div>
-        <button onclick="closeTVMode()" class="p-2 rounded-2xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white text-xl">✕</button>
+        <button onclick="closeTVMode()" aria-label="Fechar modo TV" title="Fechar modo TV" class="p-2 rounded-2xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white text-xl">✕</button>
       </div>
     </div>
 
@@ -1578,7 +1580,7 @@
   <!-- Modal 13: Mobile Fullscreen Player Sheet -->
   <div id="mobile-player-sheet" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 hidden flex flex-col justify-between p-6 md:hidden">
     <div class="flex items-center justify-between">
-      <button onclick="closeMobileSheetPlayer()" class="p-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 active:scale-95 text-lg">✕</button>
+      <button onclick="closeMobileSheetPlayer()" aria-label="Fechar player" title="Fechar player" class="p-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 active:scale-95 text-lg">✕</button>
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
         <span class="text-xs font-black uppercase tracking-widest text-cyan-400">ROC WAVES</span>

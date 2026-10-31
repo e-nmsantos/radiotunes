@@ -1,5 +1,5 @@
 // Service Worker para Roc Waves / RadioTunes
-const CACHE_NAME = 'radiotunes-v22-live';
+const CACHE_NAME = 'radiotunes-v23-live';
 const APP_SHELL = [
   './',
   './index.html',
@@ -9,7 +9,10 @@ const APP_SHELL = [
   './js/i18n.js',
   './js/roc-core.js',
   './js/storage.js',
-  './manifest.json'
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/favicon-32.png'
 ];
 
 // Extensões servidas cache-first (com revalidação em background)

@@ -10,19 +10,86 @@
  *                   { "title": "Artista - Faixa" } para o "Now Playing" real.
  *
  * Utilização:
- *   node proxy/server.cjs            (porta 8787)
+ *   node proxy/server.cjs            (porta 8787, só neste PC)
+ *   node proxy/server.cjs --lan      (acessível na rede Wi-Fi — teste no telemóvel)
  *   PORT=9000 node proxy/server.cjs
+ *
+ * Segurança: o proxy recusa destinos em redes privadas/loopback (router,
+ * NAS, serviços locais), incluindo depois de redirecionamentos, para não
+ * poder ser usado por terceiros para aceder à tua rede.
  */
 'use strict';
 
 const http = require('http');
 const https = require('https');
+const dns = require('dns');
+const net = require('net');
 const { URL } = require('url');
 
 const PORT = Number(process.env.PORT) || 8787;
 const MAX_REDIRECTS = 5;
 const ICY_READ_TIMEOUT_MS = 8000;
 const UA = 'RocWaves/1.0 (radio proxy)';
+const LAN_MODE = process.argv.includes('--lan') || process.env.ROC_PROXY_LAN === '1';
+
+/** true para endereços que não são internet pública (loopback, LAN, link-local, CGNAT, multicast...). */
+function isPrivateAddress(ip) {
+  if (net.isIPv4(ip)) {
+    const [a, b] = ip.split('.').map(Number);
+    return a === 0 || a === 10 || a === 127 || a >= 224 ||
+      (a === 100 && b >= 64 && b <= 127) ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 198 && (b === 18 || b === 19));
+  }
+  if (net.isIPv6(ip)) {
+    const low = ip.toLowerCase();
+    const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(low);
+    if (mapped) return isPrivateAddress(mapped[1]);
+    return low === '::' || low === '::1' || low.startsWith('fc') || low.startsWith('fd') ||
+      low.startsWith('fe8') || low.startsWith('fe9') || low.startsWith('fea') || low.startsWith('feb') ||
+      low.startsWith('ff');
+  }
+  return true;
+}
+
+/** dns.lookup que recusa IPs privados — aplicado à ligação real (imune a DNS rebinding). */
+function safeLookup(hostname, options, cb) {
+  dns.lookup(hostname, { ...options, all: true }, (err, addrs) => {
+    if (err) return cb(err);
+    const bad = addrs.find((a) => isPrivateAddress(a.address));
+    if (bad) return cb(new Error('destino em rede privada bloqueado'));
+    if (options && options.all) return cb(null, addrs);
+    cb(null, addrs[0].address, addrs[0].family);
+  });
+}
+
+/** Verifica se o host de um URL resolve só para IPs públicos. */
+async function assertPublicHost(u) {
+  const host = u.hostname.replace(/^\[|\]$/g, '');
+  if (net.isIP(host)) {
+    if (isPrivateAddress(host)) throw new Error('destino em rede privada bloqueado');
+    return;
+  }
+  const addrs = await dns.promises.lookup(host, { all: true });
+  if (!addrs.length || addrs.some((a) => isPrivateAddress(a.address))) {
+    throw new Error('destino em rede privada bloqueado');
+  }
+}
+
+/** fetch() com redirecionamentos manuais, validando cada salto contra redes privadas. */
+async function safeFetch(url, opts, redirectsLeft = MAX_REDIRECTS) {
+  const u = new URL(url);
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error('protocolo inválido');
+  await assertPublicHost(u);
+  const res = await fetch(u, { ...opts, redirect: 'manual' });
+  if ([301, 302, 303, 307, 308].includes(res.status) && res.headers.get('location')) {
+    if (redirectsLeft <= 0) throw new Error('demasiados redirecionamentos');
+    return safeFetch(new URL(res.headers.get('location'), u).href, opts, redirectsLeft - 1);
+  }
+  return res;
+}
 
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -37,6 +104,8 @@ function parseTarget(reqUrl) {
   let target;
   try { target = new URL(raw); } catch (e) { return null; }
   if (target.protocol !== 'http:' && target.protocol !== 'https:') return null;
+  const host = target.hostname.replace(/^\[|\]$/g, '');
+  if (net.isIP(host) && isPrivateAddress(host)) return null;
   return target;
 }
 
@@ -50,12 +119,14 @@ function fetchStream(target, extraHeaders, redirectsLeft, cb) {
       ...extraHeaders,
     },
     timeout: 10000,
+    lookup: safeLookup,
   }, (res) => {
     // Seguir redirecionamentos manualmente (http não segue sozinho)
     if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location && redirectsLeft > 0) {
       res.resume();
       try {
         const next = new URL(res.headers.location, target);
+        if (next.protocol !== 'http:' && next.protocol !== 'https:') return cb(new Error('redirect inválido'));
         return fetchStream(next, extraHeaders, redirectsLeft - 1, cb);
       } catch (e) {
         return cb(new Error('redirect inválido'));
@@ -231,10 +302,9 @@ function collectUrls(text, into) {
 }
 
 async function fetchText(url, timeoutMs) {
-  const res = await fetch(url, {
+  const res = await safeFetch(url, {
     headers: { 'User-Agent': UA, 'Accept': '*/*' },
     signal: AbortSignal.timeout(timeoutMs),
-    redirect: 'follow',
   });
   if (!res.ok) return null;
   return res.text();
@@ -242,10 +312,9 @@ async function fetchText(url, timeoutMs) {
 
 async function quickStreamProbe(url) {
   try {
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
       headers: { 'User-Agent': UA, 'Range': 'bytes=0-1024', 'Accept': '*/*', 'Icy-MetaData': '1' },
       signal: AbortSignal.timeout(6000),
-      redirect: 'follow',
     });
     if (res.status !== 200 && res.status !== 206) return null;
     const ct = (res.headers.get('content-type') || '').toLowerCase();
@@ -267,7 +336,7 @@ async function supabaseCandidates(jsText, into) {
   const headers = { apikey: key[0], Authorization: 'Bearer ' + key[0] };
   for (const table of ['site_settings', 'settings', 'config', 'streams', 'stations', 'radio_settings', 'radio']) {
     try {
-      const res = await fetch(`https://${proj[1]}.supabase.co/rest/v1/${table}?select=*&limit=50`, {
+      const res = await safeFetch(`https://${proj[1]}.supabase.co/rest/v1/${table}?select=*&limit=50`, {
         headers, signal: AbortSignal.timeout(6000),
       });
       if (!res.ok) continue;
@@ -355,9 +424,10 @@ const server = http.createServer((req, res) => {
   res.end('Roc Waves proxy: usar /ping, /stream?url=..., /icy?url=..., /extract?url=...');
 });
 
-// 0.0.0.0: permite testar a app num telemóvel na mesma rede Wi-Fi
-// (a app deteta o proxy via http://<ip-do-pc>:8787 automaticamente).
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🎧 Roc Waves proxy ativo em http://localhost:${PORT}`);
+// Por omissão só aceita ligações deste PC. Com --lan escuta em 0.0.0.0 para
+// testar no telemóvel na mesma rede Wi-Fi (a app deteta http://<ip-do-pc>:8787).
+const HOST = LAN_MODE ? '0.0.0.0' : '127.0.0.1';
+server.listen(PORT, HOST, () => {
+  console.log(`🎧 Roc Waves proxy ativo em http://localhost:${PORT}${LAN_MODE ? ' (modo rede local: acessível na Wi-Fi)' : ''}`);
   console.log('   Endpoints: /ping | /stream?url= | /icy?url= | /extract?url=<site>');
 });
