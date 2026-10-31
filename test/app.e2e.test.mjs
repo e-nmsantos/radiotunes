@@ -157,14 +157,95 @@ test('XSS: título ICY malicioso no histórico não executa código', { skip }, 
     trackHistory = [{ title: "x'); window.__pwned=true; ('<img src=x onerror=\\"window.__pwned=true\\">", artist: '<i>a</i>', time: '1' }];
     renderTrackHistoryList();
     await new Promise(r => setTimeout(r, 300));
-    const handlers = [...document.querySelectorAll('button[onclick*="spotify"], button[onclick*="youtube"]')].map(b => b.getAttribute('onclick'));
+    const opened = [];
+    const realOpen = window.open;
+    window.open = (url) => { opened.push(url); return null; };
+    document.querySelectorAll('[data-action="openTrackSearch"]').forEach(b => b.click());
+    window.open = realOpen;
     trackHistory = saved;
     renderTrackHistoryList();
-    return { pwned: window.__pwned, handlers };
+    return { pwned: window.__pwned, opened };
   })()`);
   assert.equal(out.pwned, false);
-  assert.ok(out.handlers.length >= 2, 'botões Spotify/YouTube deviam existir');
-  for (const h of out.handlers) assert.ok(!h.includes("x')"), 'o título não pode sair da string JS: ' + h);
+  assert.equal(out.opened.length, 2, 'botões Spotify/YouTube deviam abrir a pesquisa');
+  // o título chega ao URL só como dado codificado
+  assert.ok(out.opened[0].startsWith("https://open.spotify.com/search/x')%3B%20window"), out.opened[0]);
+  assert.ok(out.opened[1].startsWith("https://www.youtube.com/results?search_query=x')%3B%20window"), out.opened[1]);
+});
+
+test('nenhum template injeta dados em handlers inline (onclick="...${...}")', async () => {
+  const src = fs.readFileSync(path.join(ROOT, 'js/app.js'), 'utf8');
+  const offenders = src.match(/\bon[a-z]+="[^"]*\$\{[^"]*"/g) || [];
+  assert.deepEqual(offenders, []);
+});
+
+test('delegação: cartão, botões do cartão e popup do mapa funcionam', { skip }, async () => {
+  const out = await evaluate(`(async () => {
+    setView('home');
+    await new Promise(r => setTimeout(r, 300));
+    const card = document.querySelectorAll('.station-card')[1];
+    const id = JSON.parse(card.dataset.args)[0];
+    const favBefore = userFavorites.includes(String(id));
+    card.querySelector('[data-action="handleCardFavClick"]').click();
+    const favAfter = userFavorites.includes(String(id));
+    const stationBefore = currentStationId;
+    card.querySelector('[data-action="handleCardFavClick"]').click(); // repõe
+    const stillSame = String(currentStationId) === String(stationBefore); // o botão não pode tocar a rádio
+    lastPlayIntent = false;
+    const realPlay = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = () => Promise.resolve();
+    // o clique na estrela redesenha a grelha: voltar a obter o cartão
+    const freshCard = [...document.querySelectorAll('.station-card')].find(c => JSON.parse(c.dataset.args)[0] === id);
+    freshCard.click();
+    const selected = String(currentStationId) === String(id);
+    // popup do mapa (Leaflet trava a propagação de cliques nos popups)
+    const st = getAllStations().find(s => s.lat != null && s.lon != null && String(s.id) !== String(id));
+    const holder = document.createElement('div');
+    holder.innerHTML = '<button ' + uiAction('selectStation', st.id, true) + '>x</button>';
+    document.body.appendChild(holder);
+    holder.querySelector('button').click();
+    holder.remove();
+    const viaPopup = String(currentStationId) === String(st.id);
+    HTMLMediaElement.prototype.play = realPlay;
+    return { toggled: favBefore !== favAfter, stillSame, selected, viaPopup };
+  })()`);
+  assert.deepEqual(out, { toggled: true, stillSame: true, selected: true, viaPopup: true });
+});
+
+test('delegação: botão "Ouvir" num popup real do mapa (Leaflet) sintoniza a rádio', { skip }, async () => {
+  await evaluate(`setView('map')`);
+  await waitFor(`typeof leafletMap !== 'undefined' && leafletMap && mapMarkers.length > 0`);
+  const out = await evaluate(`(async () => {
+    const marker = mapMarkers.find(m => String(m.stationId) !== String(currentStationId));
+    leafletMap.addLayer(marker); // fora do cluster, para o popup poder abrir
+    marker.openPopup();
+    await new Promise(r => setTimeout(r, 300));
+    const btn = document.querySelector('.leaflet-popup [data-action="selectStation"]');
+    const realPlay = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = () => Promise.resolve();
+    btn.click();
+    HTMLMediaElement.prototype.play = realPlay;
+    const ok = String(currentStationId) === String(marker.stationId);
+    leafletMap.closePopup();
+    leafletMap.removeLayer(marker);
+    setView('home');
+    return { hasButton: !!btn, ok };
+  })()`);
+  assert.deepEqual(out, { hasButton: true, ok: true });
+});
+
+test('delegação: largar um cartão numa categoria muda a categoria da rádio', { skip }, async () => {
+  const out = await evaluate(`(() => {
+    const card = document.querySelectorAll('.station-card')[0];
+    const id = JSON.parse(card.dataset.args)[0];
+    const target = document.querySelector('[data-drop-category="Rock"]');
+    const dt = new DataTransfer();
+    card.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt }));
+    target.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
+    const st = getAllStations().find(s => String(s.id) === String(id));
+    return st && st.category;
+  })()`);
+  assert.equal(out, 'Rock');
 });
 
 test('toasts escapam o texto', { skip }, async () => {

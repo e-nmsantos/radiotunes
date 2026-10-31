@@ -8,7 +8,7 @@
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
-    // IDs vão parar a handlers inline (onclick="...('id')"): só caracteres seguros.
+    // IDs de fontes externas: só caracteres seguros (vão para atributos e seletores).
     function safeId(value) {
       return String(value == null ? '' : value).replace(/[^\w-]/g, '');
     }
@@ -19,14 +19,55 @@
       return /^(https?:|data:image\/)/i.test(u) ? escapeHtml(u) : '';
     }
 
-    // encodeURIComponent não codifica ' ( ) — necessário dentro de onclick='...'.
-    function encodeForInlineJs(value) {
-      return encodeURIComponent(String(value == null ? '' : value)).replace(/['()*!]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+    // ===================== Delegação de eventos =====================
+    // Os templates dinâmicos não usam onclick="fn('valor')": declaram
+    // ${uiAction('fn', valor)} → data-action="fn" data-args="[json]".
+    // Os argumentos são DADOS (JSON), nunca código: um nome de rádio ou
+    // título malicioso não tem como executar nada. Só as ações desta lista
+    // podem ser chamadas; o valor indica se recebem o evento no fim.
+    const UI_ACTIONS = {
+      selectCategory: false, assignCategoryToStation: false,
+      deletePlaylist: false, playPlaylistFirstStation: false,
+      selectStation: false, flyToStationOnMap: false, openTrackSearch: false,
+      handleCardCategoryClick: true, handleCardLibraryClick: true,
+      handleCardFavClick: true, handleCardDeleteClick: true,
+    };
+
+    function uiAction(name, ...args) {
+      return `data-action="${name}" data-args="${escapeHtml(JSON.stringify(args))}"`;
     }
 
-    // Literal JS seguro para handlers inline: onclick="fn(${jsArg(x)})".
-    function jsArg(value) {
-      return escapeHtml(JSON.stringify(String(value == null ? '' : value)));
+    function runUiAction(e) {
+      if (e.__rocHandled) return;
+      const el = e.target.closest && e.target.closest('[data-action]');
+      if (!el || !Object.prototype.hasOwnProperty.call(UI_ACTIONS, el.dataset.action)) return;
+      const fn = window[el.dataset.action];
+      if (typeof fn !== 'function') return;
+      let args;
+      try { args = JSON.parse(el.dataset.args || '[]'); } catch (err) { return; }
+      if (!Array.isArray(args)) return;
+      e.__rocHandled = true;
+      if (UI_ACTIONS[el.dataset.action]) args.push(e);
+      fn(...args);
+    }
+    document.addEventListener('click', runUiAction);
+
+    // Arrastar cartões para categorias (os IDs vêm de data-*, não de código).
+    document.addEventListener('dragstart', (e) => {
+      const el = e.target.closest && e.target.closest('[data-drag-station]');
+      if (el) handleDragStart(e, el.dataset.dragStation);
+    });
+    document.addEventListener('drop', (e) => {
+      const el = e.target.closest && e.target.closest('[data-drop-category]');
+      if (el) handleDropCategory(e, el.dataset.dropCategory, el);
+    });
+
+    function openTrackSearch(service, title) {
+      const q = encodeURIComponent(title || '');
+      const url = service === 'youtube'
+        ? `https://www.youtube.com/results?search_query=${q}`
+        : `https://open.spotify.com/search/${q}`;
+      window.open(url, '_blank', 'noopener');
     }
 
     let currentLang = localStorage.getItem('roc_user_lang') || 'pt';
@@ -522,11 +563,11 @@
           const count = cat.id === 'Todas' ? all.length : all.filter(s => s.category === cat.id).length;
           return `
             <button 
-              onclick="selectCategory(${jsArg(cat.id)})" 
+              ${uiAction('selectCategory', cat.id)} 
               id="cat-${escapeHtml(cat.id)}" 
               ondragover="handleDragOver(event)" 
               ondragleave="handleDragLeave(event)" 
-              ondrop="handleDropCategory(event, ${jsArg(cat.id)})" 
+              data-drop-category="${escapeHtml(cat.id)}" 
               class="cat-btn w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium transition ${isSelected ? 'bg-cyan-500/20 text-cyan-400 font-bold border border-cyan-500/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}"
             >
               <span class="flex items-center gap-2 truncate">
@@ -544,11 +585,11 @@
           const isSelected = selectedCategory === cat.id;
           return `
             <button 
-              onclick="selectCategory(${jsArg(cat.id)})" 
+              ${uiAction('selectCategory', cat.id)} 
               id="car-cat-${escapeHtml(cat.id)}" 
               ondragover="handleDragOver(event)" 
               ondragleave="handleDragLeave(event)" 
-              ondrop="handleDropCategory(event, ${jsArg(cat.id)})" 
+              data-drop-category="${escapeHtml(cat.id)}" 
               class="cat-pill-btn px-3.5 py-1.5 rounded-xl font-medium border flex-shrink-0 transition flex items-center gap-1.5 ${isSelected ? 'bg-cyan-500 text-slate-950 font-bold border-cyan-400 shadow-md shadow-cyan-500/20' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white'}"
             >
               <span>${cat.icon || '📁'}</span>
@@ -624,9 +665,8 @@
       target.classList.remove('drag-target-active');
     }
 
-    function handleDropCategory(e, catId) {
+    function handleDropCategory(e, catId, target = e.currentTarget) {
       e.preventDefault();
-      const target = e.currentTarget;
       target.classList.remove('drag-target-active');
       const stationId = e.dataTransfer.getData('text/plain') || draggedStationId;
       if (!stationId || catId === 'Todas') return;
@@ -655,7 +695,7 @@
       const listEl = document.getElementById('station-category-options-list');
       if (listEl) {
         listEl.innerHTML = userCategories.filter(c => c.id !== 'Todas').map(cat => `
-          <button onclick="assignCategoryToStation(${jsArg(targetStationForCategory)}, ${jsArg(cat.id)})" class="w-full p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 flex items-center justify-between text-xs transition">
+          <button ${uiAction('assignCategoryToStation', targetStationForCategory, cat.id)} class="w-full p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 flex items-center justify-between text-xs transition">
             <span class="flex items-center gap-2 font-medium text-white"><span>${cat.icon || '📁'}</span> <span>${escapeHtml(cat.name)}</span></span>
             <span class="text-cyan-400 font-bold text-xs">${t('moveTo')}</span>
           </button>
@@ -1817,15 +1857,15 @@
           <div class="p-5 rounded-3xl bg-slate-900 border border-slate-800 hover:border-cyan-500/40 transition space-y-3">
             <div class="flex items-center justify-between">
               <span class="text-3xl">${pl.icon || '📂'}</span>
-              <button onclick="deletePlaylist('${pl.id}')" class="text-slate-500 hover:text-red-400 text-xs">🗑️</button>
+              <button ${uiAction('deletePlaylist', pl.id)} class="text-slate-500 hover:text-red-400 text-xs" title="${escapeHtml(t('deletePlaylist'))}">🗑️</button>
             </div>
             <div>
               <h3 class="text-base font-black text-white">${escapeHtml(pl.name)}</h3>
-              <p class="text-xs text-slate-400">${count} estações adicionadas</p>
+              <p class="text-xs text-slate-400">${escapeHtml(t('playlistCount', { count }))}</p>
             </div>
             <div class="flex gap-2 pt-2">
-              <button onclick="playPlaylistFirstStation('${pl.id}')" class="flex-1 py-2 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition">
-                ▶️ Tocar Playlist
+              <button ${uiAction('playPlaylistFirstStation', pl.id)} class="flex-1 py-2 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition">
+                ▶️ ${escapeHtml(t('playPlaylist'))}
               </button>
             </div>
           </div>
@@ -2024,7 +2064,7 @@
             <span>🏷️ ${escapeHtml(st.category || 'Música')}</span>
             <span class="font-mono text-cyan-400 font-bold">${st.bit_rate || 128} kbps</span>
           </div>
-          <button onclick="selectStation('${st.id}', true)" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-xs shadow-lg transition active:scale-95 flex items-center justify-center gap-1.5">
+          <button ${uiAction('selectStation', st.id, true)} class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-xs shadow-lg transition active:scale-95 flex items-center justify-center gap-1.5">
             <span>▶️</span> <span>${t('listenLive')}</span>
           </button>
         </div>
@@ -2340,8 +2380,8 @@
 
             <p class="text-[10px] text-slate-400 truncate">${safeGenre}</p>
 
-            <button onclick="flyToStationOnMap('${s.id}')" class="w-full py-1.5 px-3 rounded-xl bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 font-bold text-[11px] transition active:scale-95 flex items-center justify-center gap-1.5">
-              <span>✈️</span> <span>Sintonizar & Voar</span>
+            <button ${uiAction('flyToStationOnMap', s.id)} class="w-full py-1.5 px-3 rounded-xl bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 font-bold text-[11px] transition active:scale-95 flex items-center justify-center gap-1.5">
+              <span>✈️</span> <span>${escapeHtml(t('tuneAndFly'))}</span>
             </button>
           </div>
         `;
@@ -2405,8 +2445,8 @@
 
             <p class="text-[10px] text-slate-400 truncate">${safeGenre}</p>
 
-            <button onclick="flyToStationOnMap('${s.id}')" class="w-full py-1.5 px-3 rounded-xl bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 font-bold text-[11px] transition active:scale-95 flex items-center justify-center gap-1.5">
-              <span>✈️</span> <span>Sintonizar & Voar</span>
+            <button ${uiAction('flyToStationOnMap', s.id)} class="w-full py-1.5 px-3 rounded-xl bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 font-bold text-[11px] transition active:scale-95 flex items-center justify-center gap-1.5">
+              <span>✈️</span> <span>${escapeHtml(t('tuneAndFly'))}</span>
             </button>
           </div>
         `;
@@ -2804,32 +2844,32 @@
           return `
             <div
               draggable="true"
-              ondragstart="handleDragStart(event, '${s.id}')"
+              data-drag-station="${escapeHtml(s.id)}"
               ondragend="handleDragEnd(event)"
-              onclick="selectStation('${s.id}', true)"
+              ${uiAction('selectStation', s.id, true)}
               class="station-card group cursor-pointer rounded-2xl p-4 border flex flex-col justify-between select-none ${isCurrent ? 'bg-cyan-500/15 border-cyan-500/60 shadow-xl shadow-cyan-500/15' : 'bg-slate-900 border-slate-800 hover:border-cyan-500/40 hover:bg-slate-800/80'}"
             >
 
               <!-- Cover Header -->
               <div class="flex items-start justify-between gap-3 mb-3">
                 <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition shadow-md relative">
-                  ${safeImageUrl(s.image) ? `<img src="${safeImageUrl(s.image)}" data-roc-station="${s.id}" alt="${safeName}" loading="lazy" decoding="async" class="w-full h-full object-cover" onerror="rocCardLogoFallback(this)" />` : `<img src="${stationMonogram(s)}" alt="${safeName}" loading="lazy" decoding="async" class="w-full h-full object-cover" />`}
+                  ${safeImageUrl(s.image) ? `<img src="${safeImageUrl(s.image)}" data-roc-station="${escapeHtml(s.id)}" alt="${safeName}" loading="lazy" decoding="async" class="w-full h-full object-cover" onerror="rocCardLogoFallback(this)" />` : `<img src="${stationMonogram(s)}" alt="${safeName}" loading="lazy" decoding="async" class="w-full h-full object-cover" />`}
                 </div>
                 <div class="flex items-center gap-1">
                   <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
                     ${s.flag || '🌐'} ${safeCountry}
                   </span>
                   ${isUnhealthy ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/30" title="Stream em falha na última verificação automática">⚠</span>` : ''}
-                  <button onclick="handleCardCategoryClick('${s.id}', event)" class="p-1.5 rounded-lg text-slate-400 hover:text-purple-400 hover:bg-purple-500/10 transition text-sm active:scale-90" title="Mover para Categoria">
+                  <button ${uiAction('handleCardCategoryClick', s.id)} class="p-1.5 rounded-lg text-slate-400 hover:text-purple-400 hover:bg-purple-500/10 transition text-sm active:scale-90" title="Mover para Categoria">
                     🏷️
                   </button>
-                  <button onclick="handleCardLibraryClick('${s.id}', event)" class="p-1.5 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition text-sm active:scale-90" title="${isInLib ? 'Remover da Biblioteca' : 'Incluir na Biblioteca'}">
+                  <button ${uiAction('handleCardLibraryClick', s.id)} class="p-1.5 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition text-sm active:scale-90" title="${isInLib ? 'Remover da Biblioteca' : 'Incluir na Biblioteca'}">
                     ${isInLib ? '📌' : '➕'}
                   </button>
-                  <button onclick="handleCardFavClick('${s.id}', event)" class="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition text-sm active:scale-90" title="Favorito">
+                  <button ${uiAction('handleCardFavClick', s.id)} class="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition text-sm active:scale-90" title="Favorito">
                     ${isFav ? '⭐' : '☆'}
                   </button>
-                  <button onclick="handleCardDeleteClick('${s.id}', event)" class="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition text-sm active:scale-90" title="Eliminar / Remover Rádio">
+                  <button ${uiAction('handleCardDeleteClick', s.id)} class="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition text-sm active:scale-90" title="Eliminar / Remover Rádio">
                     🗑️
                   </button>
                 </div>
@@ -3396,10 +3436,10 @@ active_stations = [
             <p class="text-[10px] text-slate-400">${escapeHtml(item.artist)} • ${escapeHtml(item.time)}</p>
           </div>
           <div class="flex items-center gap-1.5 flex-shrink-0">
-            <button onclick="window.open('https://open.spotify.com/search/${encodeForInlineJs(item.title)}', '_blank')" class="px-2 py-1 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-[10px] font-bold">
+            <button ${uiAction('openTrackSearch', 'spotify', item.title)} class="px-2 py-1 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-[10px] font-bold">
               Spotify
             </button>
-            <button onclick="window.open('https://www.youtube.com/results?search_query=${encodeForInlineJs(item.title)}', '_blank')" class="px-2 py-1 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[10px] font-bold">
+            <button ${uiAction('openTrackSearch', 'youtube', item.title)} class="px-2 py-1 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[10px] font-bold">
               YouTube
             </button>
           </div>

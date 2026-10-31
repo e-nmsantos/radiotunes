@@ -1,6 +1,10 @@
 //! Roc Waves — Dicionários de tradução (pt / en / es / fr).
     const I18N = {
       pt: {
+        playlistCount: "{count} estações adicionadas",
+        playPlaylist: "Tocar Playlist",
+        deletePlaylist: "Eliminar playlist",
+        tuneAndFly: "Sintonizar & Voar",
         streamHttpError: "O servidor da rádio respondeu HTTP {status} — stream inativo ou mudado de endereço.",
         streamPlaybackFailed: "O stream está acessível mas a reprodução falhou. Tenta reconectar.",
         pipUnsupported: "Picture-in-Picture não suportado ou bloqueado no teu navegador.",
@@ -131,6 +135,10 @@
         turnOff: "Desligar",
       },
       en: {
+        playlistCount: "{count} stations added",
+        playPlaylist: "Play Playlist",
+        deletePlaylist: "Delete playlist",
+        tuneAndFly: "Tune In & Fly",
         streamHttpError: "The station's server returned HTTP {status} — the stream is down or has moved.",
         streamPlaybackFailed: "The stream is reachable but playback failed. Try reconnecting.",
         pipUnsupported: "Picture-in-Picture is not supported or is blocked in your browser.",
@@ -261,6 +269,10 @@
         turnOff: "Dismiss",
       },
       es: {
+        playlistCount: "{count} emisoras añadidas",
+        playPlaylist: "Reproducir Lista",
+        deletePlaylist: "Eliminar lista",
+        tuneAndFly: "Sintonizar y Volar",
         streamHttpError: "El servidor de la emisora respondió HTTP {status}: stream inactivo o con otra dirección.",
         streamPlaybackFailed: "El stream es accesible pero la reproducción falló. Intenta reconectar.",
         pipUnsupported: "Picture-in-Picture no es compatible o está bloqueado en tu navegador.",
@@ -391,6 +403,10 @@
         turnOff: "Apagar",
       },
       fr: {
+        playlistCount: "{count} stations ajoutées",
+        playPlaylist: "Lire la Playlist",
+        deletePlaylist: "Supprimer la playlist",
+        tuneAndFly: "Écouter & Voler",
         streamHttpError: "Le serveur de la station a répondu HTTP {status} — flux inactif ou déplacé.",
         streamPlaybackFailed: "Le flux est accessible mais la lecture a échoué. Essaie de te reconnecter.",
         pipUnsupported: "Le Picture-in-Picture n'est pas pris en charge ou est bloqué par ton navigateur.",
