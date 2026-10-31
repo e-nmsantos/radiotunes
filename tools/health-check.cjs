@@ -160,6 +160,35 @@ async function suggestReplacement(st) {
   return null;
 }
 
+async function suggestLogoReplacement(st) {
+  const q = st.name.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+  if (!q || q.length < 3) return null;
+  for (const srv of ['https://de1.api.radio-browser.info', 'https://nl1.api.radio-browser.info']) {
+    try {
+      const res = await fetch(
+        `${srv}/json/stations/search?name=${encodeURIComponent(q)}&limit=15&order=clickcount&reverse=true&hidebroken=true&lastcheckok=1`,
+        { signal: AbortSignal.timeout(9000) }
+      );
+      if (!res.ok) continue;
+      const list = await res.json();
+      const pool = list.filter((s) => (s.country || '').toLowerCase() === st.country.toLowerCase());
+      for (const s of (pool.length ? pool : [])) {
+        const fav = s.favicon;
+        if (!fav || !fav.startsWith('http')) continue;
+        // o nome tem de bater (guarda editorial contra logos trocados)
+        const a = deaccent(st.name), b = deaccent(s.name || '');
+        const shared = a.split(/[^a-z0-9]+/).filter((t) => t.length > 3 && b.includes(t)).length;
+        if (shared === 0) continue;
+        try {
+          const check = await fetch(fav, { method: 'HEAD', signal: AbortSignal.timeout(6000) });
+          if (check.ok) return fav;
+        } catch (e) {}
+      }
+    } catch (e) { /* servidor indisponível */ }
+  }
+  return null;
+}
+
 // ---------- Main ----------
 
 (async () => {
@@ -192,6 +221,11 @@ async function suggestReplacement(st) {
         process.stdout.write('!');
         continue;
       }
+    }
+    // Logos mortos (HTTP >= 400) também recebem sugestão automática de favicon
+    if (!logo.ok && !logo.skipped) {
+      const logoSug = await suggestLogoReplacement(st);
+      if (logoSug) row.logo_suggestion = logoSug;
     }
     results.push(row);
     checked++;
@@ -232,10 +266,36 @@ async function suggestReplacement(st) {
           src = src.replace(reBr, `$1${f.suggestion_bitrate}`);
         }
       }
+      // ---------- logos mortos: aplicar favicons substitutos ----------
+      const logoFixes = results.filter((r) => r.logo_suggestion && r.logo_status.startsWith('MORTO'));
+      for (const f of logoFixes) {
+        const esc = f.id.replace(/[$()*+.?[^\\]|]/g, '\\$&');
+        const reImg = new RegExp(`(id:\\s*"${esc}",[\\s\\S]*?image:\\s*)"[^"]*"`);
+        if (reImg.test(src)) {
+          src = src.replace(reImg, `$1"${f.logo_suggestion}"`);
+          console.log(`\n🖼️ ${f.name} (${f.id}) logo → ${f.logo_suggestion}`);
+        }
+      }
       fs.writeFileSync(APP_PATH, src, 'utf-8');
-      console.log(`\n🔧 ${fixes.length} streams reparados e gravados em js/catalog.js`);
+      console.log(`\n🔧 ${fixes.length} streams + ${logoFixes.length} logos reparados e gravados em js/catalog.js`);
     } else {
-      console.log('\n🔧 --fix: nenhuma substituição segura a aplicar');
+      // mesmo sem streams mortos, pode haver logos mortos para reparar
+      const logoFixes = results.filter((r) => r.logo_suggestion && r.logo_status.startsWith('MORTO'));
+      if (logoFixes.length) {
+        let src = fs.readFileSync(APP_PATH, 'utf-8');
+        for (const f of logoFixes) {
+          const esc = f.id.replace(/[$()*+.?[^\\]|]/g, '\\$&');
+          const reImg = new RegExp(`(id:\\s*"${esc}",[\\s\\S]*?image:\\s*)"[^"]*"`);
+          if (reImg.test(src)) {
+            src = src.replace(reImg, `$1"${f.logo_suggestion}"`);
+            console.log(`\n🖼️ ${f.name} (${f.id}) logo → ${f.logo_suggestion}`);
+          }
+        }
+        fs.writeFileSync(APP_PATH, src, 'utf-8');
+        console.log(`\n🔧 ${logoFixes.length} logos reparados e gravados em js/catalog.js`);
+      } else {
+        console.log('\n🔧 --fix: nenhuma substituição segura a aplicar');
+      }
     }
   }
 
@@ -287,10 +347,10 @@ async function suggestReplacement(st) {
     if (deadStreams.length || deadLogos.length) {
       md.push('## ⚠️ Falhas detetadas');
       md.push('');
-      md.push('| Estação | Stream | Logo | Sugestão |');
-      md.push('|---|---|---|---|');
+      md.push('| Estação | Stream | Logo | Sugestão stream | Sugestão logo |');
+      md.push('|---|---|---|---|---|');
       for (const r of [...new Set([...deadStreams, ...deadLogos])]) {
-        md.push(`| ${r.name} (${r.country}) | ${r.stream_status} | ${r.logo_status} | ${r.suggestion ? `${r.suggestion} ← _${r.suggestion_source}_` : '—'} |`);
+        md.push(`| ${r.name} (${r.country}) | ${r.stream_status} | ${r.logo_status} | ${r.suggestion ? `${r.suggestion} ← _${r.suggestion_source}_` : '—'} | ${r.logo_suggestion ? r.logo_suggestion : '—'} |`);
       }
       md.push('');
       md.push('_Para reparar automaticamente os casos confirmados: `node tools/health-check.cjs --fix`_');
