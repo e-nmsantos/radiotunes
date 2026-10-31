@@ -1,5 +1,5 @@
 // Service Worker para Roc Waves / RadioTunes
-const CACHE_NAME = 'radiotunes-v23-live';
+const CACHE_NAME = 'radiotunes-v24-live';
 const APP_SHELL = [
   './',
   './index.html',

@@ -139,7 +139,7 @@
         persist('roc_user_alarm', JSON.stringify(alarmSettings));
         persist('roc_user_dvr', JSON.stringify(dvrSettings));
         persist('roc_user_eq10', JSON.stringify(eq10Bands));
-        showToast('Coleção restaurada do backup automático.', '💾', 'success');
+        showToast(t('autoBackupRestored'), '💾', 'success');
       } catch (e) { console.warn('Restauro do backup falhou:', e); }
     })();
     let dvrCheckInterval = null;
@@ -290,7 +290,7 @@
         console.warn('Persistência falhou (quota?):', key, e);
         if (!quotaWarned) {
           quotaWarned = true;
-          showToast('Armazenamento local cheio — alguns dados podem não ser guardados.', '💾');
+          showToast(t('storageFull'), '💾', 'warning');
         }
         return false;
       }
@@ -494,7 +494,9 @@
       const container = document.getElementById('toast-container');
       if (!container) return;
       const toast = document.createElement('div');
-      const bgClass = type === 'success' ? 'bg-emerald-950/95 border-emerald-500/50 text-emerald-100' : 'bg-slate-900/95 border-cyan-500/50 text-slate-100';
+      const bgClass = type === 'success' ? 'bg-emerald-950/95 border-emerald-500/50 text-emerald-100'
+        : type === 'warning' ? 'bg-amber-950/95 border-amber-500/50 text-amber-100'
+        : 'bg-slate-900/95 border-cyan-500/50 text-slate-100';
       toast.className = `toast-slide p-3.5 rounded-2xl border shadow-2xl backdrop-blur-md flex items-center gap-3 text-xs pointer-events-auto transition-all ${bgClass}`;
       toast.innerHTML = `
         <span class="text-xl flex-shrink-0">${icon}</span>
@@ -590,7 +592,7 @@
       if (!userCategories.some(c => c.id.toLowerCase() === name.toLowerCase())) {
         userCategories.push(newCat);
         persist('roc_user_categories', JSON.stringify(userCategories));
-        showToast(`Categoria "${name}" criada com sucesso!`, icon, 'success');
+        showToast(t('categoryCreated', { name }), icon, 'success');
       }
       closeCreateCategoryModal();
       selectCategory(newCat.id);
@@ -694,7 +696,7 @@
       const catName = catObj ? catObj.name : catId;
       const catIcon = catObj ? catObj.icon : '🏷️';
 
-      showToast(`Rádio "${stName}" associada à categoria "${catName}" e guardada na Biblioteca!`, catIcon, 'success');
+      showToast(t('stationAssigned', { station: stName, cat: catName }), catIcon, 'success');
 
       closeStationCategoryModal();
       saveState();
@@ -910,7 +912,7 @@
         btnEl.closest('.toast-slide').remove();
       }
 
-      showToast(`Rádio "${d.name}" restaurada com sucesso!`, '🔄', 'success');
+      showToast(t('stationRestored', { name: d.name }), '🔄', 'success');
     }
 
     function openDeleteStationModal(stationId, event) {
@@ -938,14 +940,14 @@
 
     function restoreAllDeletedStations() {
       if (!deletedStationIds || deletedStationIds.length === 0) {
-        showToast('Não existem rádios eliminadas para restaurar.', 'ℹ️', 'info');
+        showToast(t('nothingToRestore'), 'ℹ️', 'info');
         return;
       }
       const count = deletedStationIds.length;
       deletedStationIds = [];
       persist('roc_user_deleted_stations', JSON.stringify([]));
       saveState();
-      showToast(`${count} rádio(s) restaurada(s) com sucesso no catálogo!`, '🔄', 'success');
+      showToast(t('stationsRestored', { count }), '🔄', 'success');
       closeBackupModal();
     }
 
@@ -1500,10 +1502,10 @@
           persist('roc_user_cors_blocked', JSON.stringify(corsBlockedStreamUrls));
           const autoplayRetry = lastPlayIntent;
           if (proxyAvailable) {
-            showToast('A ligar via proxy de áudio para ativar o DSP neste stream.', '🎛️');
+            showToast(t('proxyDsp'), '🎛️');
             audio.src = AUDIO_PROXY_BASE + '/stream?url=' + encodeURIComponent(failedUrl);
           } else {
-            showToast('Este stream não suporta DSP (CORS) — modo de áudio direto ativado.', '🎛️');
+            showToast(t('directMode'), '🎛️');
             resetAudioEngine();
             audio.crossOrigin = null;
             audio.src = failedUrl;
@@ -1515,12 +1517,12 @@
 
         if (probe.status >= 400) {
           // Stream morto no servidor da rádio (ex.: 404) — não é problema de CORS/DSP.
-          showToast('Este stream está indisponível no servidor da rádio (HTTP ' + probe.status + ').', '📡');
-          showStreamError(`O servidor da rádio respondeu HTTP ${probe.status} — stream inativo ou mudado de endereço.`);
+          showToast(t('streamDown', { status: probe.status }), '📡', 'warning');
+          showStreamError(t('streamHttpError', { status: probe.status }));
         } else {
           // URL acessível, mas a reprodução falhou (falha transitória, codec, etc.)
-          showToast('Falha transitória no stream — tenta reconectar ou escolhe outra estação.', '📡');
-          showStreamError('O stream está acessível mas a reprodução falhou. Tenta reconectar.');
+          showToast(t('streamGlitch'), '📡', 'warning');
+          showStreamError(t('streamPlaybackFailed'));
         }
         isPlaying = false;
         updatePlayState();
@@ -1561,10 +1563,8 @@
     function showStreamError(reason) {
       const el = document.getElementById('stream-error-banner');
       if (el) el.classList.remove('hidden');
-      if (reason) {
-        const txt = document.getElementById('stream-error-text');
-        if (txt) txt.textContent = reason;
-      }
+      const txt = document.getElementById('stream-error-text');
+      if (txt) txt.textContent = reason || t('streamOffline');
     }
 
     function retryCurrentStream() {
@@ -1701,7 +1701,7 @@
           await video.requestPictureInPicture();
         }
       } catch (err) {
-        alert('Picture-in-Picture não suportado ou bloqueado no teu navegador.');
+        showToast(t('pipUnsupported'), '🖼️', 'warning');
       }
     }
 
@@ -2257,7 +2257,7 @@
 
         if (deduplicated.length > 0) {
           processAndAddGeoStationsWithCenter(deduplicated, centerLat, centerLon, cleanCity);
-          showToast(`${deduplicated.length} rádios descobertas em ${cleanCity}!`, '📻', 'success');
+          showToast(t('mapDiscovered', { count: deduplicated.length, city: cleanCity }), '📻', 'success');
         }
       } catch (err) {
         console.warn('Error fetching city radios:', err);
@@ -2471,7 +2471,7 @@
       const searchInput = document.getElementById('map-city-search-input');
       if (searchInput) searchInput.blur();
 
-      showToast(`A pesquisar "${q}" no mapa mundial...`, '🔍', 'info');
+      showToast(t('mapSearching', { q }), '🔍', 'info');
 
       const knownPlaces = {
         'lisboa': [38.7223, -9.1393, 11, '🇵🇹 Lisboa, Portugal', 'Lisboa'],
@@ -2528,7 +2528,7 @@
             leafletMap.flyTo([v[0], v[1]], v[2], { duration: 1.5 });
             const areaTitle = document.getElementById('map-area-title');
             if (areaTitle) areaTitle.textContent = v[3];
-            showToast(`A voar para ${v[3]}!`, '✈️', 'success');
+            showToast(t('flyingTo', { place: v[3] }), '✈️', 'success');
             fetchCityAndStateRadios(v[4] || k, v[0], v[1]);
           }
           return;
@@ -2549,7 +2549,7 @@
               const areaTitle = document.getElementById('map-area-title');
               const cityName = item.display_name.split(',')[0];
               if (areaTitle) areaTitle.textContent = item.display_name.split(',').slice(0, 2).join(',');
-              showToast(`A voar para ${cityName}!`, '✈️', 'success');
+              showToast(t('flyingTo', { place: cityName }), '✈️', 'success');
               fetchCityAndStateRadios(cityName, lat, lon);
               return;
             }
@@ -2559,16 +2559,16 @@
         console.warn('Geocoding search failed:', err);
       }
 
-      showToast(`Local "${q}" não encontrado. Tenta outra cidade.`, '⚠️', 'info');
+      showToast(t('placeNotFound', { q }), '⚠️', 'warning');
     }
 
     function locateUserGPSOnMap() {
       if (!navigator.geolocation) {
-        showToast('Geolocalização não é suportada pelo teu navegador.', '⚠️', 'info');
+        showToast(t('geoUnsupported'), '⚠️', 'warning');
         return;
       }
 
-      showToast('A obter a tua localização GPS...', '🎯', 'info');
+      showToast(t('gpsLocating'), '🎯', 'info');
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const lat = pos.coords.latitude;
@@ -2577,12 +2577,12 @@
             leafletMap.flyTo([lat, lon], 10, { duration: 1.5 });
             const areaTitle = document.getElementById('map-area-title');
             if (areaTitle) areaTitle.textContent = '📍 A Tua Localização Atual';
-            showToast('Localização GPS detetada com sucesso!', '🎯', 'success');
+            showToast(t('gpsFound'), '🎯', 'success');
           }
         },
         (err) => {
           console.warn('GPS error:', err);
-          showToast('Permissão de GPS recusada ou indisponível.', '⚠️', 'info');
+          showToast(t('gpsDenied'), '⚠️', 'warning');
         },
         { enableHighAccuracy: true, timeout: 8000 }
       );
@@ -2646,7 +2646,7 @@
           }
         }, 1450);
 
-        showToast(`A voar no mapa para ${station.city || station.country}: ${station.name}!`, station.flag || '✈️', 'success');
+        showToast(t('flyingToStation', { place: station.city || station.country, name: station.name }), station.flag || '✈️', 'success');
 
         // Scroll to map if user is further down on mobile
         const mapEl = document.getElementById('world-map');
@@ -2654,7 +2654,7 @@
           mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       } else {
-        showToast(`A tocar ${station.name}`, '📻', 'info');
+        showToast(t('nowPlayingToast', { name: station.name }), '📻', 'info');
       }
     }
 
@@ -2984,7 +2984,7 @@ active_stations = [
 
     function copyRocState() {
       navigator.clipboard.writeText(document.getElementById('roc-preview').textContent);
-      alert('Estrutura de dados Roc copiada!');
+      showToast(t('rocCopied'), '📋', 'success');
     }
 
     // Direct Global Search with multi-server discovery
@@ -3534,7 +3534,7 @@ active_stations = [
         else if (audio.mozCaptureStream) stream = audio.mozCaptureStream();
 
         if (!stream || stream.getAudioTracks().length === 0) {
-          alert('Aviso: O navegador restringe a gravação direta de áudio CORS desta rádio específica.');
+          showToast(t('recordCorsBlocked'), '⏺️', 'warning');
           return;
         }
 
@@ -3553,10 +3553,10 @@ active_stations = [
           recordSeconds++;
           const mins = Math.floor(recordSeconds / 60);
           const secs = recordSeconds % 60;
-          document.getElementById('record-btn').title = `A gravar: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+          document.getElementById('record-btn').title = t('recordingTimer', { time: `${mins}:${secs < 10 ? '0' : ''}${secs}` });
         }, 1000);
       } catch (err) {
-        alert('Gravação não suportada neste stream pelo navegador.');
+        showToast(t('recordUnsupported'), '⏺️', 'warning');
       }
     }
 
@@ -3591,8 +3591,8 @@ active_stations = [
       const curr = getCurrentStation();
       const shareUrl = `${window.location.origin}${window.location.pathname}?station=${encodeURIComponent(curr.id)}`;
       navigator.clipboard.writeText(shareUrl).then(() => {
-        alert(`Link de partilha copiado para a estação: ${curr.name}`);
-      });
+        showToast(t('shareCopied', { name: curr.name }), '🔗', 'success');
+      }).catch(() => showToast(t('shareFailed'), '🔗', 'warning'));
     }
 
     // Backup & M3U Export
@@ -3643,9 +3643,9 @@ active_stations = [
           if (data.dvr) dvrSettings = data.dvr;
           saveState();
           closeBackupModal();
-          alert('Backup restaurado com sucesso!');
+          showToast(t('backupRestored'), '💾', 'success');
         } catch (err) {
-          alert('Ficheiro JSON inválido.');
+          showToast(t('backupInvalid'), '⚠️', 'warning');
         }
       };
       reader.readAsText(file);
@@ -3776,9 +3776,9 @@ active_stations = [
           if (!image && found.favicon && found.favicon.startsWith('http')) image = found.favicon;
           if (found.country) country = found.country;
           if (found.bitrate) bitRate = found.bitrate;
-          showToast(`Rádio descoberta pelo link do site${found.name ? `: ${found.name}` : ''}!`, '🔎', 'success');
+          showToast(found.name ? t('siteDiscoveredNamed', { name: found.name }) : t('siteDiscovered'), '🔎', 'success');
         } else {
-          showToast('Não encontrámos o stream deste site. Cola o URL direto do stream (ex: .../live.mp3) ou tenta o site oficial.', '🔍');
+          showToast(t('siteNotFound'), '🔍', 'warning');
           return;
         }
       }
@@ -3809,7 +3809,7 @@ active_stations = [
       saveState();
       closeAddModal();
       selectStation(newId, true);
-      showToast(`Rádio "${name}" adicionada com sucesso à categoria "${cat}" e à Biblioteca!`, '📻', 'success');
+      showToast(t('stationAdded', { name, cat }), '📻', 'success');
     });
 
     // Gestos de swipe no mini-player mobile: ← estação anterior, → seguinte
