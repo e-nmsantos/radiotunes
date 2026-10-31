@@ -620,14 +620,19 @@ document.getElementById('custom-form').addEventListener('submit', async (e) => {
 
 // Keyboard Shortcuts
 window.addEventListener('keydown', (e) => {
-  if (['INPUT', 'SELECT'].includes(document.activeElement.tagName)) return;
+  // Atalhos globais só quando o foco não está num controlo (Espaço/setas têm de
+  // continuar a ativar botões e sliders) e nenhum diálogo está aberto
+  // (o Escape dos diálogos é tratado em core.js).
+  const el = document.activeElement;
+  if (el && el.closest('input, select, textarea, button, a[href], [contenteditable], [role="dialog"]')) return;
+  if (topOpenDialog()) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
   if (e.code === 'ArrowRight') { e.preventDefault(); playNext(); }
   if (e.code === 'ArrowLeft') { e.preventDefault(); playPrev(); }
   if (e.code === 'KeyM') { toggleMute(); }
   if (e.code === 'KeyP') { togglePictureInPicture(); }
   if (e.code === 'KeyF') { openTVMode(); }
-  if (e.code === 'Escape') { closeTVMode(); }
   if (e.code === 'ArrowUp') {
     e.preventDefault();
     setVolume(Math.min(100, volume + 5));

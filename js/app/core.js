@@ -65,6 +65,72 @@ document.addEventListener('drop', (e) => {
   if (el) handleDropCategory(e, el.dataset.dropCategory, el);
 });
 
+// ===================== Diálogos acessíveis =====================
+// Todos os modais/sheets têm role="dialog". Ao abrir, o foco entra no diálogo;
+// Tab fica preso lá dentro; Escape fecha (com a função própria de cada um, que
+// faz a limpeza necessária); ao fechar, o foco volta a quem o abriu.
+const DIALOG_CLOSERS = {
+  'history-modal': 'closeTrackHistoryModal', 'dvr-modal': 'closeDVRModal',
+  'playlist-create-modal': 'closeCreatePlaylistModal', 'eq-modal': 'closeEqualizerModal',
+  'soundscapes-modal': 'closeSoundscapesModal', 'sleep-modal': 'closeSleepModal',
+  'alarm-modal': 'closeAlarmModal', 'tv-ambient-modal': 'closeTVMode',
+  'backup-modal': 'closeBackupModal', 'add-modal': 'closeAddModal',
+  'category-create-modal': 'closeCreateCategoryModal', 'station-category-modal': 'closeStationCategoryModal',
+  'mobile-player-sheet': 'closeMobileSheetPlayer', 'mobile-tools-modal': 'closeMobileToolsDrawer',
+  'delete-confirm-modal': 'closeDeleteStationModal', 'station-actions-sheet': 'closeStationActions',
+};
+const FOCUSABLE = 'button:not([disabled]), a[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+const isDialogOpen = (el) => !el.classList.contains('hidden') && el.getClientRects().length > 0;
+function topOpenDialog() {
+  // o último na ordem do DOM é o que está por cima (todos partilham z-50)
+  return [...document.querySelectorAll('[role="dialog"]')].filter(isDialogOpen).pop() || null;
+}
+function focusablesIn(el) {
+  return [...el.querySelectorAll(FOCUSABLE)].filter(f => f.getClientRects().length > 0);
+}
+
+function onDialogVisibilityChange(el) {
+  const open = !el.classList.contains('hidden');
+  if (open && !el.__rocOpen) {
+    el.__rocOpen = true;
+    el.__rocReturnFocus = document.activeElement;
+    requestAnimationFrame(() => {
+      const first = focusablesIn(el)[0];
+      if (first) first.focus({ preventScroll: true });
+      else { el.setAttribute('tabindex', '-1'); el.focus({ preventScroll: true }); }
+    });
+  } else if (!open && el.__rocOpen) {
+    el.__rocOpen = false;
+    const back = el.__rocReturnFocus;
+    if (back && document.contains(back) && back.getClientRects().length) back.focus({ preventScroll: true });
+  }
+}
+new MutationObserver((muts) => {
+  for (const m of muts) {
+    if (m.type === 'attributes' && m.target.getAttribute('role') === 'dialog') onDialogVisibilityChange(m.target);
+  }
+}).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
+
+document.addEventListener('keydown', (e) => {
+  const dlg = topOpenDialog();
+  if (!dlg) return;
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    const closer = window[DIALOG_CLOSERS[dlg.id]];
+    if (typeof closer === 'function') closer(); else dlg.classList.add('hidden');
+    return;
+  }
+  if (e.key === 'Tab') {
+    const items = focusablesIn(dlg);
+    if (!items.length) { e.preventDefault(); return; }
+    const first = items[0], last = items[items.length - 1];
+    if (!dlg.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+    else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+});
+
 // ===================== Bibliotecas a pedido =====================
 // hls.js e Leaflet só são descarregados quando são precisos (stream .m3u8 /
 // abrir o mapa): o arranque fica muito mais leve, sobretudo no telemóvel.
@@ -131,6 +197,10 @@ function changeLanguage(lang) {
   document.getElementById('lang-select').value = lang;
   
   const dict = I18N[lang] || I18N.pt;
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+    const key = el.getAttribute('data-i18n-aria');
+    if (dict[key]) el.setAttribute('aria-label', dict[key]);
+  });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     const key = el.getAttribute('data-i18n-placeholder');
     if (dict[key]) el.setAttribute('placeholder', dict[key]);

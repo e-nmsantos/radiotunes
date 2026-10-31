@@ -146,7 +146,8 @@ function createMarkerObject(st) {
     popupAnchor: [0, -14]
   });
 
-  const marker = L.marker([st.lat, st.lon], { icon: customIcon });
+  // title/alt dão nome acessível ao marcador (o Leaflet torna-o focável por teclado)
+  const marker = L.marker([st.lat, st.lon], { icon: customIcon, title: st.name || '', alt: st.name || '', keyboard: true });
   marker.stationId = String(st.id);
   marker.stationData = st;
 

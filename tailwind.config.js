@@ -8,6 +8,8 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // slate-500 mais claro: contraste WCAG AA (≥ 4,5:1) sobre slate-950/900/800
+        slate: { 500: '#8190a6' },
         brand: {
           50: 'var(--brand-50)',
           100: 'var(--brand-100)',

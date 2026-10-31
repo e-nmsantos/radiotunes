@@ -336,3 +336,60 @@ test('telemóvel: mini-player, menu "Mais" e menu ⋯ dos cartões abrem e ficam
     await send('Emulation.clearDeviceMetricsOverride');
   }
 });
+
+test('teclado: diálogos recebem o foco, prendem o Tab, fecham com Escape e devolvem o foco', { skip }, async () => {
+  await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
+  await sleep(300);
+  try {
+  const key = async (k, code, shift = false) => {
+    for (const type of ['keyDown', 'keyUp']) {
+      await send('Input.dispatchKeyEvent', { type, key: k, code, windowsVirtualKeyCode: { Escape: 27, Tab: 9, ' ': 32 }[k], modifiers: shift ? 8 : 0 });
+    }
+    await sleep(120);
+  };
+  await evaluate(`(() => { const b = [...document.querySelectorAll('button[onclick*="openEqualizerModal"]')].find(x => x.getClientRects().length); b.focus(); window.__opener = b; b.click(); })()`);
+  await sleep(300);
+  assert.equal(await evaluate(`document.getElementById('eq-modal').contains(document.activeElement)`), true, 'o foco devia entrar no diálogo');
+  for (let i = 0; i < 40; i++) await key('Tab', 'Tab');
+  assert.equal(await evaluate(`document.getElementById('eq-modal').contains(document.activeElement)`), true, 'o Tab devia ficar preso no diálogo');
+  await key('Escape', 'Escape');
+  assert.equal(await evaluate(`document.getElementById('eq-modal').classList.contains('hidden')`), true, 'Escape devia fechar');
+  assert.equal(await evaluate(`document.activeElement === window.__opener`), true, 'o foco devia voltar ao botão que abriu');
+  // Espaço num botão focado ativa o botão (não faz play/pausa)
+  const out = await evaluate(`(async () => {
+    const wasPlaying = isPlaying;
+    const btn = [...document.querySelectorAll('button[onclick*="openSleepModal"]')].find(x => x.getClientRects().length);
+    btn.focus();
+    return { wasPlaying };
+  })()`);
+  await key(' ', 'Space');
+  assert.equal(await evaluate(`!document.getElementById('sleep-modal').classList.contains('hidden')`), true, 'Espaço devia ativar o botão');
+  assert.equal(await evaluate(`isPlaying`), out.wasPlaying, 'Espaço num botão não pode alterar a reprodução');
+  await key('Escape', 'Escape');  } finally {
+    await send('Emulation.clearDeviceMetricsOverride');
+  }
+});
+
+test('teclado: cada rádio é alcançável por Tab e anunciada com nome', { skip }, async () => {
+  const out = await evaluate(`(() => {
+    const b = document.querySelector('.station-card .station-name-btn');
+    return { focusable: b && b.tabIndex >= 0, label: b && b.getAttribute('aria-label') };
+  })()`);
+  assert.equal(out.focusable, true);
+  assert.match(out.label, /^Ouvir /);
+});
+
+test('acessibilidade: auditoria axe-core (WCAG 2.1 AA) sem violações — página e diálogo', { skip }, async () => {
+  const axeSrc = await (await fetch('https://cdn.jsdelivr.net/npm/axe-core@4.10.2/axe.min.js')).text();
+  await evaluate(axeSrc + ';0');
+  const audit = () => evaluate(`axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'] }, resultTypes: ['violations'] })
+    .then(r => r.violations.map(v => v.id + ' (' + v.nodes.length + '): ' + v.nodes.slice(0, 2).map(n => n.target.join(' ')).join(', ')))`);
+  await evaluate(`setView('home')`);
+  await sleep(300);
+  assert.deepEqual(await audit(), [], 'página inicial');
+  await evaluate(`openEqualizerModal()`);
+  await sleep(300);
+  const withDialog = await audit();
+  await evaluate(`closeEqualizerModal()`);
+  assert.deepEqual(withDialog, [], 'com o equalizador aberto');
+});

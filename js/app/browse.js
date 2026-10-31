@@ -228,7 +228,7 @@ function render() {
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
               <h3 class="text-sm font-extrabold text-white truncate ${isCurrent ? 'text-cyan-400' : ''}">
-                ${safeName}
+                <button type="button" ${uiAction('selectStation', s.id, true)} class="station-name-btn max-w-full truncate text-left" aria-label="${escapeHtml(t('playStation', { name: s.name || '' }))}">${safeName}</button>
               </h3>
               ${isCurrent && isPlaying ? '<span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping flex-shrink-0"></span>' : ''}
               ${isUnhealthy ? `<span class="md:hidden text-[10px] text-red-400 flex-shrink-0" title="Stream em falha na última verificação automática">⚠</span>` : ''}

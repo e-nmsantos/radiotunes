@@ -311,7 +311,7 @@
         </div>
 
         <!-- Language Selector -->
-        <select id="lang-select" onchange="changeLanguage(this.value)" class="bg-slate-950 border border-slate-800 text-[11px] text-cyan-400 rounded-lg px-2 py-1 font-bold focus:outline-none">
+        <select id="lang-select" aria-label="Idioma" data-i18n-aria="ariaLanguage" onchange="changeLanguage(this.value)" class="bg-slate-950 border border-slate-800 text-[11px] text-cyan-400 rounded-lg px-2 py-1 font-bold focus:outline-none">
           <option value="pt">🇵🇹 PT</option>
           <option value="en">🇬🇧 EN</option>
           <option value="es">🇪🇸 ES</option>
@@ -450,6 +450,7 @@
 
   <!-- Main Content Area -->
   <main class="flex-1 p-3 md:p-8 overflow-y-auto max-w-7xl mx-auto w-full space-y-4 md:space-y-6">
+    <h1 class="sr-only">Roc Waves — Rádio Mundial Hi-Fi</h1>
 
     <!-- Mobile Top Header Bar (< md) -->
     <header class="md:hidden flex items-center justify-between p-3 bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-2xl shadow-lg sticky top-0 z-30 mb-2">
@@ -466,7 +467,7 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <select id="mob-lang-select" onchange="changeLanguage(this.value)" class="bg-slate-950 border border-slate-800 text-[10px] text-cyan-400 rounded-lg px-2 py-1 font-bold focus:outline-none">
+        <select id="mob-lang-select" aria-label="Idioma" data-i18n-aria="ariaLanguage" onchange="changeLanguage(this.value)" class="bg-slate-950 border border-slate-800 text-[10px] text-cyan-400 rounded-lg px-2 py-1 font-bold focus:outline-none">
           <option value="pt">🇵🇹 PT</option>
           <option value="en">🇬🇧 EN</option>
           <option value="es">🇪🇸 ES</option>
@@ -512,7 +513,7 @@
       <div class="flex items-center gap-2.5">
         <span id="explainer-icon" class="text-2xl flex-shrink-0">🔥</span>
         <div>
-          <h4 id="explainer-title" class="font-bold text-white text-xs sm:text-sm">Catálogo Global & Tendências</h4>
+          <h2 id="explainer-title" class="font-bold text-white text-xs sm:text-sm">Catálogo Global & Tendências</h2>
           <p id="explainer-desc" class="text-[11px] text-slate-400">Todas as rádios disponíveis organizadas por país e categorias musicais.</p>
         </div>
       </div>
@@ -528,7 +529,7 @@
       <div class="relative w-full">
         <input 
           type="text" 
-          id="search-input" data-i18n-placeholder="searchPlaceholder" 
+          id="search-input" aria-label="Pesquisar rádios" data-i18n-aria="ariaSearch" data-i18n-placeholder="searchPlaceholder" 
           placeholder="Pesquisar em +45.000 rádios mundiais (ex: Los 40, BBC, Apple, Kiss FM, Comercial, Jovem Pan, Jazz, Rock)..." 
           class="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-12 pr-28 sm:pr-44 py-4 text-sm md:text-base text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 shadow-2xl transition"
           autocomplete="off"
@@ -558,25 +559,25 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <!-- Country Filter -->
           <div>
-            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1" data-i18n="filterCountry">País</label>
+            <label for="adv-country" class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1" data-i18n="filterCountry">País</label>
             <input type="text" id="adv-country" placeholder="Ex: Portugal, Espanha, Brasil..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400" />
           </div>
 
           <!-- City / State Filter -->
           <div>
-            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1" data-i18n="filterCity">Cidade / Região</label>
+            <label for="adv-city" class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1" data-i18n="filterCity">Cidade / Região</label>
             <input type="text" id="adv-city" placeholder="Ex: Lisboa, Madrid, São Paulo..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400" />
           </div>
 
           <!-- Music Genre / Tag Filter -->
           <div>
-            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1" data-i18n="filterGenre">Estilo de Música / Tag</label>
+            <label for="adv-genre" class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1" data-i18n="filterGenre">Estilo de Música / Tag</label>
             <input type="text" id="adv-genre" placeholder="Ex: Pop, Rock, 80s, Jazz, House..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400" />
           </div>
 
           <!-- Bitrate / Sort Order -->
           <div>
-            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1" data-i18n="filterSort">Ordenar Por</label>
+            <label for="adv-sort" class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1" data-i18n="filterSort">Ordenar Por</label>
             <select id="adv-sort" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400">
               <option value="clickcount" data-i18n="sortPopular">Mais Populares (Cliques)</option>
               <option value="votes" data-i18n="sortVotes">Mais Votadas</option>
@@ -718,7 +719,7 @@
           <div class="relative flex-1 sm:w-72">
             <input 
               type="text" 
-              id="map-city-search-input" 
+              id="map-city-search-input" aria-label="Pesquisar cidade no mapa" data-i18n-aria="ariaMapCity" 
               placeholder="🔍 Escreve uma cidade ou país..." 
               onkeydown="if(event.key==='Enter') searchCityOnMap(this.value);"
               class="w-full bg-slate-950 border border-slate-800 focus:border-cyan-400 rounded-2xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none shadow-inner"
@@ -800,7 +801,7 @@
           <div class="relative w-full sm:w-60">
             <input 
               type="text" 
-              id="map-picker-filter-input" 
+              id="map-picker-filter-input" aria-label="Filtrar estações visíveis no mapa" data-i18n-aria="ariaMapFilter" 
               placeholder="Filtrar nesta lista..." 
               oninput="filterMapPickerList(this.value)"
               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400"
@@ -851,7 +852,7 @@
           </button>
         </div>
       </div>
-      <pre id="roc-preview" class="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs text-cyan-400 overflow-x-auto leading-relaxed max-h-48"></pre>
+      <pre id="roc-preview" tabindex="0" role="region" aria-label="Estrutura de dados Roc" class="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs text-cyan-400 overflow-x-auto leading-relaxed max-h-48"></pre>
     </div>
 
     <!-- App Bottom Credits / Brand Badge -->
@@ -884,7 +885,7 @@
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-1.5 md:gap-2">
             <h4 id="player-station-name" class="text-sm font-extrabold text-white truncate">LOS 40 España</h4>
-            <span id="player-live-badge" class="hidden px-1.5 py-0.5 rounded-full text-[8px] md:text-[9px] font-black bg-red-500 text-white animate-pulse">LIVE</span>
+            <span id="player-live-badge" class="hidden px-1.5 py-0.5 rounded-full text-[8px] md:text-[9px] font-black bg-red-600 text-white animate-pulse">LIVE</span>
           </div>
           <!-- Live Now Playing Track Info -->
           <div class="flex items-center gap-1.5 truncate">
@@ -974,7 +975,7 @@
         </button>
         <input 
           type="range" 
-          id="p-volume-slider" 
+          id="p-volume-slider" aria-label="Volume" data-i18n-aria="ariaVolume" 
           min="0" 
           max="100" 
           value="80" 
@@ -1019,10 +1020,10 @@
   <canvas id="pip-canvas" width="480" height="270" class="hidden"></canvas>
 
   <!-- Modal 1: Track History & Lyrics Drawer -->
-  <div id="history-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div id="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-modal-title" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-5">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">🎵 Histórico de Músicas & Letras</h3>
+        <h3 id="history-modal-title" class="text-base font-bold text-white flex items-center gap-2">🎵 Histórico de Músicas & Letras</h3>
         <button onclick="closeTrackHistoryModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
 
@@ -1059,10 +1060,10 @@
   </div>
 
   <!-- Modal 2: Radio DVR / Scheduled Recording -->
-  <div id="dvr-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div id="dvr-modal" role="dialog" aria-modal="true" aria-labelledby="dvr-modal-title" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">🎙️ Gravação Agendada de Rádio (DVR)</h3>
+        <h3 id="dvr-modal-title" class="text-base font-bold text-white flex items-center gap-2">🎙️ Gravação Agendada de Rádio (DVR)</h3>
         <button onclick="closeDVRModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
 
@@ -1070,12 +1071,12 @@
 
       <div class="space-y-3">
         <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">Hora de Início da Gravação</label>
+          <label for="dvr-start-time" class="text-xs font-semibold text-slate-400 block mb-1">Hora de Início da Gravação</label>
           <input type="time" id="dvr-start-time" value="08:00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-red-400" />
         </div>
 
         <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">Duração da Gravação</label>
+          <label for="dvr-duration" class="text-xs font-semibold text-slate-400 block mb-1">Duração da Gravação</label>
           <select id="dvr-duration" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-red-400">
             <option value="15">15 Minutos</option>
             <option value="30" selected>30 Minutos</option>
@@ -1085,7 +1086,7 @@
         </div>
 
         <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">Estação de Rádio</label>
+          <label for="dvr-station-select" class="text-xs font-semibold text-slate-400 block mb-1">Estação de Rádio</label>
           <select id="dvr-station-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-red-400">
             <!-- Dynamically populated -->
           </select>
@@ -1093,7 +1094,7 @@
 
         <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-950 border border-slate-800">
           <span class="text-xs font-semibold text-slate-300">Ativar Agendamento DVR</span>
-          <input type="checkbox" id="dvr-toggle" class="w-5 h-5 accent-red-500 cursor-pointer" />
+          <input type="checkbox" id="dvr-toggle" aria-label="Ativar agendamento DVR" data-i18n-aria="ariaDvrToggle" class="w-5 h-5 accent-red-500 cursor-pointer" />
         </div>
       </div>
 
@@ -1105,21 +1106,21 @@
   </div>
 
   <!-- Modal 3: Custom Playlists Creator -->
-  <div id="playlist-create-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div id="playlist-create-modal" role="dialog" aria-modal="true" aria-labelledby="playlist-create-modal-title" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">📂 Criar Nova Playlist</h3>
+        <h3 id="playlist-create-modal-title" class="text-base font-bold text-white flex items-center gap-2">📂 Criar Nova Playlist</h3>
         <button onclick="closeCreatePlaylistModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
 
       <form id="playlist-form" class="space-y-3">
         <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">Nome da Playlist</label>
+          <label for="pl-name" class="text-xs font-semibold text-slate-400 block mb-1">Nome da Playlist</label>
           <input type="text" id="pl-name" required placeholder="Ex: Foco no Trabalho, Treino Gym..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400" />
         </div>
 
         <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">Ícone</label>
+          <label for="pl-icon" class="text-xs font-semibold text-slate-400 block mb-1">Ícone</label>
           <select id="pl-icon" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400">
             <option value="💼">💼 Trabalho & Foco</option>
             <option value="🏃‍♂️">🏃‍♂️ Treino & Gym</option>
@@ -1139,10 +1140,10 @@
   </div>
 
   <!-- Modal 4: Equalizador Pro 10-Band & 3D Spatial Audio -->
-  <div id="eq-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div id="eq-modal" role="dialog" aria-modal="true" aria-labelledby="eq-modal-title" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-5">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">🎚️ Equalizador Gráfico Pro & Áudio 3D</h3>
+        <h3 id="eq-modal-title" class="text-base font-bold text-white flex items-center gap-2">🎚️ Equalizador Gráfico Pro & Áudio 3D</h3>
         <button onclick="closeEqualizerModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
 
@@ -1153,7 +1154,7 @@
             <span>🎧 Áudio Espacial 3D</span>
             <span id="spatial-val" class="text-cyan-400 font-mono">0%</span>
           </div>
-          <input type="range" id="spatial-slider" min="-100" max="100" value="0" oninput="updateSpatialAudio(this.value)" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+          <input type="range" id="spatial-slider" aria-label="Áudio 3D (largura estéreo)" data-i18n-aria="ariaSpatial" min="-100" max="100" value="0" oninput="updateSpatialAudio(this.value)" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
         </div>
 
         <div>
@@ -1161,7 +1162,7 @@
             <span>🏛️ Concert Hall Reverb</span>
             <span id="reverb-val" class="text-purple-400 font-mono">Off</span>
           </div>
-          <input type="range" id="reverb-slider" min="0" max="100" value="0" oninput="updateReverb(this.value)" class="w-full accent-purple-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+          <input type="range" id="reverb-slider" aria-label="Reverberação" data-i18n-aria="ariaReverb" min="0" max="100" value="0" oninput="updateReverb(this.value)" class="w-full accent-purple-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
         </div>
       </div>
       
@@ -1185,52 +1186,52 @@
         <div class="grid grid-cols-5 sm:grid-cols-10 gap-2 text-center">
           <div class="space-y-1">
             <span class="text-[10px] text-slate-400">32Hz</span>
-            <input type="range" min="-12" max="12" value="0" id="eq-b-32" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <input type="range" min="-12" max="12" value="0" id="eq-b-32" aria-label="EQ 32 Hz" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
             <span id="eq-v-32" class="text-[10px] font-mono text-cyan-400 block">0</span>
           </div>
           <div class="space-y-1">
             <span class="text-[10px] text-slate-400">64Hz</span>
-            <input type="range" min="-12" max="12" value="0" id="eq-b-64" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <input type="range" min="-12" max="12" value="0" id="eq-b-64" aria-label="EQ 64 Hz" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
             <span id="eq-v-64" class="text-[10px] font-mono text-cyan-400 block">0</span>
           </div>
           <div class="space-y-1">
             <span class="text-[10px] text-slate-400">125Hz</span>
-            <input type="range" min="-12" max="12" value="0" id="eq-b-125" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <input type="range" min="-12" max="12" value="0" id="eq-b-125" aria-label="EQ 125 Hz" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
             <span id="eq-v-125" class="text-[10px] font-mono text-cyan-400 block">0</span>
           </div>
           <div class="space-y-1">
             <span class="text-[10px] text-slate-400">250Hz</span>
-            <input type="range" min="-12" max="12" value="0" id="eq-b-250" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <input type="range" min="-12" max="12" value="0" id="eq-b-250" aria-label="EQ 250 Hz" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
             <span id="eq-v-250" class="text-[10px] font-mono text-cyan-400 block">0</span>
           </div>
           <div class="space-y-1">
             <span class="text-[10px] text-slate-400">500Hz</span>
-            <input type="range" min="-12" max="12" value="0" id="eq-b-500" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <input type="range" min="-12" max="12" value="0" id="eq-b-500" aria-label="EQ 500 Hz" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
             <span id="eq-v-500" class="text-[10px] font-mono text-cyan-400 block">0</span>
           </div>
           <div class="space-y-1">
             <span class="text-[10px] text-slate-400">1kHz</span>
-            <input type="range" min="-12" max="12" value="0" id="eq-b-1k" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <input type="range" min="-12" max="12" value="0" id="eq-b-1k" aria-label="EQ 1 kHz" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
             <span id="eq-v-1k" class="text-[10px] font-mono text-cyan-400 block">0</span>
           </div>
           <div class="space-y-1">
             <span class="text-[10px] text-slate-400">2kHz</span>
-            <input type="range" min="-12" max="12" value="0" id="eq-b-2k" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <input type="range" min="-12" max="12" value="0" id="eq-b-2k" aria-label="EQ 2 kHz" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
             <span id="eq-v-2k" class="text-[10px] font-mono text-cyan-400 block">0</span>
           </div>
           <div class="space-y-1">
             <span class="text-[10px] text-slate-400">4kHz</span>
-            <input type="range" min="-12" max="12" value="0" id="eq-b-4k" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <input type="range" min="-12" max="12" value="0" id="eq-b-4k" aria-label="EQ 4 kHz" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
             <span id="eq-v-4k" class="text-[10px] font-mono text-cyan-400 block">0</span>
           </div>
           <div class="space-y-1">
             <span class="text-[10px] text-slate-400">8kHz</span>
-            <input type="range" min="-12" max="12" value="0" id="eq-b-8k" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <input type="range" min="-12" max="12" value="0" id="eq-b-8k" aria-label="EQ 8 kHz" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
             <span id="eq-v-8k" class="text-[10px] font-mono text-cyan-400 block">0</span>
           </div>
           <div class="space-y-1">
             <span class="text-[10px] text-slate-400">16kHz</span>
-            <input type="range" min="-12" max="12" value="0" id="eq-b-16k" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
+            <input type="range" min="-12" max="12" value="0" id="eq-b-16k" aria-label="EQ 16 kHz" oninput="update10BandEQ()" class="w-full accent-cyan-400 h-24 -rotate-90 my-8 cursor-pointer" />
             <span id="eq-v-16k" class="text-[10px] font-mono text-cyan-400 block">0</span>
           </div>
         </div>
@@ -1244,10 +1245,10 @@
   </div>
 
   <!-- Modal 5: Soundscapes Ambient Mixer -->
-  <div id="soundscapes-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div id="soundscapes-modal" role="dialog" aria-modal="true" aria-labelledby="soundscapes-modal-title" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">🌧️ Misturador de Sons Ambiente</h3>
+        <h3 id="soundscapes-modal-title" class="text-base font-bold text-white flex items-center gap-2">🌧️ Misturador de Sons Ambiente</h3>
         <button onclick="closeSoundscapesModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
 
@@ -1263,7 +1264,7 @@
               <div class="text-[10px] text-slate-500">Raindrop DSP</div>
             </div>
           </div>
-          <input type="range" min="0" max="100" value="0" id="sound-rain" oninput="updateSoundscape('rain', this.value)" class="flex-1 accent-emerald-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+          <input type="range" min="0" max="100" value="0" id="sound-rain" aria-label="Volume da chuva" data-i18n-aria="ariaRain" oninput="updateSoundscape('rain', this.value)" class="flex-1 accent-emerald-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
           <span id="val-rain" class="text-xs font-mono text-emerald-400 w-8 text-right">0%</span>
         </div>
 
@@ -1276,7 +1277,7 @@
               <div class="text-[10px] text-slate-500">Ocean Breeze</div>
             </div>
           </div>
-          <input type="range" min="0" max="100" value="0" id="sound-ocean" oninput="updateSoundscape('ocean', this.value)" class="flex-1 accent-emerald-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+          <input type="range" min="0" max="100" value="0" id="sound-ocean" aria-label="Volume do mar" data-i18n-aria="ariaOcean" oninput="updateSoundscape('ocean', this.value)" class="flex-1 accent-emerald-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
           <span id="val-ocean" class="text-xs font-mono text-emerald-400 w-8 text-right">0%</span>
         </div>
 
@@ -1289,7 +1290,7 @@
               <div class="text-[10px] text-slate-500">Fire Embers</div>
             </div>
           </div>
-          <input type="range" min="0" max="100" value="0" id="sound-fire" oninput="updateSoundscape('fire', this.value)" class="flex-1 accent-emerald-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+          <input type="range" min="0" max="100" value="0" id="sound-fire" aria-label="Volume da lareira" data-i18n-aria="ariaFire" oninput="updateSoundscape('fire', this.value)" class="flex-1 accent-emerald-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
           <span id="val-fire" class="text-xs font-mono text-emerald-400 w-8 text-right">0%</span>
         </div>
 
@@ -1302,7 +1303,7 @@
               <div class="text-[10px] text-slate-500">Focus Mask</div>
             </div>
           </div>
-          <input type="range" min="0" max="100" value="0" id="sound-noise" oninput="updateSoundscape('noise', this.value)" class="flex-1 accent-emerald-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+          <input type="range" min="0" max="100" value="0" id="sound-noise" aria-label="Volume do ruído branco" data-i18n-aria="ariaNoise" oninput="updateSoundscape('noise', this.value)" class="flex-1 accent-emerald-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
           <span id="val-noise" class="text-xs font-mono text-emerald-400 w-8 text-right">0%</span>
         </div>
       </div>
@@ -1315,10 +1316,10 @@
   </div>
 
   <!-- Modal 6: Sleep Timer -->
-  <div id="sleep-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div id="sleep-modal" role="dialog" aria-modal="true" aria-labelledby="sleep-modal-title" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">⏳ Temporizador de Sono</h3>
+        <h3 id="sleep-modal-title" class="text-base font-bold text-white flex items-center gap-2">⏳ Temporizador de Sono</h3>
         <button onclick="closeSleepModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
 
@@ -1340,10 +1341,10 @@
   </div>
 
   <!-- Modal 7: Radio Alarm Clock -->
-  <div id="alarm-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div id="alarm-modal" role="dialog" aria-modal="true" aria-labelledby="alarm-modal-title" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">⏰ Despertador com Rádio</h3>
+        <h3 id="alarm-modal-title" class="text-base font-bold text-white flex items-center gap-2">⏰ Despertador com Rádio</h3>
         <button onclick="closeAlarmModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
 
@@ -1351,12 +1352,12 @@
 
       <div class="space-y-3">
         <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">Hora do Despertador</label>
+          <label for="alarm-time-input" class="text-xs font-semibold text-slate-400 block mb-1">Hora do Despertador</label>
           <input type="time" id="alarm-time-input" value="07:30" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-base text-white font-mono focus:outline-none focus:border-amber-400" />
         </div>
 
         <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">Estação de Rádio para Tocar</label>
+          <label for="alarm-station-select" class="text-xs font-semibold text-slate-400 block mb-1">Estação de Rádio para Tocar</label>
           <select id="alarm-station-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-400">
             <!-- Dynamically populated -->
           </select>
@@ -1364,7 +1365,7 @@
 
         <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-950 border border-slate-800">
           <span class="text-xs font-semibold text-slate-300">Ativar Despertador</span>
-          <input type="checkbox" id="alarm-toggle" class="w-5 h-5 accent-amber-400 cursor-pointer" />
+          <input type="checkbox" id="alarm-toggle" aria-label="Ativar despertador" data-i18n-aria="ariaAlarmToggle" class="w-5 h-5 accent-amber-400 cursor-pointer" />
         </div>
       </div>
 
@@ -1376,7 +1377,7 @@
   </div>
 
   <!-- Modal 8: TV / Fullscreen Ambient Mode -->
-  <div id="tv-ambient-modal" class="fixed inset-0 bg-slate-950 z-50 hidden flex flex-col justify-between p-6 md:p-12">
+  <div id="tv-ambient-modal" role="dialog" aria-modal="true" aria-labelledby="tv-station-name" class="fixed inset-0 bg-slate-950 z-50 hidden flex flex-col justify-between p-6 md:p-12">
     
     <!-- Top Bar -->
     <div class="flex justify-between items-center">
@@ -1441,10 +1442,10 @@
   </div>
 
   <!-- Modal 9: Backup & M3U Export -->
-  <div id="backup-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div id="backup-modal" role="dialog" aria-modal="true" aria-labelledby="backup-modal-title" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">💾 Backup & Exportação de Favoritos</h3>
+        <h3 id="backup-modal-title" class="text-base font-bold text-white flex items-center gap-2">💾 Backup & Exportação de Favoritos</h3>
         <button onclick="closeBackupModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
 
@@ -1479,30 +1480,30 @@
   </div>
 
   <!-- Modal 10: Add Custom Station -->
-  <div id="add-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div id="add-modal" role="dialog" aria-modal="true" aria-labelledby="add-modal-title" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">📻 Adicionar Estação Personalizada</h3>
+        <h3 id="add-modal-title" class="text-base font-bold text-white flex items-center gap-2">📻 Adicionar Estação Personalizada</h3>
         <button onclick="closeAddModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
       
       <form id="custom-form" class="space-y-3">
         <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">Nome da Estação <span class="text-slate-500 font-normal">(opcional — descoberto pelo link do site)</span></label>
+          <label for="cust-name" class="text-xs font-semibold text-slate-400 block mb-1">Nome da Estação <span class="text-slate-500 font-normal">(opcional — descoberto pelo link do site)</span></label>
           <input type="text" id="cust-name" placeholder="Ex: Rádio Local FM (deixa vazio para descobrir pelo site)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400" />
         </div>
         <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">URL do Stream Áudio ou do Site da Rádio 🌐</label>
+          <label for="cust-url" class="text-xs font-semibold text-slate-400 block mb-1">URL do Stream Áudio ou do Site da Rádio 🌐</label>
           <input type="url" id="cust-url" required placeholder="Cola o link do site (ex: https://radio-exemplo.pt) ou do stream direto (ex: https://stream.exemplo.com/live.mp3)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400" />
           <p class="text-[10px] text-slate-500 mt-1">💡 Site da rádio? Descobrimos o stream automaticamente. Não encontramos? Cola o URL do stream direto.</p>
         </div>
         <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">URL da Capa / Imagem (Opcional)</label>
+          <label for="cust-image" class="text-xs font-semibold text-slate-400 block mb-1">URL da Capa / Imagem (Opcional)</label>
           <input type="url" id="cust-image" placeholder="https://exemplo.com/logo.png" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400" />
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="text-xs font-semibold text-slate-400 block mb-1">Categoria</label>
+            <label for="cust-cat" class="text-xs font-semibold text-slate-400 block mb-1">Categoria</label>
             <select id="cust-cat" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400">
               <option value="Música">Música</option>
               <option value="Rock">Rock</option>
@@ -1513,7 +1514,7 @@
             </select>
           </div>
           <div>
-            <label class="text-xs font-semibold text-slate-400 block mb-1">País</label>
+            <label for="cust-country" class="text-xs font-semibold text-slate-400 block mb-1">País</label>
             <input type="text" id="cust-country" placeholder="Portugal" value="Portugal" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400" />
           </div>
         </div>
@@ -1527,16 +1528,16 @@
   </div>
 
   <!-- Modal 11: Create Custom Category -->
-  <div id="category-create-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div id="category-create-modal" role="dialog" aria-modal="true" aria-labelledby="category-create-modal-title" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">✨ Criar Nova Categoria</h3>
+        <h3 id="category-create-modal-title" class="text-base font-bold text-white flex items-center gap-2">✨ Criar Nova Categoria</h3>
         <button onclick="closeCreateCategoryModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
       <p class="text-xs text-slate-400">Cria uma categoria musical ou pasta temática personalizada (ex: *Fado, Podcasts, Sertanejo, K-Pop, Anos 90*) para organizares as tuas rádios.</p>
       <form id="category-create-form" class="space-y-4">
         <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">Nome da Categoria</label>
+          <label for="cat-create-name" class="text-xs font-semibold text-slate-400 block mb-1">Nome da Categoria</label>
           <input type="text" id="cat-create-name" required placeholder="Ex: Sertanejo, Fado, Estudo..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400" />
         </div>
         <div>
@@ -1566,10 +1567,10 @@
   </div>
 
   <!-- Modal 12: Assign Station to Category -->
-  <div id="station-category-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div id="station-category-modal" role="dialog" aria-modal="true" aria-labelledby="station-category-modal-title" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">🏷️ Mover Rádio para Categoria</h3>
+        <h3 id="station-category-modal-title" class="text-base font-bold text-white flex items-center gap-2">🏷️ Mover Rádio para Categoria</h3>
         <button onclick="closeStationCategoryModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
       <div id="station-category-target-info" class="p-3 bg-slate-950 rounded-2xl border border-slate-800 flex items-center gap-3">
@@ -1590,7 +1591,7 @@
   </div>
 
   <!-- Modal 13: Mobile Fullscreen Player Sheet -->
-  <div id="mobile-player-sheet" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 hidden flex flex-col justify-between p-6 md:hidden">
+  <div id="mobile-player-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-station-name" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 hidden flex flex-col justify-between p-6 md:hidden">
     <div class="flex items-center justify-between">
       <button onclick="closeMobileSheetPlayer()" aria-label="Fechar player" title="Fechar player" class="p-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 active:scale-95 text-lg">✕</button>
       <div class="flex items-center gap-2">
@@ -1635,7 +1636,7 @@
       <!-- Volume Slider -->
       <div class="flex items-center gap-3 bg-slate-900/80 px-4 py-3 rounded-2xl border border-slate-800">
         <span class="text-xs text-slate-400">🔈</span>
-        <input type="range" id="sheet-volume-slider" min="0" max="100" value="80" oninput="setVolume(this.value); const pvs=document.getElementById('p-volume-slider'); if(pvs) pvs.value=this.value;" class="flex-1 accent-cyan-400 h-2 bg-slate-800 rounded-lg cursor-pointer" />
+        <input type="range" id="sheet-volume-slider" aria-label="Volume" data-i18n-aria="ariaVolume" min="0" max="100" value="80" oninput="setVolume(this.value); const pvs=document.getElementById('p-volume-slider'); if(pvs) pvs.value=this.value;" class="flex-1 accent-cyan-400 h-2 bg-slate-800 rounded-lg cursor-pointer" />
         <span class="text-xs text-slate-400">🔊</span>
       </div>
 
@@ -1649,10 +1650,10 @@
   </div>
 
   <!-- Modal 14: Mobile Tools Drawer Modal -->
-  <div id="mobile-tools-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div id="mobile-tools-modal" role="dialog" aria-modal="true" aria-labelledby="mobile-tools-modal-title" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">🛠️ Ferramentas & Configurações</h3>
+        <h3 id="mobile-tools-modal-title" class="text-base font-bold text-white flex items-center gap-2">🛠️ Ferramentas & Configurações</h3>
         <button onclick="closeMobileToolsDrawer()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
 
@@ -1711,10 +1712,10 @@
   </div>
 
   <!-- Modal 15: Confirm Delete Station Modal -->
-  <div id="delete-confirm-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div id="delete-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-confirm-modal-title" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-black text-red-400 flex items-center gap-2">🗑️ Eliminar Rádio</h3>
+        <h3 id="delete-confirm-modal-title" class="text-base font-black text-red-400 flex items-center gap-2">🗑️ Eliminar Rádio</h3>
         <button onclick="closeDeleteStationModal()" class="text-slate-400 hover:text-white text-xl p-1">&times;</button>
       </div>
 
