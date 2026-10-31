@@ -24,22 +24,22 @@
   <!-- Tailwind CSS compilado (css/tailwind.css; fonte css/tailwind.input.css) -->
   <link rel="stylesheet" href="css/tailwind.css">
   <!-- hls.js e Leaflet carregam a pedido (ver ensureLib em js/app/core.js) -->
-  <script src="js/roc-core.js" defer></script>
-  <script src="js/storage.js" defer></script>
-  <script src="js/catalog.js" defer></script>
-  <script src="js/i18n.js" defer></script>
-  <!-- App: scripts clássicos com defer — descarregam em paralelo com o HTML e
-       executam por esta ordem depois do parse (partilham o âmbito global); init.js arranca a app -->
-  <script src="js/app/core.js" defer></script>
-  <script src="js/app/soundscapes.js" defer></script>
-  <script src="js/app/library.js" defer></script>
-  <script src="js/app/health.js" defer></script>
-  <script src="js/app/player.js" defer></script>
-  <script src="js/app/map.js" defer></script>
-  <script src="js/app/browse.js" defer></script>
-  <script src="js/app/features.js" defer></script>
-  <script src="js/app/visualizer.js" defer></script>
-  <script src="js/app/init.js" defer></script>
+  <!-- Scripts descarregados logo (preload) mas executados no fim do <body>:
+       o browser pinta a página estática antes de correr o JavaScript -->
+  <link rel="preload" href="js/roc-core.js" as="script">
+  <link rel="preload" href="js/storage.js" as="script">
+  <link rel="preload" href="js/catalog.js" as="script">
+  <link rel="preload" href="js/i18n.js" as="script">
+  <link rel="preload" href="js/app/core.js" as="script">
+  <link rel="preload" href="js/app/soundscapes.js" as="script">
+  <link rel="preload" href="js/app/library.js" as="script">
+  <link rel="preload" href="js/app/health.js" as="script">
+  <link rel="preload" href="js/app/player.js" as="script">
+  <link rel="preload" href="js/app/map.js" as="script">
+  <link rel="preload" href="js/app/browse.js" as="script">
+  <link rel="preload" href="js/app/features.js" as="script">
+  <link rel="preload" href="js/app/visualizer.js" as="script">
+  <link rel="preload" href="js/app/init.js" as="script">
   <link rel="preconnect" href="https://unpkg.com" crossorigin>
 
   <style>
@@ -511,10 +511,10 @@
     <!-- View & Concept Explainer Banner (Clarifies difference between Favoritos, Biblioteca, Categorias) -->
     <div id="view-explainer-banner" class="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 border border-cyan-500/20 text-xs flex items-center justify-between shadow-sm">
       <div class="flex items-center gap-2.5">
-        <span id="explainer-icon" class="text-2xl flex-shrink-0">🔥</span>
+        <span id="explainer-icon" class="text-2xl flex-shrink-0">📻</span>
         <div>
-          <h2 id="explainer-title" class="font-bold text-white text-xs sm:text-sm">Catálogo Global & Tendências</h2>
-          <p id="explainer-desc" class="text-[11px] text-slate-400">Todas as rádios disponíveis organizadas por país e categorias musicais.</p>
+          <h2 id="explainer-title" class="font-bold text-white text-xs sm:text-sm">Catálogo Geral de Estações</h2>
+          <p id="explainer-desc" class="text-[11px] text-slate-400">Explora todas as rádios disponíveis por país, género musical ou pesquisa.</p>
         </div>
       </div>
       <div class="hidden lg:flex items-center gap-1.5 text-[10px]">
@@ -672,7 +672,7 @@
           <span>➕</span> <span data-i18n="createCategory">Nova Categoria</span>
         </button>
       </div>
-      <div id="categories-carousel" class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+      <div id="categories-carousel" class="flex items-center gap-2 overflow-x-auto pb-1 text-xs min-h-[34px]">
         <!-- Injected dynamically -->
       </div>
     </div>
@@ -817,14 +817,14 @@
 
     <!-- Stations Grid Section -->
     <div id="stations-grid-section" class="space-y-4">
-      <div class="flex items-center justify-between">
-        <h2 id="section-title" class="text-base font-black text-white flex items-center gap-2">
+      <div class="flex items-center justify-between gap-3">
+        <h2 id="section-title" class="text-base font-black text-white flex items-center gap-2 min-w-0 flex-1">
           <span>🔥</span> <span data-i18n="popularStations">Rádios Populares & Tendências</span>
         </h2>
-        <span id="results-count" class="text-xs text-slate-400">A carregar...</span>
+        <span id="results-count" class="text-xs text-slate-400 flex-shrink-0 w-28 text-right">A carregar...</span>
       </div>
 
-      <div id="stations-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4">
+      <div id="stations-grid" class="min-h-screen grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4">
         <!-- Station Cards injected dynamically -->
       </div>
 
@@ -885,7 +885,7 @@
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-1.5 md:gap-2">
             <h4 id="player-station-name" class="text-sm font-extrabold text-white truncate">LOS 40 España</h4>
-            <span id="player-live-badge" class="hidden px-1.5 py-0.5 rounded-full text-[8px] md:text-[9px] font-black bg-red-600 text-white animate-pulse">LIVE</span>
+            <span id="player-live-badge" class="hidden px-1.5 py-0.5 rounded-full text-[8px] md:text-[9px] font-black bg-red-600 text-white"><span class="inline-block w-1 h-1 mr-0.5 align-middle rounded-full bg-white animate-pulse" aria-hidden="true"></span>LIVE</span>
           </div>
           <!-- Live Now Playing Track Info -->
           <div class="flex items-center gap-1.5 truncate">
@@ -1736,5 +1736,21 @@
 
   <audio id="audio-player" preload="none"></audio>
 
+
+  <!-- App: scripts clássicos por esta ordem (partilham o âmbito global); init.js arranca a app -->
+  <script src="js/roc-core.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/catalog.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/app/core.js"></script>
+  <script src="js/app/soundscapes.js"></script>
+  <script src="js/app/library.js"></script>
+  <script src="js/app/health.js"></script>
+  <script src="js/app/player.js"></script>
+  <script src="js/app/map.js"></script>
+  <script src="js/app/browse.js"></script>
+  <script src="js/app/features.js"></script>
+  <script src="js/app/visualizer.js"></script>
+  <script src="js/app/init.js"></script>
 </body>
 </html>

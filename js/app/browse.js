@@ -175,6 +175,8 @@ function render() {
   const visibleList = list.slice(0, gridRenderLimit);
 
   count.textContent = `${list.length} estações disponíveis`;
+  // 1.º render feito: a altura reservada contra saltos de layout já não é precisa
+  grid.classList.remove('min-h-screen');
 
   if (list.length === 0) {
     grid.innerHTML = '';

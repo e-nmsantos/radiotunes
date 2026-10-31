@@ -44,8 +44,12 @@ test('nenhum modal/sheet fica aninhado dentro de outro (ficaria invisível)', ()
   assert.equal(stack.length, 0, 'há <div> por fechar');
 });
 
-test('os scripts locais usam defer (descarregam em paralelo com o HTML)', () => {
-  const tags = [...read('index.html').matchAll(/<script src="(js\/[^"]+)"([^>]*)>/g)];
-  assert.ok(tags.length >= 14);
-  for (const [, src, attrs] of tags) assert.match(attrs, /\bdefer\b/, src);
+test('os scripts locais são pré-carregados no <head> e executados no fim do <body>', () => {
+  const [head, body] = read('index.html').split('</head>');
+  const scripts = [...body.matchAll(/<script src="(js\/[^"]+)"/g)].map((m) => m[1]);
+  const preloads = [...head.matchAll(/<link rel="preload" href="(js\/[^"]+)" as="script">/g)].map((m) => m[1]);
+  assert.ok(scripts.length >= 14);
+  assert.deepEqual(preloads, scripts, 'cada script tem preload, pela mesma ordem');
+  assert.doesNotMatch(head, /<script src="js\//, 'nenhum script local no <head>');
+  assert.ok(body.lastIndexOf('<script src="js/') > body.lastIndexOf('<audio'), 'scripts depois do conteúdo');
 });

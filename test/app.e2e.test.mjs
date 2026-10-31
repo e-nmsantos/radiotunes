@@ -382,7 +382,12 @@ test('teclado: cada rádio é alcançável por Tab e anunciada com nome', { skip
 test('acessibilidade: auditoria axe-core (WCAG 2.1 AA) sem violações — página e diálogo', { skip }, async () => {
   const axeSrc = await (await fetch('https://cdn.jsdelivr.net/npm/axe-core@4.10.2/axe.min.js')).text();
   await evaluate(axeSrc + ';0');
-  const audit = () => evaluate(`axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'] }, resultTypes: ['violations'] })
+  // Espera pelo fim das animações finitas (entrada dos cartões: opacity 0→1) — senão o
+  // axe mede o contraste a meio do fade e o resultado depende do tempo.
+  const audit = () => evaluate(`Promise.all(document.getAnimations()
+      .filter(a => isFinite(a.effect && a.effect.getComputedTiming().endTime))
+      .map(a => a.finished.catch(() => {})))
+    .then(() => axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'] }, resultTypes: ['violations'] }))
     .then(r => r.violations.map(v => v.id + ' (' + v.nodes.length + '): ' + v.nodes.slice(0, 2).map(n => n.target.join(' ')).join(', ')))`);
   await evaluate(`setView('home')`);
   await sleep(300);

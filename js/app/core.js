@@ -10,6 +10,12 @@ function escapeHtml(value) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// Só reescreve quando o texto muda: reescrever o mesmo texto cria um nó novo,
+// que o browser conta como nova pintura (atrasava o LCP e custava layout).
+function setTextIfChanged(el, text) {
+  if (el && el.textContent !== text) el.textContent = text;
+}
+
 // IDs de fontes externas: só caracteres seguros (vão para atributos e seletores).
 function safeId(value) {
   return String(value == null ? '' : value).replace(/[^\w-]/g, '');
@@ -207,9 +213,7 @@ function changeLanguage(lang) {
   });
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
-    if (dict[key]) {
-      el.textContent = dict[key];
-    }
+    if (dict[key]) setTextIfChanged(el, dict[key]);
   });
   refreshViewHeader(currentView);
   render();

@@ -511,7 +511,7 @@ function updateExplainerBanner(icon, title, desc) {
   const iconEl = document.getElementById('explainer-icon');
   const titleEl = document.getElementById('explainer-title');
   const descEl = document.getElementById('explainer-desc');
-  if (iconEl) iconEl.textContent = icon;
-  if (titleEl) titleEl.textContent = title;
-  if (descEl) descEl.textContent = desc;
+  setTextIfChanged(iconEl, icon);
+  setTextIfChanged(titleEl, title);
+  setTextIfChanged(descEl, desc);
 }
